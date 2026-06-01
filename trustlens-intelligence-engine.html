@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TrustLens · Intelligence Engine Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02070F;--bg2:#060D1A;--bg3:#091628;--bg4:#0C1F3A;
+  --border:#162E52;--border2:#1E3D6A;
+  --blue:#3B9EFF;--blue2:#1A6FC4;
+  --green:#22C55E;--green2:#16A34A;
+  --yellow:#F59E0B;--orange:#F97316;
+  --red:#DC2626;--purple:#8B5CF6;--cyan:#06B6D4;
+  --text:#E2E8F0;--muted:#94A3B8;--dim:#64748B;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(59,158,255,.06),transparent);pointer-events:none;z-index:0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes flow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.4);opacity:0}}
+@keyframes scan{0%{top:0}100%{top:100%}}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(2,7,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 24px;gap:12px;position:relative;z-index:200}
+.logo{font-size:16px;font-weight:900}.logo span{color:var(--blue)}
+.tb-sub{font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);letter-spacing:1.5px}
+.sep{width:1px;height:20px;background:var(--border)}
+
+/* NAV TABS */
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto;position:sticky;top:52px;z-index:199}
+.nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:14px 16px;font-size:11px;font-weight:700;font-family:var(--mono);color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.nav-tab:hover{color:var(--muted)}
+.nav-tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* MAIN */
+.main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:28px 24px 60px}
+
+/* SECTION HEADER */
+.sec-hdr{margin-bottom:22px;animation:fadeIn .4s ease}
+.sec-tag{font-size:9px;font-weight:700;color:var(--blue);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.sec-tag::before{content:'';display:block;width:20px;height:2px;background:var(--blue)}
+.sec-title{font-size:24px;font-weight:900;letter-spacing:-.4px;margin-bottom:6px}
+.sec-desc{font-size:13px;color:var(--muted);line-height:1.7;max-width:680px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;animation:fadeIn .35s ease}
+.card:hover{border-color:var(--border2);transition:border-color .2s}
+.card-hdr{padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.card-title{font-size:12px;font-weight:700;flex:1;font-family:var(--mono)}
+.card-body{padding:16px}
+
+/* PIPELINE FLOW */
+.pipeline{display:flex;align-items:stretch;gap:0;margin-bottom:20px;overflow-x:auto}
+.pipeline::-webkit-scrollbar{height:3px}
+.pipeline::-webkit-scrollbar-thumb{background:var(--border)}
+.pipe-step{min-width:130px;flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center;position:relative;animation:fadeIn .4s ease;transition:all .2s}
+.pipe-step:hover{border-color:var(--blue);transform:translateY(-2px)}
+.pipe-step.active{border-color:var(--blue);background:rgba(59,158,255,.06)}
+.pipe-step.critical{border-color:var(--red)}
+.pipe-step.discard{border-color:var(--green)}
+.pipe-icon{font-size:24px;margin-bottom:7px}
+.pipe-label{font-size:10px;font-weight:700;margin-bottom:4px;font-family:var(--mono)}
+.pipe-desc{font-size:9px;color:var(--dim);line-height:1.4;font-family:var(--mono)}
+.pipe-arrow{display:flex;align-items:center;padding:0 6px;flex-shrink:0;color:var(--border2);font-size:16px;font-weight:700}
+
+/* HASH DISPLAY */
+.hash-demo{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:var(--mono);margin-bottom:10px}
+.hash-raw{font-size:11px;color:var(--orange);margin-bottom:6px}
+.hash-arrow{font-size:12px;color:var(--dim);margin:4px 0}
+.hash-result{font-size:13px;font-weight:700;color:var(--green)}
+.hash-meta{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6}
+.hash-stored{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:7px;padding:9px;margin-top:8px;font-size:10px}
+.hash-discarded{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:7px;padding:9px;margin-top:5px;font-size:10px;color:var(--red)}
+
+/* SIGNAL COMBINATION */
+.signal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.signal-card{border-radius:10px;padding:13px;border:1px solid;animation:fadeIn .4s ease}
+.signal-weight{font-size:20px;font-weight:900;font-family:var(--mono);margin-bottom:4px}
+.signal-name{font-size:11px;font-weight:700;margin-bottom:4px}
+.signal-desc{font-size:10px;line-height:1.5;font-family:var(--mono)}
+.signal-mac-note{font-size:9px;padding:4px 8px;border-radius:5px;margin-top:6px;font-weight:700;font-family:var(--mono)}
+
+/* THREAT DETECTION TABLE */
+.threat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.threat-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;transition:all .2s;cursor:default;animation:fadeIn .3s ease}
+.threat-item:hover{border-color:var(--border2);transform:translateY(-1px)}
+.threat-item.crit{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.04)}
+.threat-item.high{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.03)}
+.threat-item.med{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.02)}
+.ti-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ti-icon{font-size:20px;flex-shrink:0}
+.ti-name{font-size:12px;font-weight:700;flex:1}
+.ti-level{font-size:8px;font-weight:700;padding:2px 7px;border-radius:7px;font-family:var(--mono)}
+.ti-sensors{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.ti-sensor{font-size:8px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:var(--mono)}
+.ti-desc{font-size:10px;color:var(--muted);line-height:1.5;font-family:var(--mono)}
+.ti-note{font-size:9px;color:var(--yellow);margin-top:5px;font-family:var(--mono)}
+
+/* LAW ENFORCEMENT CHECK */
+.le-check{background:rgba(59,158,255,.06);border:1px solid rgba(59,158,255,.2);border-radius:10px;padding:13px;margin-top:8px}
+.le-check-title{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.le-step{display:flex;gap:8px;font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5}
+.le-num{width:18px;height:18px;border-radius:50%;background:rgba(59,158,255,.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--blue);flex-shrink:0;font-family:var(--mono)}
+
+/* PRIVACY STATEMENT */
+.privacy-box{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:16px;margin-bottom:14px}
+.privacy-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px}
+.privacy-pitch{font-size:14px;font-style:italic;color:var(--text);line-height:1.7;border-left:3px solid var(--green);padding-left:14px;margin-bottom:12px}
+
+/* LIVE DEMO */
+.demo-scene{background:#050c18;border-radius:12px;overflow:hidden;border:1px solid var(--border);position:relative;aspect-ratio:16/9;margin-bottom:12px}
+.demo-canvas{width:100%;height:100%;display:block}
+.demo-hud{position:absolute;top:8px;left:12px;font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4);z-index:10;line-height:1.7}
+.demo-rec{position:absolute;top:8px;right:12px;display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;color:var(--red);z-index:10}
+.rec-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse .9s infinite}
+.c2pa-badge{position:absolute;bottom:7px;right:7px;background:rgba(34,197,94,.9);color:white;font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:var(--mono);z-index:10}
+.scan-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(59,158,255,.45),transparent);animation:scan 3.5s linear infinite;z-index:5;pointer-events:none}
+
+/* MAC NOTE */
+.mac-note{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px;margin-bottom:10px}
+.mac-note-title{font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px}
+
+/* TOOLTIP-STYLE TAG */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:7px;font-size:9px;font-weight:700;font-family:var(--mono)}
+
+/* SCROLL */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block;animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+
+<div class="topbar" style="position:sticky">
+  <div class="logo">Trust<span>Lens</span></div>
+  <div class="sep"></div>
+  <div class="tb-sub">INTELLIGENCE ENGINE · TECHNICAL ARCHITECTURE</div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab on" onclick="tab(0,this)">🔐 Device Identity</div>
+  <div class="nav-tab" onclick="tab(1,this)">📡 Signal Fusion</div>
+  <div class="nav-tab" onclick="tab(2,this)">🎯 Threat Detection</div>
+  <div class="nav-tab" onclick="tab(3,this)">⚖️ LE Differentiation</div>
+  <div class="nav-tab" onclick="tab(4,this)">🛡️ Privacy Compliance</div>
+  <div class="nav-tab" onclick="tab(5,this)">📹 Live Demo</div>
+</div>
+
+<div class="main">
+
+<!-- TAB 0: DEVICE IDENTITY -->
+<div class="panel on" id="p0">
+  <div class="sec-hdr">
+    <div class="sec-tag">Device identity pipeline</div>
+    <div class="sec-title">Raw MAC → Anonymous hash token</div>
+    <div class="sec-desc">TrustLens never stores a raw MAC address. The moment a device signal is captured, it is immediately converted into a hashed device token. The raw identifier is discarded. TrustLens operates entirely on anonymous tokens.</div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline" style="margin-bottom:20px">
+    <div class="pipe-step">
+      <div class="pipe-icon">📡</div>
+      <div class="pipe-label">RF signal captured</div>
+      <div class="pipe-desc">Wi-Fi probe request, BLE advertisement, or RF burst detected by sensor</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step critical">
+      <div class="pipe-icon">⚡</div>
+      <div class="pipe-label">Immediate hash</div>
+      <div class="pipe-desc">SHA-3-256 applied in <12ms at edge. Raw MAC never leaves the sensor processor</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step discard">
+      <div class="pipe-icon">🗑️</div>
+      <div class="pipe-label">Raw MAC discarded</div>
+      <div class="pipe-desc">Original identifier overwritten in memory. Cannot be recovered</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step active">
+      <div class="pipe-icon">🔑</div>
+      <div class="pipe-label">Hash token stored</div>
+      <div class="pipe-desc">Anonymous token enters session store with metadata only</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🧠</div>
+      <div class="pipe-label">Behavioral analysis</div>
+      <div class="pipe-desc">Token correlated with zone, time, movement, and risk score</div>
+    </div>
+  </div>
+
+  <!-- Hash example -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">What the system sees vs. what it stores</div></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="hash-demo">
+            <div style="font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">What the RF sensor captures</div>
+            <div class="hash-raw">📡 Raw MAC: A4:C3:F0:72:8B:1D</div>
+            <div class="hash-arrow">⬇ SHA-3-256 · &lt;12ms · edge processor</div>
+            <div class="hash-result">🔑 PH·SHA3·F2A1:B891:C3D4:E5F6</div>
+            <div class="hash-discarded">❌ Raw MAC A4:C3:F0:72:8B:1D — overwritten in memory immediately. Not logged. Not stored. Not transmitted.</div>
+            <div class="hash-stored">
+              <div style="font-size:9px;font-weight:700;color:var(--green);margin-bottom:5px">✅ What enters the session store</div>
+              <div style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8">
+                hash: <span style="color:var(--green)">PH·SHA3·F2A1:B891:C3D4:E5F6</span><br>
+                type: <span style="color:var(--blue)">PH (Phone)</span><br>
+                first_seen: <span style="color:var(--cyan)">Day 1 · 11:08 AM · Platform B</span><br>
+                visits: <span style="color:var(--cyan)">1</span><br>
+                zones: <span style="color:var(--cyan)">["Platform-B"]</span><br>
+                risk_score: <span style="color:var(--yellow)">0.12</span><br>
+                expires_at: <span style="color:var(--dim)">+72h (standard tier)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px">Day 2 — same device returns</div>
+          <div class="hash-demo">
+            <div style="font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Session store lookup</div>
+            <div style="font-size:11px;color:var(--text);font-family:var(--mono);margin-bottom:8px">
+              <span style="color:var(--green)">PH·SHA3·F2A1:B891:C3D4:E5F6</span><br>
+              <span style="color:var(--cyan)">→ RETURN VISITOR · Visit 2</span>
+            </div>
+            <div style="background:var(--bg4);border-radius:7px;padding:10px;font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8;border:1px solid var(--border)">
+              "Device <span style="color:var(--green)">PH·SHA3·F2A1</span> was seen<br>
+              yesterday at <span style="color:var(--blue)">Platform B · 11:08 AM</span><br>
+              and returned today at<br>
+              <span style="color:var(--blue)">Mezzanine · 09:47 AM</span>.<br><br>
+              <span style="color:var(--orange)">Zone crossing detected.</span><br>
+              <span style="color:var(--orange)">Behavior pattern: 2 visits / 2 zones.</span><br>
+              <span style="color:var(--yellow)">Risk score: 0.12 → 0.34 ↑</span>"
+            </div>
+          </div>
+
+          <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:11px;margin-top:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px">What TrustLens can infer</div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.7;font-family:var(--mono)">
+              ✓ This device was here before<br>
+              ✓ It moved between zones<br>
+              ✓ Time-of-day pattern<br>
+              ✓ Behavioral change vs. prior visit<br>
+              ✗ Who owns this device<br>
+              ✗ Name, account, or identity<br>
+              ✗ Any data from outside TrustLens
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAC Randomization -->
+  <div class="mac-note">
+    <div class="mac-note-title">⚠️ MAC randomization — why TrustLens does not rely on MAC alone</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">Modern iPhones (iOS 14+), Android devices (Android 10+), and Windows 10+ randomize their MAC address per network, per session, and periodically over time. A device that was <span style="color:var(--orange)">A4:C3:F0:72:8B:1D</span> this morning may present as <span style="color:var(--orange)">B7:2E:44:9A:1C:F8</span> this afternoon. Relying on MAC alone would produce a new "first-time visitor" every hour from the same device.</div>
+    <div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:8px">TrustLens response: multi-signal device continuity</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);margin-bottom:4px">📡 RF signal fingerprint</div>
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);line-height:1.5">Probe request timing patterns, signal strength profile, channel preference, and burst frequency create a device behavioral fingerprint even when MAC rotates</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:4px">📷 Camera movement track</div>
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);line-height:1.5">Body shape, gait signature, clothing color pattern, and movement trajectory link camera observations to RF signals without facial recognition</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--yellow);margin-bottom:4px">📍 Space-time correlation</div>
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);line-height:1.5">If a body appears at zone A at T=0 and a RF signal appears at zone A at T=0, they are likely the same person regardless of MAC rotation</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: SIGNAL FUSION -->
+<div class="panel" id="p1">
+  <div class="sec-hdr">
+    <div class="sec-tag">Multi-signal fusion</div>
+    <div class="sec-title">Five independent intelligence streams</div>
+    <div class="sec-desc">TrustLens combines five independent data streams into a unified behavioral risk score. No single stream can be defeated without the others compensating. This is the core architectural resilience of the platform.</div>
+  </div>
+
+  <div class="signal-grid">
+    <div class="signal-card" style="border-color:rgba(59,158,255,.35);background:rgba(59,158,255,.06)">
+      <div class="signal-weight" style="color:var(--blue)">25%</div>
+      <div class="signal-name" style="color:var(--blue)">📡 RF device signals</div>
+      <div class="signal-desc" style="color:var(--muted)">Hashed device token presence, zone crossing pattern, signal blackout events, cross-zone device correlation, device type classification (PH/TR/DR/DT/UK)</div>
+      <div class="signal-mac-note" style="background:rgba(245,158,11,.1);color:var(--yellow)">⚠ MAC randomization handled by multi-signal continuity</div>
+    </div>
+    <div class="signal-card" style="border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.06)">
+      <div class="signal-weight" style="color:var(--green)">30%</div>
+      <div class="signal-name" style="color:var(--green)">📷 Camera behavioral AI</div>
+      <div class="signal-desc" style="color:var(--muted)">Gait analysis, loitering detection, zone dwell time, crowd density, object placement, movement velocity, entry/exit pattern, body-shape continuity across cameras</div>
+      <div class="signal-mac-note" style="background:rgba(34,197,94,.1);color:var(--green)">✓ Primary channel — works regardless of MAC state</div>
+    </div>
+    <div class="signal-card" style="border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.06)">
+      <div class="signal-weight" style="color:var(--red)">20%</div>
+      <div class="signal-name" style="color:var(--red)">💓 Physiological signals</div>
+      <div class="signal-desc" style="color:var(--muted)">rPPG heart rate (face exposed), respiratory rate (torso movement), hand tremor frequency (exposed hands), gait stress signature, thermal core temperature elevation</div>
+      <div class="signal-mac-note" style="background:rgba(220,38,38,.1);color:var(--red)">⚠ Degrades when fully covered — compensated by gait + thermal</div>
+    </div>
+    <div class="signal-card" style="border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06)">
+      <div class="signal-weight" style="color:var(--orange)">15%</div>
+      <div class="signal-name" style="color:var(--orange)">🌡️ Thermal imaging</div>
+      <div class="signal-desc" style="color:var(--muted)">Adrenaline temperature signature (+0.3–0.9°C), concealed metal cold spot, fever detection, peripheral vasoconstriction, respiratory heat through face covering</div>
+      <div class="signal-mac-note" style="background:rgba(249,115,22,.1);color:var(--orange)">✓ Optional sensor — works through most clothing</div>
+    </div>
+    <div class="signal-card" style="border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.06)">
+      <div class="signal-weight" style="color:var(--purple)">10%</div>
+      <div class="signal-name" style="color:var(--purple)">📍 Space-time context</div>
+      <div class="signal-desc" style="color:var(--muted)">Time-of-day anomaly, zone restriction proximity, event calendar correlation, crowd density deviation, historical behavioral baseline comparison</div>
+      <div class="signal-mac-note" style="background:rgba(139,92,246,.1);color:var(--purple)">✓ Always active — contextual weight multiplier</div>
+    </div>
+    <div class="signal-card" style="border-color:rgba(6,182,212,.35);background:rgba(6,182,212,.06)">
+      <div class="signal-weight" style="color:var(--cyan)">+bonus</div>
+      <div class="signal-name" style="color:var(--cyan)">📱 CrowdLens (DolSafe)</div>
+      <div class="signal-desc" style="color:var(--muted)">Voluntary citizen video feeds from nearby DolSafe users covering dead zones. Triggered by TrustLens when confidence threshold warrants additional angles</div>
+      <div class="signal-mac-note" style="background:rgba(6,182,212,.1);color:var(--cyan)">✓ Supplemental — covers fixed camera blind spots</div>
+    </div>
+  </div>
+
+  <!-- Score computation -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Unified risk score computation</div></div>
+    <div class="card-body">
+      <div style="font-family:var(--mono);font-size:11px;background:var(--bg3);border-radius:9px;padding:14px;margin-bottom:12px;border:1px solid var(--border)">
+        <div style="color:var(--dim);margin-bottom:6px"># TrustLens unified score formula</div>
+        <div style="color:var(--text);line-height:2">
+          score = (<span style="color:var(--green)">camera_behavior</span> × 0.30)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--blue)">rf_intelligence</span> × 0.25)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--red)">physiological</span> × 0.20)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--orange)">thermal</span> × 0.15)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--purple)">context_multiplier</span> × 0.10)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span style="color:var(--yellow)">auto_flags</span> <span style="color:var(--dim)"># TR/DR/DT devices: +0.3 automatic</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span style="color:var(--cyan)">zero_device_penalty</span> <span style="color:var(--dim)"># No RF in high-density area: +0.15</span>
+        </div>
+        <div style="margin-top:10px;color:var(--dim)">
+          # Score range: 0.0 (normal) → 1.0 (maximum threat)<br>
+          # Auto-dispatch threshold: confidence ≥ 98%<br>
+          # Human review threshold: score ≥ 0.65
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)">
+          <div style="font-size:16px;font-weight:900;color:var(--green);font-family:var(--mono)">&lt;0.3</div>
+          <div style="font-size:9px;color:var(--green);font-family:var(--mono)">NORMAL</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)">
+          <div style="font-size:16px;font-weight:900;color:var(--yellow);font-family:var(--mono)">0.3–0.5</div>
+          <div style="font-size:9px;color:var(--yellow);font-family:var(--mono)">WATCH</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2)">
+          <div style="font-size:16px;font-weight:900;color:var(--orange);font-family:var(--mono)">0.5–0.7</div>
+          <div style="font-size:9px;color:var(--orange);font-family:var(--mono)">ELEVATED</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25)">
+          <div style="font-size:16px;font-weight:900;color:var(--red);font-family:var(--mono)">0.7–0.9</div>
+          <div style="font-size:9px;color:var(--red);font-family:var(--mono)">HIGH</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(220,38,38,.16);border:1px solid rgba(220,38,38,.4)">
+          <div style="font-size:16px;font-weight:900;color:var(--red);font-family:var(--mono)">&gt;0.9</div>
+          <div style="font-size:9px;color:var(--red);font-family:var(--mono)">CRITICAL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: THREAT DETECTION -->
+<div class="panel" id="p2">
+  <div class="sec-hdr">
+    <div class="sec-tag">Computer vision · Threat catalog</div>
+    <div class="sec-title">What TrustLens detects</div>
+    <div class="sec-desc">TrustLens uses a multi-model computer vision pipeline trained on threat scenarios specific to transit, campus, and enterprise environments. Every detection is weighted by context and combined with the behavioral score.</div>
+  </div>
+
+  <!-- OBJECT THREATS -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-hdr" style="background:rgba(220,38,38,.08)">
+      <div style="font-size:14px">🔴</div>
+      <div class="card-title" style="color:var(--red)">Weapon & object detection</div>
+      <div style="font-size:9px;font-family:var(--mono);color:var(--dim)">Computer vision model · YOLOv11 fine-tuned</div>
+    </div>
+    <div class="card-body">
+      <div class="threat-grid">
+        <div class="threat-item crit">
+          <div class="ti-top">
+            <div class="ti-icon">🔫</div>
+            <div class="ti-name">Firearm — visible</div>
+            <div class="ti-level" style="background:rgba(220,38,38,.2);color:var(--red)">CRITICAL</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM</span>
+            <span class="ti-sensor" style="background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)">THM cold-spot</span>
+          </div>
+          <div class="ti-desc">Firearm shape classification at &gt;85% confidence triggers immediate CRITICAL alert. Thermal cold-spot signature of metal at body-temperature contrast confirms concealed weapon.</div>
+          <div class="ti-note">⚠ Law enforcement check runs automatically — see LE tab</div>
+        </div>
+        <div class="threat-item crit">
+          <div class="ti-top">
+            <div class="ti-icon">🔪</div>
+            <div class="ti-name">Edged weapon — knife / blade</div>
+            <div class="ti-level" style="background:rgba(220,38,38,.2);color:var(--red)">CRITICAL</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM</span>
+          </div>
+          <div class="ti-desc">Blade geometry detection. Context-aware: kitchen environment = lower weight, transit platform = maximum weight. Reflective surface signature at high confidence triggers alert.</div>
+          <div class="ti-note">Context multiplier active — environment calibrates response</div>
+        </div>
+        <div class="threat-item high">
+          <div class="ti-top">
+            <div class="ti-icon">📦</div>
+            <div class="ti-name">Unattended object / package</div>
+            <div class="ti-level" style="background:rgba(249,115,22,.15);color:var(--orange)">HIGH</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM</span>
+            <span class="ti-sensor" style="background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)">THM</span>
+          </div>
+          <div class="ti-desc">Object placement event: person places object, moves away, object remains stationary beyond threshold time. Owner tracking: if person leaves camera coverage, object is flagged. Thermal detects explosive chemical signatures via heat differential.</div>
+          <div class="ti-note">Timer: 60s general · 30s near restricted areas · 15s at access points</div>
+        </div>
+        <div class="threat-item high">
+          <div class="ti-top">
+            <div class="ti-icon">💣</div>
+            <div class="ti-name">Concealed threat object</div>
+            <div class="ti-level" style="background:rgba(249,115,22,.15);color:var(--orange)">HIGH</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)">THM cold-spot</span>
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM gait</span>
+          </div>
+          <div class="ti-desc">Gait asymmetry from concealed weight (81% accuracy). Thermal cold-spot confirms metal object beneath clothing. Combined score threshold: 0.75 for dispatch recommendation.</div>
+          <div class="ti-note">No RF from DT/DR device type = +0.30 automatic flag</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEHAVIORAL THREATS -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-hdr" style="background:rgba(249,115,22,.06)">
+      <div style="font-size:14px">🟠</div>
+      <div class="card-title" style="color:var(--orange)">Behavioral incident detection</div>
+      <div style="font-size:9px;font-family:var(--mono);color:var(--dim)">Pose estimation · Action recognition · Crowd analysis</div>
+    </div>
+    <div class="card-body">
+      <div class="threat-grid">
+        <div class="threat-item high">
+          <div class="ti-top">
+            <div class="ti-icon">🥊</div>
+            <div class="ti-name">Physical altercation / Fight</div>
+            <div class="ti-level" style="background:rgba(220,38,38,.15);color:var(--red)">HIGH → CRITICAL</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM pose</span>
+            <span class="ti-sensor" style="background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)">THM</span>
+          </div>
+          <div class="ti-desc">Pose estimation detects rapid limb movement, contact events between persons, falling posture, and crowd contraction around an incident. Thermal confirms adrenaline spike in multiple subjects simultaneously. Audio anomaly (if microphone present) correlates.</div>
+          <div class="ti-note">Crowd contraction pattern = fight indicator · EMS auto-staged</div>
+        </div>
+        <div class="threat-item high">
+          <div class="ti-top">
+            <div class="ti-icon">🚫</div>
+            <div class="ti-name">Trespass / Restricted area breach</div>
+            <div class="ti-level" style="background:rgba(249,115,22,.15);color:var(--orange)">HIGH</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM zone</span>
+            <span class="ti-sensor" style="background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.25)">RF zone</span>
+          </div>
+          <div class="ti-desc">Configurable restricted zones defined in onboarding (track level, server room, executive floor). Body enters exclusion zone polygon = immediate alert. RF hash confirms the same device that was at the perimeter is now inside. No tailgate exemption.</div>
+          <div class="ti-note">Zone polygons defined per camera in onboarding step 3</div>
+        </div>
+        <div class="threat-item med">
+          <div class="ti-top">
+            <div class="ti-icon">🏃</div>
+            <div class="ti-name">Running / Panic movement</div>
+            <div class="ti-level" style="background:rgba(245,158,11,.12);color:var(--yellow)">ELEVATED</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM velocity</span>
+          </div>
+          <div class="ti-desc">Velocity anomaly: sustained movement &gt;2.5× crowd average velocity. Direction analysis: crowd dispersal pattern from a single point indicates an incident origin. Panic crowd pattern (radial dispersal) triggers automatic scene review.</div>
+          <div class="ti-note">Context-calibrated: airport = different baseline than station</div>
+        </div>
+        <div class="threat-item med">
+          <div class="ti-top">
+            <div class="ti-icon">👁️</div>
+            <div class="ti-name">Surveillance / Reconnaissance</div>
+            <div class="ti-level" style="background:rgba(245,158,11,.12);color:var(--yellow)">ELEVATED</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM</span>
+            <span class="ti-sensor" style="background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.25)">RF</span>
+          </div>
+          <div class="ti-desc">Multi-zone crossing without destination behavior. Extended dwell near security equipment, access points, or camera positions. Device hash seen across multiple sites in one day. Body-shape continuity confirms same individual across zones.</div>
+          <div class="ti-note">Body-shape continuity: no facial recognition required</div>
+        </div>
+        <div class="threat-item med">
+          <div class="ti-top">
+            <div class="ti-icon">😵</div>
+            <div class="ti-name">Medical emergency / Person down</div>
+            <div class="ti-level" style="background:rgba(245,158,11,.12);color:var(--yellow)">ELEVATED</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM pose</span>
+            <span class="ti-sensor" style="background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.25)">THM</span>
+          </div>
+          <div class="ti-desc">Prone posture detection in high-flow zone. Subject stationary &gt;45 seconds in path-of-travel triggers EMS staging. Thermal confirms body temperature consistent with collapse. Crowd gathering pattern confirms incident.</div>
+          <div class="ti-note">EMS auto-staged at ELEVATED — not dispatched until confirmed</div>
+        </div>
+        <div class="threat-item med">
+          <div class="ti-top">
+            <div class="ti-icon">🧍</div>
+            <div class="ti-name">Platform edge / Fall risk</div>
+            <div class="ti-level" style="background:rgba(245,158,11,.12);color:var(--yellow)">ELEVATED</div>
+          </div>
+          <div class="ti-sensors">
+            <span class="ti-sensor" style="background:rgba(59,158,255,.15);color:var(--blue);border:1px solid rgba(59,158,255,.3)">CAM zone</span>
+          </div>
+          <div class="ti-desc">Body proximity to configured edge zone. Erratic movement near platform edge. MTA-specific: yellow safety line proximity detection. Intentional fall detection vs. accidental slip classification (pose + velocity analysis).</div>
+          <div class="ti-note">MTA-specific zone config: yellow line = proximity alert trigger</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: LE DIFFERENTIATION -->
+<div class="panel" id="p3">
+  <div class="sec-hdr">
+    <div class="sec-tag">Law enforcement differentiation</div>
+    <div class="sec-title">How TrustLens identifies authorized weapons</div>
+    <div class="sec-desc">When TrustLens detects a firearm or weapon, it does not immediately dispatch. It runs a law enforcement differentiation protocol before escalating. This is both a technical accuracy requirement and a legal necessity.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">LE differentiation pipeline — runs in 800ms</div></div>
+    <div class="card-body">
+      <div class="pipeline" style="flex-wrap:wrap;gap:10px">
+        <div class="pipe-step" style="min-width:160px">
+          <div class="pipe-icon">🔫</div>
+          <div class="pipe-label">Weapon detected</div>
+          <div class="pipe-desc">Computer vision flags firearm or edged weapon at &gt;85% confidence</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step active" style="min-width:160px">
+          <div class="pipe-icon">👮</div>
+          <div class="pipe-label">LE identifier check</div>
+          <div class="pipe-desc">Uniform detection, badge reflection, holster position, patrol pattern, authorized zone presence</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" style="min-width:160px">
+          <div class="pipe-icon">📡</div>
+          <div class="pipe-label">RF cross-check</div>
+          <div class="pipe-desc">Tactical radio hash (TR·SHA3·xxxx) corroborates LE identity. P25 radio = law enforcement signal</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step discard" style="min-width:140px">
+          <div class="pipe-icon">✅</div>
+          <div class="pipe-label">LE confirmed</div>
+          <div class="pipe-desc">Alert suppressed. Subject tagged LE. Logged as authorized presence.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">Visual LE indicators</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">👔</span>
+            <div><div style="font-weight:700;margin-bottom:2px">Uniform detection</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">NYPD blue, MTA blue, Amtrak uniform, federal agent attire — trained on operator-specific uniforms during onboarding</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">🪙</span>
+            <div><div style="font-weight:700;margin-bottom:2px">Badge / shield reflection</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Metallic badge reflection at chest or waist level. Shield shape classification (NYPD shield geometry, MTA shield)</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">🔫</span>
+            <div><div style="font-weight:700;margin-bottom:2px">Holster position</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Duty holster at hip level vs. concealed carry profile. Tactical belt indicators (handcuffs, radio, mag pouch geometry)</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0">
+            <span style="font-size:16px;flex-shrink:0">🚶</span>
+            <div><div style="font-weight:700;margin-bottom:2px">Patrol movement pattern</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Systematic zone coverage, authority posture, interaction pattern with public — distinguishable from civilian movement</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">RF LE indicators</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">📻</span>
+            <div><div style="font-weight:700;margin-bottom:2px">P25 NYPD frequency</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">TR device on known NYPD P25 NYCOMM frequencies = strong LE indicator. Hash tagged as TR·LE·xxxx internally</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">📡</span>
+            <div><div style="font-weight:700;margin-bottom:2px">MTA / Amtrak radio</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Transit authority radio frequencies registered during onboarding. Known LE radio hashes pre-loaded per operator</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;flex-shrink:0">📱</span>
+            <div><div style="font-weight:700;margin-bottom:2px">NYPD iPhone hash</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">Known NYPD MDM-enrolled device profiles. Hash pattern consistent with department-issued device fleet</div></div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:12px;padding:7px 0">
+            <span style="font-size:16px;flex-shrink:0">⚠️</span>
+            <div><div style="font-weight:700;margin-bottom:2px">Plainclothes fallback</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono)">If visual fails (plainclothes officer), TR radio on known frequency alone is sufficient to suppress weapon alert. Logged as "probable LE — plainclothes"</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:11px;padding:14px">
+    <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:8px">⚠️ Failure modes and safeguards</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px">False positive (civilian flagged as threat)</div>
+        Firearm detected → LE check fails → alert sent to human dispatcher → dispatcher makes final call. TrustLens never dispatches armed response automatically for weapon detection. The auto-dispatch (98% confidence) applies to behavioral threat convergence — weapon detection always routes to human review first.
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px">False negative (threat mistaken for LE)</div>
+        If an attacker acquires LE uniform and radio: behavioral analysis still runs. Pre-attack stress signature (HR, gait, thermal) would be inconsistent with trained officer profile. Zone behavior (recon, loitering) would remain flagged. Multi-signal fusion makes pure visual spoofing insufficient.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: PRIVACY -->
+<div class="panel" id="p4">
+  <div class="sec-hdr">
+    <div class="sec-tag">Privacy architecture · Legal compliance</div>
+    <div class="sec-title">Privacy-preserving behavioral intelligence</div>
+    <div class="sec-desc">TrustLens is designed from the ground up to deliver security intelligence without building personal profiles. The architecture makes privacy violations structurally impossible — not merely policy-prohibited.</div>
+  </div>
+
+  <div class="privacy-box">
+    <div class="privacy-title">The official TrustLens privacy pitch</div>
+    <div class="privacy-pitch">
+      "TrustLens uses privacy-preserving hashed device tokens, not raw MAC addresses or facial recognition, to support anonymous behavioral continuity. No identity is ever known to the system. No personal data is stored. The raw signal is discarded at capture. What persists is a pattern — not a person."
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7">This pitch is technically accurate, legally defensible, and answers the ACLU challenge before it is raised. Use it verbatim in investor decks, government proposals, and media inquiries.</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">What TrustLens never does</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);flex-shrink:0">✗</span>Facial recognition — never, by design, zero exceptions</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);flex-shrink:0">✗</span>Store raw MAC addresses — discarded at capture</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);flex-shrink:0">✗</span>Write session data to disk — RAM only</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);flex-shrink:0">✗</span>Build longitudinal profiles beyond TTL window</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--red);flex-shrink:0">✗</span>Correlate with external databases or social media</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0"><span style="color:var(--red);flex-shrink:0">✗</span>Identify individuals by name, account, or biometric</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">What TrustLens does do</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);flex-shrink:0">✓</span>Hash device signals immediately at edge</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);flex-shrink:0">✓</span>Track anonymous behavioral patterns by zone</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);flex-shrink:0">✓</span>Expire all session data at TTL (72h / 14d / 30d)</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);flex-shrink:0">✓</span>Detect behavioral anomalies without identity</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green);flex-shrink:0">✓</span>Generate C2PA-verified tamper-proof incident records</div>
+          <div style="display:flex;gap:8px;font-size:12px;padding:6px 0"><span style="color:var(--green);flex-shrink:0">✓</span>Support law enforcement with anonymous intelligence</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Hashed MAC as personal data — the legal nuance</div></div>
+    <div class="card-body">
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px">A hashed MAC address can theoretically constitute personal data under GDPR if it can be used to single out an individual over time. TrustLens addresses this with three architectural defenses:</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:12px;padding:11px;background:var(--bg3);border-radius:9px;border:1px solid var(--border)">
+          <div style="font-size:20px;flex-shrink:0">⏱️</div>
+          <div><div style="font-size:12px;font-weight:700;margin-bottom:3px">Mandatory expiry (TTL)</div><div style="font-size:11px;color:var(--muted);line-height:1.6">Data that expires after 72 hours cannot be used to build a longitudinal profile. After expiry, the same device is a first-time visitor. No continuity across TTL boundaries = no meaningful personal data under GDPR Art.5(e).</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:11px;background:var(--bg3);border-radius:9px;border:1px solid var(--border)">
+          <div style="font-size:20px;flex-shrink:0">🔀</div>
+          <div><div style="font-size:12px;font-weight:700;margin-bottom:3px">MAC randomization compound</div><div style="font-size:11px;color:var(--muted);line-height:1.6">Modern devices rotate their MAC address. A hash of a randomized MAC is pseudorandom — it changes every session. TrustLens hashes what the device presents, which is already anonymized by the device itself.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:11px;background:var(--bg3);border-radius:9px;border:1px solid var(--border)">
+          <div style="font-size:20px;flex-shrink:0">🏛️</div>
+          <div><div style="font-size:12px;font-weight:700;margin-bottom:3px">Public safety legal basis</div><div style="font-size:11px;color:var(--muted);line-height:1.6">GDPR Art.6(1)(e) permits processing necessary for the performance of a task carried out in the public interest. Transit security is explicitly a public interest task. The Surveillance Impact Assessment (Extended tier) documents this legal basis formally.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: LIVE DEMO -->
+<div class="panel" id="p5">
+  <div class="sec-hdr">
+    <div class="sec-tag">Live intelligence demo</div>
+    <div class="sec-title">Multi-threat detection in real time</div>
+    <div class="sec-desc">Simulated TrustLens camera feed showing simultaneous detection of behavioral anomalies, object threats, and physiological signals. All analytics run on the live video stream.</div>
+  </div>
+
+  <div class="demo-scene">
+    <canvas class="demo-canvas" id="demoCanvas"></canvas>
+    <div class="demo-hud" id="demoHUD">CAM-003 · Penn Station · Main Concourse · TrustLens Edge v3.0</div>
+    <div class="demo-rec"><div class="rec-dot"></div>REC · C2PA VERIFIED</div>
+    <div class="c2pa-badge">✓ C2PA SHA-256</div>
+    <div class="scan-line"></div>
+  </div>
+
+  <!-- Live detection panels -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px" id="detectionPanels">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px" id="dp_behavior">
+      <div style="font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">📷 Behavioral analysis</div>
+      <div id="dp_behavior_content" style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8">Initializing...</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px" id="dp_rf">
+      <div style="font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">📡 RF intelligence</div>
+      <div id="dp_rf_content" style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8">Initializing...</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px" id="dp_score">
+      <div style="font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">🧠 Unified score</div>
+      <div id="dp_score_content" style="font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8">Initializing...</div>
+    </div>
+  </div>
+
+  <!-- Hash token display -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">Live session store — anonymous hash tokens only</div></div>
+    <div class="card-body">
+      <div id="liveHashTable" style="font-family:var(--mono);font-size:10px">Loading...</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+// ── TAB SWITCHER ──
+function tab(i, el) {
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('on'); });
+  document.getElementById('p' + i).classList.add('on');
+  el.classList.add('on');
+  if (i === 5) initDemo();
+}
+
+// ── CANVAS DEMO ──
+var demoIv = null;
+var demoT = 0;
+var demoPhase = 0; // 0=normal 1=suspect 2=threat 3=weapon 4=fight 5=trespass
+var phaseTimer = 0;
+var sessionTokens = [
+  {code:'PH', hash:'PH·SHA3·F2A1:B891:C3D4', zone:'Platform-B', visits:1, risk:0.12, flag:''},
+  {code:'PH', hash:'PH·SHA3·A3C2:9F10:E2D1', zone:'Concourse', visits:3, risk:0.34, flag:'RECON'},
+  {code:'TR', hash:'TR·SHA3·B8C2:4401:D9F2', zone:'Main Hall', visits:1, risk:0.81, flag:'TACTICAL RADIO · AUTO-FLAG'},
+  {code:'EB', hash:'EB·SHA3·7712:C330:A100', zone:'Platform-B', visits:2, risk:0.08, flag:''},
+  {code:'UK', hash:'UK·SHA3·??:??:??:??:??', zone:'Concourse', visits:1, risk:0.42, flag:'UNKNOWN RF · WATCH'},
+];
+
+var PHASES = [
+  {name:'Normal baseline', color:'#22C55E', score:0.09,
+   behavior:'All subjects normal gait\nNo dwell anomalies\nCrowd density: normal\nZone crossings: expected',
+   rf:'PH·SHA3·F2A1 — known return\nEB·SHA3·7712 — known return\n5 devices in zone\n0 flagged'},
+  {name:'Loitering detected', color:'#F59E0B', score:0.34,
+   behavior:'WATCH: Subject 2 stationary\nDwell time: 94s (threshold: 90s)\nZone: Main Concourse\nGait: normal',
+   rf:'NEW: PH·SHA3·A3C2 — first visit\nDevice type: Phone\nSignal: 2.4GHz probe\nRisk: 0.34'},
+  {name:'Reconnaissance pattern', color:'#F97316', score:0.58,
+   behavior:'ELEVATED: 3 zone crossings / 9min\nNo destination behavior\nBody-shape continuity confirmed\nrPPG: HR ~104 BPM ↑',
+   rf:'PH·SHA3·A3C2 — visit 3\nCross-zone: Platform→Mezz→Hall\nSignal blackout: 22s\nRisk: 0.58 ↑'},
+  {name:'Weapon detected', color:'#DC2626', score:0.88,
+   behavior:'HIGH: Firearm geometry detected\nConfidence: 91%\nHolster: hip-level duty holster\n→ Running LE check...',
+   rf:'TR·SHA3·B8C2 detected\nFreq: NYPD P25 NYCOMM\nLE radio confirmed\n→ ALERT SUPPRESSED · LE'},
+  {name:'Fight / Altercation', color:'#DC2626', score:0.91,
+   behavior:'CRITICAL: Physical altercation\nPose: rapid limb contact events\nCrowd contraction: 3.2m radius\nrPPG: 2 subjects >130 BPM',
+   rf:'Signal blackout: 2 devices\nTR·SHA3·B8C2: LE confirmed\nEMS auto-staged\nCrowd RF dispersal pattern'},
+  {name:'Trespass — restricted area', color:'#DC2626', score:0.79,
+   behavior:'HIGH: Body entered restricted zone\nZone: Track Level (unauthorized)\nTime-in-zone: 38s\nRF hash confirmed same device',
+   rf:'PH·SHA3·A3C2 in restricted zone\nSame hash: Concourse → Track\nDevice continuity: confirmed\nAuto-alert: Zone breach'},
+];
+
+function initDemo() {
+  var canvas = document.getElementById('demoCanvas');
+  if (!canvas || demoIv) return;
+  canvas.width = canvas.offsetWidth || 800;
+  canvas.height = canvas.offsetHeight || 450;
+  var ctx = canvas.getContext('2d');
+  demoT = 0; demoPhase = 0; phaseTimer = 0;
+  demoIv = setInterval(function() {
+    demoT += 0.02;
+    phaseTimer++;
+    if (phaseTimer > 220) { phaseTimer = 0; demoPhase = (demoPhase + 1) % PHASES.length; updatePanels(); }
+    drawDemo(ctx, canvas.width, canvas.height);
+  }, 60);
+  updatePanels();
+  updateHashTable();
+  setInterval(updateHashTable, 3000);
+}
+
+function updatePanels() {
+  var ph = PHASES[demoPhase];
+  document.getElementById('dp_behavior_content').innerHTML = ph.behavior.replace(/\n/g, '<br>').replace(/(CRITICAL|HIGH|ELEVATED|WATCH):/g, '<span style="font-weight:700;color:var(--red)">$1:</span>');
+  document.getElementById('dp_rf_content').innerHTML = ph.rf.replace(/\n/g, '<br>').replace(/(LE radio confirmed|ALERT SUPPRESSED · LE)/g, '<span style="color:var(--green)">$1</span>').replace(/(AUTO-FLAG|CRITICAL|HIGH)/g, '<span style="color:var(--red)">$1</span>');
+  var sc = ph.score;
+  var lvl = sc < 0.3 ? ['NORMAL','#22C55E'] : sc < 0.5 ? ['WATCH','#F59E0B'] : sc < 0.7 ? ['ELEVATED','#F97316'] : sc < 0.9 ? ['HIGH','#DC2626'] : ['CRITICAL','#DC2626'];
+  document.getElementById('dp_score_content').innerHTML =
+    '<div style="font-size:22px;font-weight:900;color:' + lvl[1] + ';font-family:var(--mono)">' + sc.toFixed(2) + '</div>' +
+    '<div style="color:' + lvl[1] + ';font-weight:700;margin-bottom:4px">' + lvl[0] + '</div>' +
+    '<div style="color:var(--dim)">Phase: ' + (demoPhase+1) + '/6<br>' + ph.name + '</div>';
+  document.getElementById('dp_behavior').style.borderColor = demoPhase >= 4 ? '#DC2626' : demoPhase >= 2 ? '#F97316' : 'var(--border)';
+}
+
+function updateHashTable() {
+  var el = document.getElementById('liveHashTable'); if (!el) return;
+  var riskColor = function(r) { return r >= 0.7 ? '#DC2626' : r >= 0.5 ? '#F97316' : r >= 0.3 ? '#F59E0B' : '#22C55E'; };
+  el.innerHTML = '<div style="display:grid;grid-template-columns:220px 60px 100px 80px 1fr;gap:0;font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px">' +
+    '<div>Hash token</div><div>Type</div><div>Zone</div><div>Risk</div><div>Flag</div></div>' +
+    sessionTokens.map(function(t) {
+      var rc = riskColor(t.risk);
+      return '<div style="display:grid;grid-template-columns:220px 60px 100px 80px 1fr;gap:0;padding:6px 0;border-bottom:1px solid rgba(22,46,82,.3)">' +
+        '<div style="color:' + (t.code==='TR'?'#DC2626':t.code==='UK'?'#F97316':'#22C55E') + ';font-weight:700">' + t.hash + '</div>' +
+        '<div style="color:var(--muted)">' + t.code + '</div>' +
+        '<div style="color:var(--dim)">' + t.zone + '</div>' +
+        '<div style="color:' + rc + ';font-weight:700">' + t.risk.toFixed(2) + '</div>' +
+        '<div style="color:' + (t.flag?'#DC2626':'var(--dimmer)') + ';font-weight:' + (t.flag?'700':'400') + '">' + (t.flag||'—') + '</div>' +
+        '</div>';
+    }).join('') +
+    '<div style="margin-top:8px;font-size:9px;color:var(--dimmer);font-family:var(--mono)">Session store: RAM only · No raw MACs · No names · No faces · TTL: 72h standard</div>';
+}
+
+function drawDemo(ctx, W, H) {
+  var ph = PHASES[demoPhase];
+  ctx.fillStyle = '#060c18'; ctx.fillRect(0, 0, W, H);
+  // Grid
+  ctx.strokeStyle = 'rgba(59,158,255,.03)'; ctx.lineWidth = 1;
+  for (var x = 0; x < W; x += 52) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (var y = 0; y < H; y += 52) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  // Floor
+  var fy = H * 0.72;
+  ctx.fillStyle = '#111828'; ctx.fillRect(0, fy, W, H - fy);
+  ctx.strokeStyle = '#1e2a42'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
+
+  // Subjects
+  var subjects = [
+    {x:0.12, y:0.6, t:0, label:'Normal', score:0.09},
+    {x:0.5,  y:0.55, t: demoPhase >= 1 ? (demoPhase >= 4 ? 3 : demoPhase >= 3 ? 1 : 2) : 0, label: demoPhase >= 4 ? '⚠ ALTERCATION' : demoPhase >= 2 ? '⚠ SUSPECT' : 'Normal', score: ph.score},
+    {x:0.78, y:0.6, t: demoPhase >= 3 ? 1 : 0, label: demoPhase >= 3 ? 'LE · NYPD' : 'Normal', score: demoPhase >= 3 ? 0.05 : 0.1},
+    {x:0.28, y:0.58, t:0, label:'Normal', score:0.08},
+  ];
+
+  subjects.forEach(function(s) {
+    var dx = Math.sin(demoT * (s.t === 2 ? 2.5 : 0.8) + s.x * 5) * 0.01 * W;
+    var px = s.x * W + dx;
+    var py = s.y * H;
+    var ps = H * 0.1;
+    var isThreat = s.t === 2 || s.t === 3;
+    var isLE = s.label && s.label.indexOf('LE') >= 0;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.beginPath(); ctx.ellipse(px, fy + 3, ps*0.4, ps*0.1, 0, 0, Math.PI*2); ctx.fill();
+    // Body
+    var bc = isLE ? 'rgba(59,120,200,.9)' : isThreat ? 'rgba(180,60,60,.95)' : 'rgba(70,100,160,.85)';
+    ctx.fillStyle = bc;
+    ctx.fillRect(px - ps*0.2, py - ps*0.35, ps*0.4, ps*0.65);
+    ctx.beginPath(); ctx.arc(px, py - ps*0.48, ps*0.18, 0, Math.PI*2); ctx.fill();
+    // LE badge
+    if (isLE) {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath(); ctx.arc(px + ps*0.12, py - ps*0.18, ps*0.05, 0, Math.PI*2); ctx.fill();
+    }
+    // Bounding box
+    var bcolor = isLE ? '#3B9EFF' : isThreat ? '#DC2626' : '#22C55E';
+    var bx = px - ps*0.55, by = py - ps*0.7, bw = ps*1.1, bh = ps*1.1;
+    ctx.strokeStyle = bcolor; ctx.lineWidth = isThreat ? 2 : 1.5;
+    ctx.strokeRect(bx, by, bw, bh);
+    // Label
+    ctx.fillStyle = bcolor; ctx.fillRect(bx, by - 12, Math.min(bw, 90), 11);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 7px monospace';
+    ctx.fillText(s.label, bx + 2, by - 2);
+    // Score
+    ctx.fillStyle = bcolor; ctx.font = 'bold 7px monospace';
+    ctx.fillText(s.score.toFixed(2), bx + bw - 24, by + bh + 10);
+    // Pulse ring for threat
+    if (isThreat && s.t === 2) {
+      var ring = (Math.sin(demoT * 3) + 1) * 0.5;
+      ctx.strokeStyle = 'rgba(220,38,38,' + (0.2 + ring*0.5) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, py - ps*0.1, ps*(0.65 + ring*0.2), 0, Math.PI*2); ctx.stroke();
+    }
+    // Object detection
+    if (demoPhase === 2 && s.t === 2) {
+      ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.strokeRect(px - ps*0.08, py - ps*0.02, ps*0.16, ps*0.25);
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#F59E0B'; ctx.font = 'bold 7px monospace';
+      ctx.fillText('concealed?', px - ps*0.08, py + ps*0.28);
+    }
+    // Fight
+    if (demoPhase === 4 && s.t === 2) {
+      ctx.strokeStyle = 'rgba(220,38,38,.6)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, py - ps*0.1, ps*0.9, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = '#DC2626'; ctx.font = 'bold 8px monospace';
+      ctx.fillText('ALTERCATION', px - 30, py + ps*0.7);
+    }
+  });
+
+  // Restricted zone overlay
+  if (demoPhase === 5) {
+    ctx.fillStyle = 'rgba(220,38,38,.08)';
+    ctx.fillRect(W*0.35, H*0.3, W*0.3, H*0.45);
+    ctx.strokeStyle = 'rgba(220,38,38,.5)'; ctx.lineWidth = 2;
+    ctx.setLineDash([6,4]);
+    ctx.strokeRect(W*0.35, H*0.3, W*0.3, H*0.45);
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(220,38,38,.8)'; ctx.font = 'bold 9px monospace';
+    ctx.fillText('RESTRICTED ZONE', W*0.38, H*0.34);
+  }
+
+  // Timestamp
+  ctx.fillStyle = 'rgba(59,158,255,.35)'; ctx.font = '8px monospace';
+  ctx.fillText(new Date().toISOString().slice(11,23) + ' UTC', W - 150, H - 7);
+
+  // Phase label
+  ctx.fillStyle = ph.color + 'DD';
+  ctx.fillRect(8, 8, 180, 18);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 9px monospace';
+  ctx.fillText(ph.name.toUpperCase(), 12, 20);
+}
+
+window.addEventListener('load', function() {
+  // Start on tab 0
+  document.getElementById('p0').classList.add('on');
+});
+</script>
+</body>
+</html>

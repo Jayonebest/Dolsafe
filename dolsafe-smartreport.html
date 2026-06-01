@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · SmartReport</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#E8ECF2;font-family:'Inter',sans-serif;color:#111827}
+.phone{width:100%;max-width:390px;min-height:100vh;background:#F2F5FA;
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.12)}
+
+/* STATUS */
+.status{height:44px;background:#1A56DB;display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;flex-shrink:0}
+.st-time{font-size:15px;font-weight:700;color:white}
+.st-r{font-size:11px;color:rgba(255,255,255,.85)}
+
+/* HEADER */
+.hdr{background:#1A56DB;padding:10px 16px 0}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.back-btn{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);
+  border:none;color:white;font-size:20px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.hdr-c{flex:1}
+.hdr-title{font-size:17px;font-weight:800;color:white;letter-spacing:-.3px}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.68);font-weight:500;margin-top:1px}
+.anon-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);
+  border-radius:20px;padding:5px 10px;font-size:10px;font-weight:700;color:white;
+  display:flex;align-items:center;gap:4px;flex-shrink:0}
+
+/* PROGRESS */
+.prog-wrap{background:#1A56DB;padding:0 16px 14px}
+.prog-bars{display:flex;gap:5px;margin-bottom:6px}
+.pb{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.2);transition:background .35s}
+.pb.done{background:white}
+.pb.active{background:rgba(255,255,255,.6)}
+.prog-row{display:flex;justify-content:space-between}
+.prog-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.75)}
+.prog-ct{font-size:10px;color:rgba(255,255,255,.5)}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:90px}
+.scroll::-webkit-scrollbar{display:none}
+
+@keyframes stepIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes recblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes waveform{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+
+.step-body{padding:16px;animation:stepIn .28s ease}
+.step-h{font-size:20px;font-weight:900;color:#111827;letter-spacing:-.4px;margin-bottom:5px}
+.step-d{font-size:13px;color:#6B7280;font-weight:500;line-height:1.6;margin-bottom:18px}
+
+/* ── CAPTURE SCREEN ── */
+.capture-zone{margin-bottom:14px}
+.viewfinder{background:#111827;border-radius:16px;overflow:hidden;position:relative;
+  height:260px;cursor:pointer}
+.vf-canvas{width:100%;height:100%;display:block}
+.vf-overlay{position:absolute;inset:0;display:flex;flex-direction:column;pointer-events:none}
+.vf-top{padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.vf-rec-badge{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.55);
+  padding:4px 10px;border-radius:8px;font-size:10px;font-weight:700;color:white}
+.vf-recdot{width:7px;height:7px;border-radius:50%;background:#EF4444;animation:recblink 1s infinite}
+.vf-timer{background:rgba(0,0,0,.55);padding:4px 10px;border-radius:8px;
+  font-size:11px;font-weight:700;color:white}
+.vf-focus{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);
+  width:90px;height:90px;border:1.5px solid rgba(255,255,255,.6);border-radius:4px;
+  pointer-events:none}
+.vf-corner{position:absolute;width:12px;height:12px;border:2.5px solid white}
+.vf-corner.tl{top:-1px;left:-1px;border-right:none;border-bottom:none;border-radius:3px 0 0 0}
+.vf-corner.tr{top:-1px;right:-1px;border-left:none;border-bottom:none;border-radius:0 3px 0 0}
+.vf-corner.bl{bottom:-1px;left:-1px;border-right:none;border-top:none;border-radius:0 0 0 3px}
+.vf-corner.br{bottom:-1px;right:-1px;border-left:none;border-top:none;border-radius:0 0 3px 0}
+.vf-bottom{position:absolute;bottom:0;left:0;right:0;padding:10px 14px;
+  background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.vf-hint{font-size:10px;color:rgba(255,255,255,.8);text-align:center;font-weight:500}
+.vf-idle{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer}
+.vf-idle-icon{font-size:44px;margin-bottom:10px;opacity:.6}
+.vf-idle-text{font-size:14px;color:rgba(255,255,255,.7);font-weight:600}
+.vf-idle-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:4px}
+
+/* MEDIA CONTROLS */
+.media-controls{display:flex;gap:8px;margin-top:8px}
+.mc-btn{flex:1;padding:12px 8px;border-radius:12px;border:none;font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;transition:all .15s}
+.mc-btn:active{transform:scale(.97)}
+.mc-video{background:#1A56DB;color:white}
+.mc-photo{background:white;color:#374151;border:1.5px solid #E5E7EB}
+.mc-stop{background:#EF4444;color:white}
+.mc-stop.recording{animation:pulse .9s infinite}
+
+/* CAPTURED MEDIA ROW */
+.media-row{display:flex;gap:7px;overflow-x:auto;padding:2px;margin-bottom:12px}
+.media-row::-webkit-scrollbar{display:none}
+.media-thumb{width:68px;height:68px;border-radius:10px;flex-shrink:0;
+  background:#E5E7EB;position:relative;overflow:hidden;cursor:pointer;
+  border:2px solid #E5E7EB;transition:border-color .15s}
+.media-thumb.sel{border-color:#1A56DB}
+.mt-preview{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px}
+.mt-type{position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.65);
+  border-radius:4px;padding:1px 5px;font-size:8px;font-weight:700;color:white}
+.mt-dur{position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,.65);
+  border-radius:4px;padding:1px 5px;font-size:8px;font-weight:700;color:white}
+.mt-remove{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;
+  background:#EF4444;color:white;font-size:9px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+.add-more-btn{width:68px;height:68px;border-radius:10px;flex-shrink:0;
+  background:white;border:2px dashed #D1D5DB;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;gap:2px}
+.amb-icon{font-size:20px}
+.amb-label{font-size:9px;font-weight:600;color:#9CA3AF}
+
+/* WAVEFORM */
+.waveform{display:flex;align-items:center;gap:2px;height:24px;padding:0 2px}
+.wf{width:3px;border-radius:2px;background:#EF4444;transform-origin:bottom}
+.wf:nth-child(odd){animation:waveform .45s ease-in-out infinite}
+.wf:nth-child(even){animation:waveform .45s ease-in-out infinite .15s}
+.wf.h{height:20px}.wf.m{height:13px}.wf.s{height:7px}
+
+/* AI REPORT SECTION */
+.ai-generating{background:white;border:1px solid #BFDBFE;border-radius:16px;
+  padding:16px;margin-bottom:12px}
+.ai-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ai-dot{width:10px;height:10px;border-radius:50%;background:#1A56DB;animation:pulse .8s infinite;flex-shrink:0}
+.ai-spinner{width:20px;height:20px;border:2.5px solid #BFDBFE;border-top-color:#1A56DB;
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.ai-title{font-size:14px;font-weight:700;color:#1E40AF;flex:1}
+.ai-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;
+  background:#DBEAFE;color:#1E40AF;flex-shrink:0}
+.ai-skeleton{background:linear-gradient(90deg,#EFF6FF 25%,#DBEAFE 50%,#EFF6FF 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;height:13px;margin-bottom:8px}
+.ai-skeleton.w-full{width:100%}.ai-skeleton.w-3q{width:75%}.ai-skeleton.w-half{width:52%}
+
+/* GENERATED REPORT FIELDS */
+.report-field{background:white;border:1.5px solid #E5E7EB;border-radius:12px;
+  overflow:hidden;margin-bottom:10px}
+.rf-header{padding:10px 13px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;
+  display:flex;align-items:center;gap:8px}
+.rf-icon{font-size:15px;flex-shrink:0}
+.rf-label{font-size:11px;font-weight:700;color:#374151;flex:1}
+.rf-ai-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;
+  background:#EFF6FF;color:#1E40AF;display:flex;align-items:center;gap:4px}
+.rf-ai-dot{width:6px;height:6px;border-radius:50%;background:#1A56DB}
+.rf-body{padding:11px 13px}
+.rf-text{font-size:13px;color:#111827;font-weight:500;line-height:1.65}
+.rf-edit-btn{display:flex;align-items:center;gap:5px;margin-top:8px;
+  font-size:11px;font-weight:700;color:#1A56DB;cursor:pointer;
+  padding:5px 10px;border-radius:8px;background:#EFF6FF;border:none;
+  font-family:'Inter',sans-serif;width:fit-content}
+.rf-edit-btn:active{opacity:.7}
+
+/* EDIT MODE */
+.rf-textarea{width:100%;border:none;outline:none;font-family:'Inter',sans-serif;
+  font-size:13px;color:#111827;line-height:1.65;resize:none;background:transparent;
+  min-height:80px}
+.rf-edit-actions{display:flex;gap:7px;margin-top:9px;padding-top:9px;
+  border-top:1px solid #F3F4F6}
+.rf-save-btn{padding:7px 14px;border-radius:8px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:white;cursor:pointer}
+.rf-cancel-btn{padding:7px 12px;border-radius:8px;background:#F9FAFB;border:1px solid #E5E7EB;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#374151;cursor:pointer}
+.rf-edited-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;
+  background:#FEF3C7;color:#92400E;display:flex;align-items:center;gap:4px}
+
+/* CONFIDENCE METER */
+.confidence-bar{margin-bottom:14px}
+.cb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.cb-label{font-size:12px;font-weight:700;color:#374151}
+.cb-pct{font-size:13px;font-weight:800;color:#1A56DB;font-family:'Inter',sans-serif}
+.cb-track{height:7px;background:#E5E7EB;border-radius:4px;overflow:hidden}
+.cb-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3B82F6,#1A56DB);
+  transition:width 1.2s ease}
+
+/* COMMENT BOX */
+.comment-card{background:white;border:1.5px solid #E5E7EB;border-radius:12px;
+  padding:12px 13px;margin-bottom:12px}
+.comment-lbl{font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px}
+.comment-ta{width:100%;border:2px solid #E5E7EB;border-radius:10px;
+  padding:10px 12px;font-family:'Inter',sans-serif;font-size:13px;
+  color:#111827;resize:none;min-height:72px;outline:none;
+  line-height:1.55;background:#F9FAFB;transition:border-color .2s}
+.comment-ta:focus{border-color:#1A56DB;background:white}
+.comment-ta::placeholder{color:#9CA3AF}
+.char-ct{font-size:11px;color:#9CA3AF;text-align:right;margin-top:3px}
+
+/* SEVERITY CHIPS */
+.sev-row{display:flex;gap:7px;margin-bottom:14px}
+.sev-chip{flex:1;padding:9px 6px;border-radius:10px;border:2px solid #E5E7EB;
+  background:white;cursor:pointer;text-align:center;transition:all .15s;font-family:'Inter',sans-serif}
+.sev-chip:active{transform:scale(.97)}
+.sev-chip.sl{border-color:#10B981;background:#F0FDF4}
+.sev-chip.sm{border-color:#F59E0B;background:#FFFBEB}
+.sev-chip.sh{border-color:#EF4444;background:#FEF2F2}
+.sc-icon{font-size:18px;display:block;margin-bottom:3px}
+.sc-label{font-size:11px;font-weight:700;color:#374151}
+
+/* ANON + TL CARDS */
+.anon-box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;
+  padding:11px 13px;margin-bottom:12px}
+.anon-title{font-size:12px;font-weight:700;color:#065F46;margin-bottom:6px;
+  display:flex;align-items:center;gap:5px}
+.anon-row{display:flex;gap:7px;font-size:11px;color:#047857;font-weight:500;
+  line-height:1.45;margin-bottom:4px}
+.anon-row:last-child{margin:0}
+.tl-card{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;
+  padding:11px 13px;margin-bottom:12px;display:flex;gap:9px}
+.tl-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.tl-title{font-size:12px;font-weight:700;color:#1E40AF;margin-bottom:3px}
+.tl-desc{font-size:11px;color:#3B82F6;font-weight:500;line-height:1.5}
+
+/* REVIEW */
+.review-box{background:white;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;margin-bottom:12px}
+.rv{display:flex;gap:10px;padding:10px 13px;border-bottom:1px solid #F3F4F6;align-items:flex-start}
+.rv:last-child{border:none}
+.rv-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.rv-lbl{font-size:10px;color:#9CA3AF;font-weight:600;letter-spacing:.3px;margin-bottom:2px}
+.rv-val{font-size:13px;font-weight:600;color:#111827;line-height:1.4}
+
+/* SUCCESS */
+.success{padding:20px 16px;text-align:center;animation:stepIn .4s ease}
+.suc-icon{font-size:54px;margin-bottom:14px}
+.suc-title{font-size:22px;font-weight:900;color:#065F46;letter-spacing:-.4px;margin-bottom:6px}
+.suc-sub{font-size:13px;color:#374151;font-weight:500;line-height:1.65;margin-bottom:16px}
+.report-id-box{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;
+  padding:10px 14px;font-size:11px;color:#6B7280;margin-bottom:12px;text-align:center;font-weight:500}
+.report-id-box span{font-weight:800;color:#111827;font-size:13px;font-family:'Inter',monospace}
+.tl-live{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;
+  padding:11px 13px;margin-bottom:12px;display:flex;gap:9px;text-align:left}
+.live-dot{width:9px;height:9px;border-radius:50%;background:#1A56DB;
+  animation:pulse .9s infinite;flex-shrink:0;margin-top:3px}
+.what-next{background:white;border:1px solid #E5E7EB;border-radius:14px;
+  padding:13px;margin-bottom:14px;text-align:left}
+.wn-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:9px}
+.wn-row{display:flex;gap:8px;font-size:12px;color:#374151;font-weight:500;
+  line-height:1.5;margin-bottom:5px}
+.wn-row:last-child{margin:0}
+.wn-arr{color:#1A56DB;font-weight:700;flex-shrink:0}
+
+/* ACTION BAR */
+.action-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:390px;background:white;border-top:1px solid #E5E7EB;
+  padding:10px 14px 22px;z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.07)}
+.ab-hint{font-size:11px;color:#9CA3AF;font-weight:500;text-align:center;margin-bottom:8px}
+.ab-row{display:flex;gap:8px}
+.ab-back{padding:13px 18px;border-radius:12px;background:#F9FAFB;border:1px solid #E5E7EB;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:#374151;cursor:pointer}
+.ab-next{flex:1;padding:13px;border-radius:12px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer}
+.ab-next:disabled{background:#BFDBFE;color:#93C5FD;cursor:not-allowed}
+.ab-submit{flex:1;padding:13px;border-radius:12px;background:#059669;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer}
+.btn-p{width:100%;padding:14px;border-radius:12px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer;margin-bottom:8px}
+.btn-s{width:100%;padding:13px;border-radius:12px;background:#F9FAFB;border:1px solid #E5E7EB;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:#374151;cursor:pointer}
+
+/* TOAST */
+.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.r{background:#EF4444}.toast.b{background:#1A56DB}
+
+/* BOTTOM NAV */
+.bottom-nav{position:sticky;bottom:0;background:white;border-top:1px solid #E5E7EB;
+  display:flex;padding:8px 4px 12px;box-shadow:0 -4px 20px rgba(0,0,0,.08);flex-shrink:0;z-index:90}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px;border-radius:12px;cursor:pointer;transition:background .15s}
+.nav-item.active{background:#EFF6FF}
+.ni-icon{font-size:21px;color:#9CA3AF}
+.ni-label{font-size:9px;font-weight:700;color:#9CA3AF;font-family:'Inter',sans-serif}
+.nav-item.active .ni-icon,.nav-item.active .ni-label{color:#1A56DB}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="status">
+    <div class="st-time" id="stTime">9:41</div>
+    <div class="st-r">📶 WiFi 🔋</div>
+  </div>
+
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back-btn" onclick="window.location.href='dolsafe-home.html'">‹</button>
+      <div class="hdr-c">
+        <div class="hdr-title">SmartReport</div>
+        <div class="hdr-sub" id="hdrSub">Step 1 of 4 · Capture the incident</div>
+      </div>
+      <div class="anon-chip">🔒 Anonymous</div>
+    </div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-bars" id="progBars"></div>
+    <div class="prog-row">
+      <div class="prog-lbl" id="progLbl">Capture</div>
+      <div class="prog-ct" id="progCt">1 / 4</div>
+    </div>
+  </div>
+
+  <div class="scroll" id="scrollEl">
+    <div id="stepContent"></div>
+  </div>
+
+  <div id="actionBar"></div>
+
+  <div class="bottom-nav">
+<div class="nav-item" onclick="window.location.href='dolsafe-home.html'"><div class="ni-icon">🏠</div><div class="ni-label">Home</div></div><div class="nav-item" onclick="window.location.href='dolsafe-briefing.html'"><div class="ni-icon">🧠</div><div class="ni-label">Briefing</div></div><div class="nav-item active"><div class="ni-icon" style="color:#1A56DB">📋</div><div class="ni-label" style="color:#1A56DB">Report</div></div><div class="nav-item" onclick="window.location.href='dolsafe-sos.html'"><div class="ni-icon">🆘</div><div class="ni-label">SOS</div></div><div class="nav-item" onclick="window.location.href='dolsafe-car.html'"><div class="ni-icon">🚗</div><div class="ni-label">My Car</div></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DOLSAFE SMARTREPORT v2 — AI-POWERED ENGINE
+// ═══════════════════════════════════════════
+
+var step = 0;
+var STEPS = ['Capture','DolSafe Report','Category','Review'];
+
+// REPORT STATE
+var R = {
+  category: null,
+  media: [],          // [{type:'video'|'photo', emoji, dur, label}]
+  recording: false,
+  recSec: 0,
+  severity: null,
+  userComment: '',
+  // AI-generated fields (editable)
+  ai: {
+    what:     {text:'', edited:false, editing:false},
+    who:      {text:'', edited:false, editing:false},
+    where:    {text:'', edited:false, editing:false},
+    timeline: {text:'', edited:false, editing:false},
+    risk:     {text:'', edited:false, editing:false},
+  },
+  aiConfidence: 0,
+  submitted: false,
+  reportId: null,
+};
+
+var recIv = null;
+var vfIv = null;
+
+// AI REPORT TEMPLATES — generated from captured media
+var AI_REPORTS = [
+  {
+    what:     'Unattended black backpack placed under bench near the north platform entrance. Subject placed the item and walked quickly toward the uptown exit without looking back. Item has been stationary for over 3 minutes.',
+    who:      'Male subject, approximately 5\'10", dark hoodie, grey jogger pants, red cap. No visible luggage after placing the item. Walking pace increased notably after placement.',
+    where:    'Times Square–42nd St Station · Platform B · North entrance bench · 0.4 miles from your current location.',
+    timeline: '09:38 AM — Subject entered platform B from the north stairs.\n09:39 AM — Subject placed backpack under bench near entrance.\n09:39:30 AM — Subject moved quickly toward uptown exit.\n09:42 AM — Package flagged as unattended by DolSafe user.',
+    risk:     'HIGH — Unattended package in high-density transit zone. Placement behavior consistent with intentional abandonment. Recommend immediate inspection.',
+  },
+  {
+    what:     'Two individuals engaged in a physical altercation near the fare gate array. One individual appears to have sustained a facial injury. Crowd forming around the scene. No visible weapons detected.',
+    who:      'Two males, ages approximately 25–35. Individual 1: blue jacket, jeans. Individual 2: grey sweatshirt, dark pants. A third individual appears to be attempting to separate them.',
+    where:    'Penn Station · Amtrak Concourse · Fare gate array C · Near Track 11 entrance.',
+    timeline: '09:41 AM — Verbal altercation began near fare gates.\n09:41:30 AM — Physical contact initiated.\n09:42 AM — Crowd of approximately 8 people gathered.\n09:42:30 AM — Third party intervening.',
+    risk:     'MEDIUM-HIGH — Active physical altercation in busy concourse. Crowd gathering may obstruct normal passenger flow. Medical attention may be required.',
+  },
+  {
+    what:     'Individual moving systematically through the mezzanine level photographing security camera locations, fare gate configurations, and staff positions. Behavior is consistent with pre-incident surveillance.',
+    who:      'Individual of medium build, dark clothing, baseball cap worn low. Carrying a smartphone held at waist level — consistent with discreet filming posture.',
+    where:    'DeKalb Ave Station · Mezzanine level · Near service entrance and security office.',
+    timeline: '09:35 AM — Subject entered mezzanine from street entrance.\n09:37 AM — First camera position photographed.\n09:39 AM — Subject moved to fare gate area and paused.\n09:41 AM — Subject observed near staff door.',
+    risk:     'ELEVATED — Systematic reconnaissance pattern. Multiple high-value security positions noted in sequence. Recommend discreet observation and reporting to transit police.',
+  },
+];
+
+var aiTemplate = null;
+
+// ── CLOCK ──
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  var e=document.getElementById('stTime'); if(e) e.textContent=h+':'+m;
+}
+setInterval(tick,1000); tick();
+
+// ── PROGRESS ──
+function renderProg(){
+  var bars=document.getElementById('progBars');
+  if(bars) bars.innerHTML=STEPS.map(function(_,i){
+    return '<div class="pb'+(i<step?' done':i===step?' active':'')+'"></div>';
+  }).join('');
+  var lbl=document.getElementById('progLbl'); if(lbl) lbl.textContent=STEPS[step]||'Done';
+  var ct=document.getElementById('progCt'); if(ct) ct.textContent=(step+1)+' / '+STEPS.length;
+  var sub=document.getElementById('hdrSub');
+  if(sub) sub.textContent='Step '+(step+1)+' of '+STEPS.length+' · '+STEPS[step];
+}
+
+// ── MAIN RENDER ──
+function render(){
+  renderProg();
+  if(R.submitted){ renderSuccess(); return; }
+  var fns=[renderCapture, renderAIReport, renderCategory, renderReview];
+  document.getElementById('stepContent').innerHTML='';
+  fns[step]();
+  document.getElementById('scrollEl').scrollTop=0;
+}
+
+// ═══════════════════════════════════════════
+// STEP 0 — CAPTURE
+// ═══════════════════════════════════════════
+function renderCapture(){
+  var hasMedia = R.media.length > 0;
+
+  var mediaRow = hasMedia
+    ? '<div class="media-row" id="mediaRow">'+
+        R.media.map(function(m,i){
+          return '<div class="media-thumb" id="mt'+i+'">'+
+            '<div class="mt-preview">'+m.emoji+'</div>'+
+            '<div class="mt-type">'+(m.type==='video'?'▶ VIDEO':'📷 PHOTO')+'</div>'+
+            (m.dur ? '<div class="mt-dur">'+m.dur+'s</div>' : '')+
+            '<div class="mt-remove" onclick="removeMedia('+i+')">×</div>'+
+          '</div>';
+        }).join('')+
+        '<div class="add-more-btn" onclick="showAddMore()">'+
+          '<div class="amb-icon">+</div>'+
+          '<div class="amb-label">Add more</div>'+
+        '</div>'+
+      '</div>'
+    : '';
+
+  var html='<div class="step-body">'+
+    '<div class="step-h">Capture the incident</div>'+
+    '<div class="step-d">Record a video or take photos. DolSafe will analyze your footage and automatically write the incident report. You can review and edit every detail before submitting.</div>'+
+
+    (hasMedia ? mediaRow : '')+
+
+    '<div class="viewfinder" id="viewfinder" onclick="'+(R.recording?'':'startVideo()')+'">'+
+      '<canvas class="vf-canvas" id="vfCanvas"></canvas>'+
+      (R.recording
+        ? '<div class="vf-overlay">'+
+            '<div class="vf-top">'+
+              '<div class="vf-rec-badge"><div class="vf-recdot"></div>REC</div>'+
+              '<div class="vf-timer" id="vfTimerEl">0:00</div>'+
+            '</div>'+
+          '</div>'+
+          '<div class="vf-focus">'+
+            '<div class="vf-corner tl"></div><div class="vf-corner tr"></div>'+
+            '<div class="vf-corner bl"></div><div class="vf-corner br"></div>'+
+          '</div>'+
+          '<div class="vf-bottom"><div class="vf-hint">Film the incident area · stay safe · stay back</div></div>'
+        : '<div class="vf-idle">'+
+            '<div class="vf-idle-icon">📹</div>'+
+            '<div class="vf-idle-text">Tap to start recording</div>'+
+            '<div class="vf-idle-sub">Video · Photo · or both</div>'+
+          '</div>'
+      )+
+    '</div>'+
+
+    '<div class="media-controls">'+
+      (R.recording
+        ? '<button class="mc-btn mc-stop recording" onclick="stopVideo()">⬛ Stop recording</button>'+
+          '<div class="waveform" style="background:white;border:1.5px solid #FEE2E2;border-radius:10px;padding:0 10px;gap:2px">'+
+            ['h','m','s','h','m','h','s','m','h','m'].map(function(c){return '<div class="wf '+c+'"></div>';}).join('')+
+          '</div>'
+        : '<button class="mc-btn mc-video" onclick="startVideo()">▶ Record video</button>'+
+          '<button class="mc-btn mc-photo" onclick="capturePhoto()">📷 Take photo</button>'
+      )+
+    '</div>'+
+
+    (hasMedia
+      ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:10px 13px;margin-bottom:4px;display:flex;gap:8px;align-items:center">'+
+          '<span style="font-size:16px">🧠</span>'+
+          '<div style="font-size:12px;font-weight:600;color:#1E40AF;line-height:1.5">'+
+            R.media.length+' item'+(R.media.length>1?'s':'')+' captured · DolSafe ready to analyze. Tap Continue to generate report.'+
+          '</div>'+
+        '</div>'
+      : '<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:10px 13px;margin-top:0">'+
+          '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px">🔒 Privacy protection</div>'+
+          '<div style="font-size:11px;color:#6B7280;font-weight:500;line-height:1.55">'+
+            'EXIF metadata stripped automatically. C2PA chain-of-custody attached. '+
+            'Your face is never captured in the viewfinder. Identity never linked to footage.'+
+          '</div>'+
+        '</div>'
+    )+
+  '</div>';
+
+  document.getElementById('stepContent').innerHTML=html;
+  initVFCanvas();
+
+  setBar(
+    '<div class="ab-hint">'+(hasMedia?'Ready — DolSafe will analyze your footage':'Record video or take photos to continue')+'</div>',
+    null,
+    {label:'Continue — DolSafe will write the report →', disabled:!hasMedia}
+  );
+}
+
+function startVideo(){
+  if(R.recording) return;
+  R.recording=true; R.recSec=0;
+  recIv=setInterval(function(){
+    R.recSec++;
+    var e=document.getElementById('vfTimerEl');
+    if(e){ var m=Math.floor(R.recSec/60),s=String(R.recSec%60).padStart(2,'0'); e.textContent=m+':'+s; }
+    if(R.recSec>=25) stopVideo();
+  },1000);
+  render();
+  toast('▶ Recording started · film toward the incident','b');
+}
+
+function stopVideo(){
+  if(!R.recording) return;
+  clearInterval(recIv); recIv=null;
+  var dur=R.recSec; R.recording=false; R.recSec=0;
+  var EMOJIS=['🏢','🚇','🚶','🚗','📦','🌆'];
+  R.media.push({type:'video', emoji:EMOJIS[R.media.length%EMOJIS.length], dur:dur, label:'Video '+dur+'s'});
+  render();
+  toast('✅ Video saved · '+dur+'s · EXIF stripped','g');
+}
+
+function capturePhoto(){
+  var EMOJIS=['📷','🏙️','🚉','👤','📦','🚗'];
+  R.media.push({type:'photo', emoji:EMOJIS[R.media.length%EMOJIS.length], dur:null, label:'Photo '+(R.media.length+1)});
+  render();
+  toast('📷 Photo captured · EXIF stripped','g');
+}
+
+function removeMedia(i){
+  R.media.splice(i,1);
+  render();
+}
+
+function showAddMore(){
+  toast('Tap Record video or Take photo below');
+}
+
+function initVFCanvas(){
+  var c=document.getElementById('vfCanvas'); if(!c) return;
+  c.width=c.offsetWidth||360; c.height=c.offsetHeight||260;
+  if(vfIv){clearInterval(vfIv); vfIv=null;}
+  var t=0;
+  vfIv=setInterval(function(){
+    t+=0.03; if(!c.isConnected){clearInterval(vfIv);vfIv=null;return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#0D1B2E'; ctx.fillRect(0,0,W,H);
+    // Street scene
+    ctx.fillStyle='#162032'; ctx.fillRect(0,H*.58,W,H*.42);
+    [[.02,.06,.2,.54],[.24,.04,.22,.58],[.5,.08,.24,.54],[.77,.05,.18,.56]].forEach(function(b){
+      ctx.fillStyle='#1A2840'; ctx.fillRect(b[0]*W,b[1]*H,b[2]*W,b[3]*H);
+      // Windows
+      for(var wy=b[1]*H+8;wy<(b[1]+b[3])*H-10;wy+=16){
+        for(var wx=b[0]*W+5;wx<(b[0]+b[2])*W-5;wx+=12){
+          if(Math.random()>.5){ ctx.fillStyle='rgba(255,220,100,.4)'; ctx.fillRect(wx,wy,6,5); }
+        }
+      }
+    });
+    // Crowd
+    var people=[{x:.2,s:1},{x:.45,s:-1},{x:.55,s:1},{x:.35,s:-1},{x:.65,s:1}];
+    people.forEach(function(p,i){
+      var px=(p.x*W+(Math.sin(t*1.2+i)*8*p.s))%W;
+      ctx.fillStyle='rgba(200,215,255,.85)';
+      ctx.fillRect(px-4,H*.54,8,18);
+      ctx.beginPath(); ctx.arc(px,H*.53,4,0,Math.PI*2); ctx.fill();
+    });
+    // Recording indicator scanline
+    if(R.recording){
+      ctx.strokeStyle='rgba(239,68,68,.2)'; ctx.lineWidth=1;
+      var sy=((t*80)%H); ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(W,sy); ctx.stroke();
+    }
+    // Timestamp
+    ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='8px monospace';
+    ctx.fillText(new Date().toISOString().slice(11,23)+' UTC',5,H-5);
+  },60);
+}
+
+// ═══════════════════════════════════════════
+// STEP 1 — AI REPORT GENERATION
+// ═══════════════════════════════════════════
+function renderAIReport(){
+  var isGenerating = R.ai.what.text === '';
+
+  if(isGenerating){
+    // Show skeleton while "AI analyzes"
+    var skeletons='<div class="ai-generating">'+
+      '<div class="ai-header">'+
+        '<div class="ai-spinner"></div>'+
+        '<div class="ai-title">DolSafe analyzing your footage…</div>'+
+        '<div class="ai-badge">DolSafe</div>'+
+      '</div>'+
+      ['Detecting subjects and objects…',
+       'Building incident timeline…',
+       'Assessing risk level…',
+       'Writing incident report…'].map(function(lbl,i){
+        return '<div style="margin-bottom:12px">'+
+          '<div style="font-size:11px;color:#6B7280;font-weight:500;margin-bottom:5px">'+lbl+'</div>'+
+          '<div class="ai-skeleton w-full"></div>'+
+          (i<2?'<div class="ai-skeleton '+(i===0?'w-3q':'w-half')+'" style="margin-top:5px"></div>':'')+
+        '</div>';
+      }).join('')+
+    '</div>';
+
+    document.getElementById('stepContent').innerHTML='<div class="step-body">'+
+      '<div class="step-h">DolSafe is analyzing your footage</div>'+
+      '<div class="step-d">Claude is analyzing your '+R.media.length+' captured item'+(R.media.length>1?'s':'')+' and generating a comprehensive incident report. This takes about 10 seconds.</div>'+
+      skeletons+
+    '</div>';
+
+    setBar(null, null, {label:'Analyzing…', disabled:true});
+
+    // Simulate AI generation
+    setTimeout(function(){
+      var idx=Math.floor(Math.random()*AI_REPORTS.length);
+      aiTemplate=AI_REPORTS[idx];
+      R.ai.what.text = aiTemplate.what;
+      R.ai.who.text = aiTemplate.who;
+      R.ai.where.text = aiTemplate.where;
+      R.ai.timeline.text = aiTemplate.timeline;
+      R.ai.risk.text = aiTemplate.risk;
+      R.severity = aiTemplate.risk.indexOf('HIGH')>=0 ? 'high' : aiTemplate.risk.indexOf('MEDIUM')>=0 ? 'medium' : 'low';
+      R.aiConfidence = 78 + Math.floor(Math.random()*18);
+      render();
+      toast('🧠 DolSafe report generated · review and edit below','b');
+    }, 3200);
+    return;
+  }
+
+  // Report generated — show editable fields
+  var FIELDS=[
+    {key:'what',   icon:'📋', label:'What happened'},
+    {key:'who',    icon:'👤', label:'Subject description'},
+    {key:'where',  icon:'📍', label:'Location'},
+    {key:'timeline',icon:'⏱️',label:'Timeline of events'},
+    {key:'risk',   icon:'⚡', label:'Risk assessment'},
+  ];
+
+  var sevSel={low:'sl',medium:'sm',high:'sh'}[R.severity]||'';
+  var sevColors={low:'#065F46',medium:'#92400E',high:'#991B1B'};
+  var sevLabels={low:'🟢 Low',medium:'🟡 Medium',high:'🔴 High'};
+
+  var html='<div class="step-body">'+
+    '<div class="step-h">DolSafe incident report</div>'+
+    '<div class="step-d">DolSafe analyzed your footage and wrote this report. <strong style="color:#111827">Review every field — tap Edit to correct anything.</strong> Your additions and corrections are highlighted.</div>'+
+
+    // Confidence meter
+    '<div class="confidence-bar">'+
+      '<div class="cb-row">'+
+        '<div class="cb-label">DolSafe confidence score</div>'+
+        '<div class="cb-pct" id="confPct">0%</div>'+
+      '</div>'+
+      '<div class="cb-track"><div class="cb-fill" id="confFill" style="width:0%"></div></div>'+
+    '</div>'+
+
+    // AI fields
+    FIELDS.map(function(f){
+      var field=R.ai[f.key];
+      return buildField(f.key, f.icon, f.label, field);
+    }).join('')+
+
+    // Severity override
+    '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:7px">Urgency level</div>'+
+    '<div class="sev-row">'+
+      [{id:'low',icon:'🟢',label:'Low',cls:'sl'},{id:'medium',icon:'🟡',label:'Medium',cls:'sm'},{id:'high',icon:'🔴',label:'High',cls:'sh'}].map(function(s){
+        var sel=R.severity===s.id;
+        return '<div class="sev-chip'+(sel?' '+s.cls:'')+'" onclick="pickSev(\''+s.id+'\')">'+
+          '<span class="sc-icon">'+s.icon+'</span>'+
+          '<div class="sc-label" style="color:'+(sel?(sevColors[s.id]||'#374151'):'#374151')+'">'+s.label+'</div>'+
+        '</div>';
+      }).join('')+
+    '</div>'+
+
+    // User comment
+    '<div class="comment-card">'+
+      '<div class="comment-lbl">✏️ Your additional comments <span style="color:#9CA3AF;font-weight:500;font-size:11px">optional</span></div>'+
+      '<div style="font-size:11px;color:#9CA3AF;font-weight:500;margin-bottom:8px">Add anything DolSafe missed — context, corrections, your own observations</div>'+
+      '<textarea class="comment-ta" id="commentTa" placeholder="e.g. The subject was also carrying a radio and appeared to be communicating with someone off-camera. There was a second individual watching from near the escalator..." maxlength="500" oninput="R.userComment=this.value;document.getElementById(\'ccCt\').textContent=this.value.length+\'/500\'">'+R.userComment+'</textarea>'+
+      '<div class="char-ct" id="ccCt">'+R.userComment.length+'/500</div>'+
+    '</div>'+
+
+    '<div class="tl-card">'+
+      '<div class="tl-icon">🐬</div>'+
+      '<div>'+
+        '<div class="tl-title">How this reaches TrustLens</div>'+
+        '<div class="tl-desc">Your report — DolSafe summary + your corrections + footage — enters the anonymous TrustLens signal pool. '+
+          'If it corroborates camera behavior or RF patterns in the zone, confidence rises and a security alert may be generated. '+
+          'No single report alone triggers dispatch.</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+
+  document.getElementById('stepContent').innerHTML=html;
+
+  // Animate confidence bar
+  setTimeout(function(){
+    var f=document.getElementById('confFill'), p=document.getElementById('confPct');
+    if(f) f.style.width=R.aiConfidence+'%';
+    if(p) p.textContent=R.aiConfidence+'%';
+  },200);
+
+  setBar(null,
+    {label:'← Back'},
+    {label:'Continue to review →', disabled:false}
+  );
+}
+
+function buildField(key, icon, label, field){
+  if(field.editing){
+    return '<div class="report-field">'+
+      '<div class="rf-header">'+
+        '<div class="rf-icon">'+icon+'</div>'+
+        '<div class="rf-label">'+label+'</div>'+
+        '<div class="rf-edited-badge">✏️ Editing</div>'+
+      '</div>'+
+      '<div class="rf-body">'+
+        '<textarea class="rf-textarea" id="edit_'+key+'" oninput="R.ai.'+key+'.text=this.value">'+field.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>'+
+        '<div class="rf-edit-actions">'+
+          '<button class="rf-save-btn" onclick="saveField(\''+key+'\')">✓ Save changes</button>'+
+          '<button class="rf-cancel-btn" onclick="cancelField(\''+key+'\')">Cancel</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  var badgeHtml = field.edited
+    ? '<div class="rf-edited-badge">✏️ Edited by you</div>'
+    : '<div class="rf-ai-badge"><div class="rf-ai-dot"></div>DolSafe generated</div>';
+
+  return '<div class="report-field">'+
+    '<div class="rf-header">'+
+      '<div class="rf-icon">'+icon+'</div>'+
+      '<div class="rf-label">'+label+'</div>'+
+      badgeHtml+
+    '</div>'+
+    '<div class="rf-body">'+
+      '<div class="rf-text" id="text_'+key+'">'+field.text.replace(/\n/g,'<br>')+'</div>'+
+      '<button class="rf-edit-btn" onclick="editField(\''+key+'\')">✏️ Edit this</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function editField(key){
+  var ta=document.getElementById('commentTa');
+  if(ta) R.userComment=ta.value;
+  R.ai[key].editing=true;
+  render();
+  setTimeout(function(){
+    var ta2=document.getElementById('edit_'+key);
+    if(ta2){ta2.value=R.ai[key].text;ta2.focus();}
+  },50);
+}
+
+function saveField(key){
+  var ta=document.getElementById('edit_'+key);
+  if(ta) R.ai[key].text=ta.value.trim()||R.ai[key].text;
+  R.ai[key].editing=false;
+  R.ai[key].edited=true;
+  render();
+  toast('✅ Field updated','g');
+}
+
+function cancelField(key){
+  R.ai[key].editing=false;
+  render();
+}
+
+function pickSev(id){
+  R.severity=id;
+  var sevC={low:'sl',medium:'sm',high:'sh'};
+  document.querySelectorAll('.sev-chip').forEach(function(el){
+    el.className='sev-chip';
+  });
+  render();
+}
+
+// ═══════════════════════════════════════════
+// STEP 2 — CATEGORY
+// ═══════════════════════════════════════════
+var CATS = [
+  {id:'suspicious', icon:'👁️', name:'Suspicious activity',  color:'#7C3AED', bg:'#EDE9FE', border:'#C4B5FD'},
+  {id:'weapon',     icon:'⚠️', name:'Weapon / threat',      color:'#991B1B', bg:'#FEE2E2', border:'#FECACA'},
+  {id:'fight',      icon:'🥊', name:'Fight / altercation',  color:'#9A3412', bg:'#FFF7ED', border:'#FED7AA'},
+  {id:'package',    icon:'📦', name:'Unattended package',   color:'#92400E', bg:'#FFFBEB', border:'#FDE68A'},
+  {id:'vehicle',    icon:'🚗', name:'Suspicious vehicle',   color:'#1E40AF', bg:'#EFF6FF', border:'#BFDBFE'},
+  {id:'harassment', icon:'🚫', name:'Harassment',           color:'#BE185D', bg:'#FDF2F8', border:'#F9A8D4'},
+  {id:'vandalism',  icon:'🔨', name:'Vandalism',            color:'#374151', bg:'#F9FAFB', border:'#E5E7EB'},
+  {id:'medical',    icon:'🚑', name:'Medical emergency',    color:'#065F46', bg:'#ECFDF5', border:'#A7F3D0'},
+  {id:'other',      icon:'📋', name:'Other incident',       color:'#374151', bg:'#F9FAFB', border:'#E5E7EB'},
+];
+
+function getCat(id){
+  return CATS.find(function(c){return c.id===id;})||{icon:'📋',name:'Unknown',color:'#374151',bg:'#F9FAFB',border:'#E5E7EB'};
+}
+
+function aiPickCategory(){
+  if(R.category) return;
+  var risk=(R.ai.risk.text||'').toLowerCase();
+  var what=(R.ai.what.text||'').toLowerCase();
+  var all=risk+' '+what;
+  if(all.indexOf('package')>=0||all.indexOf('unattended')>=0) R.category='package';
+  else if(all.indexOf('weapon')>=0||all.indexOf('firearm')>=0||all.indexOf('gun')>=0||all.indexOf('knife')>=0) R.category='weapon';
+  else if(all.indexOf('altercation')>=0||all.indexOf('fight')>=0||all.indexOf('physical')>=0) R.category='fight';
+  else if(all.indexOf('harassment')>=0||all.indexOf('stalking')>=0||all.indexOf('threatening')>=0) R.category='harassment';
+  else if(all.indexOf('vandal')>=0||all.indexOf('graffiti')>=0||all.indexOf('damage')>=0) R.category='vandalism';
+  else if(all.indexOf('medical')>=0||all.indexOf('injury')>=0||all.indexOf('person down')>=0) R.category='medical';
+  else if(all.indexOf('vehicle')>=0||all.indexOf('car')>=0) R.category='vehicle';
+  else if(all.indexOf('surveillance')>=0||all.indexOf('reconnais')>=0||all.indexOf('photograph')>=0) R.category='suspicious';
+  else R.category='suspicious';
+}
+
+function renderCategory(){
+  aiPickCategory();
+  var selected = getCat(R.category);
+
+  var catsHTML = CATS.map(function(c){
+    var sel = R.category === c.id;
+    return '<div onclick="R.category=\''+c.id+'\';render()" style="'+
+      'background:'+(sel?c.bg:'white')+';'+
+      'border:2px solid '+(sel?c.border:'#E5E7EB')+';'+
+      'border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .15s;position:relative">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">'+
+        '<span style="font-size:24px;line-height:1">'+c.icon+'</span>'+
+        '<div style="width:17px;height:17px;border-radius:50%;'+
+          'border:2px solid '+(sel?c.color:'#D1D5DB')+';'+
+          'background:'+(sel?c.color:'transparent')+';'+
+          'display:flex;align-items:center;justify-content:center;flex-shrink:0;'+
+          'font-size:9px;font-weight:900;color:white">'+(sel?'✓':'')+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;font-weight:700;color:'+(sel?c.color:'#111827')+';margin-bottom:2px;line-height:1.3">'+c.name+'</div>'+
+    '</div>';
+  }).join('');
+
+  var html='<div class="step-body">'+
+    '<div class="step-h">Type of incident</div>'+
+    '<div class="step-d">DolSafe suggested a category based on your footage. Confirm or change — this routes the report to the right TrustLens analysts.</div>'+
+
+    // AI suggestion chip — prominent
+    '<div style="background:'+(selected.bg||'#EFF6FF')+';border:1.5px solid '+(selected.border||'#BFDBFE')+';'+
+      'border-radius:12px;padding:11px 13px;margin-bottom:16px;display:flex;align-items:center;gap:10px">'+
+      '<div style="font-size:24px;flex-shrink:0">'+selected.icon+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:2px">🤖 DolSafe detected</div>'+
+        '<div style="font-size:16px;font-weight:800;color:'+(selected.color||'#111827')+'">'+selected.name+'</div>'+
+      '</div>'+
+      '<div style="font-size:11px;font-weight:600;color:#9CA3AF">Change below ↓</div>'+
+    '</div>'+
+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px">'+
+      catsHTML+
+    '</div>'+
+
+    // Urgency strip
+    '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">Urgency level</div>'+
+    '<div style="display:flex;gap:7px;margin-bottom:4px">'+
+    [{id:'low',icon:'🟢',label:'Low',desc:'Not urgent',c:'#065F46',bc:'#10B981',bg:'#F0FDF4'},
+     {id:'medium',icon:'🟡',label:'Medium',desc:'Concerning',c:'#92400E',bc:'#F59E0B',bg:'#FFFBEB'},
+     {id:'high',icon:'🔴',label:'High',desc:'Urgent now',c:'#991B1B',bc:'#EF4444',bg:'#FEF2F2'},
+    ].map(function(s){
+      var sel=R.severity===s.id;
+      return '<div onclick="R.severity=\''+s.id+'\';render()" style="'+
+        'flex:1;padding:10px 6px;border-radius:10px;text-align:center;cursor:pointer;transition:all .15s;'+
+        'border:2px solid '+(sel?s.bc:'#E5E7EB')+';background:'+(sel?s.bg:'white')+'">'+
+        '<div style="font-size:18px;margin-bottom:3px">'+s.icon+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+(sel?s.c:'#374151')+'">'+s.label+'</div>'+
+        '<div style="font-size:10px;color:'+(sel?s.c:'#9CA3AF')+';font-weight:500">'+s.desc+'</div>'+
+      '</div>';
+    }).join('')+
+    '</div>'+
+  '</div>';
+
+  document.getElementById('stepContent').innerHTML=html;
+  setBar(null,
+    {label:'← Back'},
+    {label:'Continue to review →', disabled:!R.category}
+  );
+}
+
+// ═══════════════════════════════════════════
+// STEP 3 — REVIEW
+// ═══════════════════════════════════════════
+function renderReview(){
+  var ta=document.getElementById('commentTa');
+  if(ta) R.userComment=ta.value;
+
+  var sevLabel={low:'🟢 Low — not urgent',medium:'🟡 Medium — concerning',high:'🔴 High — happening now'};
+  var editedCount=Object.values(R.ai).filter(function(f){return f.edited;}).length;
+  var photoCount=R.media.filter(function(m){return m.type==='photo';}).length;
+  var videoCount=R.media.filter(function(m){return m.type==='video';}).length;
+
+  var html='<div class="step-body">'+
+    '<div class="step-h">Review before submitting</div>'+
+    '<div class="step-d">Final check. '+(editedCount>0?editedCount+' field'+(editedCount>1?'s':'')+' corrected by you. ':'DolSafe wrote all fields. ')+' Submit when ready.</div>'+
+
+    '<div class="review-box">'+
+      rv('🏷️','Category',
+        (function(){var c=getCat(R.category);return '<span style="display:inline-flex;align-items:center;gap:5px;background:'+c.bg+';color:'+c.color+';border:1px solid '+c.border+';padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">'+c.icon+' '+c.name+'</span>';})())+
+      rv('📹','Media',
+        (videoCount?videoCount+' video'+(videoCount>1?'s':''):'')+(videoCount&&photoCount?' · ':'')+(photoCount?photoCount+' photo'+(photoCount>1?'s':''):'')||'No media')+
+      rv('⚡','Urgency',sevLabel[R.severity]||'Not set')+
+      rv('📋','What happened',R.ai.what.text.slice(0,80)+'…'+(R.ai.what.edited?' ✏️':''))+
+      rv('👤','Subject',R.ai.who.text.slice(0,70)+'…'+(R.ai.who.edited?' ✏️':''))+
+      rv('📍','Location',R.ai.where.text.slice(0,60)+(R.ai.where.edited?' ✏️':''))+
+      rv('⚡','Risk',R.ai.risk.text.slice(0,60)+'…'+(R.ai.risk.edited?' ✏️':''))+
+      (R.userComment?rv('✏️','Your comment',R.userComment.slice(0,80)+(R.userComment.length>80?'…':'')):'')+
+      rv('🤖','DolSafe confidence',R.aiConfidence+'% · '+Object.values(R.ai).filter(function(f){return f.edited;}).length+' field'+(editedCount!==1?'s':'')+' corrected by reporter')+
+    '</div>'+
+
+    '<div class="tl-card">'+
+      '<div class="tl-icon">🐬</div>'+
+      '<div>'+
+        '<div class="tl-title">Feeds TrustLens community intelligence</div>'+
+        '<div class="tl-desc">DolSafe summary + your corrections + footage metadata enter the anonymous signal pool. Zero personal data attached.</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="anon-box">'+
+      '<div class="anon-title">✅ Fully anonymous submission</div>'+
+      ['No name, account, or device ID attached',
+       'EXIF and location metadata stripped from all footage',
+       'GPS location rounded to nearest 100 meters',
+       'End-to-end encrypted · C2PA integrity certificate attached',
+       'Auto-deleted after 72 hours',
+      ].map(function(r){
+        return '<div class="anon-row"><span style="color:#10B981;font-weight:800">✓</span>'+r+'</div>';
+      }).join('')+
+    '</div>'+
+  '</div>';
+
+  document.getElementById('stepContent').innerHTML=html;
+  setBar(null,
+    {label:'← Back & edit'},
+    null,
+    {label:'🐬 Submit anonymously', fn:'submitReport()'}
+  );
+}
+
+function rv(icon,label,val){
+  return '<div class="rv">'+
+    '<div class="rv-icon">'+icon+'</div>'+
+    '<div style="flex:1">'+
+      '<div class="rv-lbl">'+label+'</div>'+
+      '<div class="rv-val">'+val+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+// ═══════════════════════════════════════════
+// STEP 3 — CONFIRM (unused - goes to submit)
+// ═══════════════════════════════════════════
+function renderConfirm(){ submitReport(); }
+
+// ── SUBMIT ──
+function submitReport(){
+  R.submitted=true;
+  R.reportId='SR-'+Date.now().toString(36).toUpperCase().slice(-8);
+  renderProg();
+  renderSuccess();
+}
+
+function renderSuccess(){
+  var pb=document.getElementById('progBars');
+  if(pb) pb.innerHTML=STEPS.map(function(){return '<div class="pb done"></div>';}).join('');
+  var pl=document.getElementById('progLbl'); if(pl) pl.textContent='Submitted ✓';
+  var hs=document.getElementById('hdrSub'); if(hs) hs.textContent='Submitted anonymously · '+new Date().toLocaleTimeString();
+
+  var editedCount=Object.values(R.ai).filter(function(f){return f.edited;}).length;
+
+  var html='<div class="success">'+
+    '<div class="suc-icon">✅</div>'+
+    '<div class="suc-title">Report submitted</div>'+
+    '<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;'+
+      'background:'+(getCat(R.category).bg||'#EFF6FF')+';color:'+(getCat(R.category).color||'#1E40AF')+';'+
+      'border:1px solid '+(getCat(R.category).border||'#BFDBFE')+';font-size:13px;font-weight:700;margin-bottom:12px">'+
+      getCat(R.category).icon+' '+getCat(R.category).name+
+    '</div>'+
+    '<div class="suc-sub">Your anonymous DolSafe report is live in TrustLens.'+
+      (editedCount?' You corrected '+editedCount+' field'+(editedCount>1?'s':'')+' — your corrections are preserved in the report.':'')+
+    '</div>'+
+
+    '<div class="report-id-box">'+
+      'Report ID: <span>'+R.reportId+'</span><br>'+
+      '<span style="font-size:10px;color:#9CA3AF;font-weight:400">Save to track status · fully anonymous</span>'+
+    '</div>'+
+
+    '<div class="tl-live">'+
+      '<div class="live-dot"></div>'+
+      '<div style="font-size:12px;font-weight:600;color:#1E40AF;line-height:1.55">'+
+        'Live in TrustLens. If your report corroborates camera or RF signals in this zone, '+
+        'the area safety score updates and analysts are alerted automatically.'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="what-next">'+
+      '<div class="wn-title">What happens next</div>'+
+      ['DolSafe summary + corrections enter the anonymous signal pool for this zone',
+       'Corroborated by camera behavior or RF patterns → confidence rises',
+       'Analysts see aggregated intelligence — never your individual report',
+       'HIGH urgency + multiple corroborating signals may surface a security alert',
+       'Report auto-deleted after 72h per standard retention',
+      ].map(function(s){
+        return '<div class="wn-row"><span class="wn-arr">›</span>'+s+'</div>';
+      }).join('')+
+    '</div>'+
+
+    '<button class="btn-p" onclick="newReport()">+ Submit another report</button>'+
+    '<button class="btn-s" onclick="goHome()">← Back to DolSafe home</button>'+
+  '</div>';
+
+  document.getElementById('stepContent').innerHTML=html;
+  document.getElementById('actionBar').innerHTML='';
+}
+
+// ── ACTION BAR ──
+function setBar(hint, back, next, submit){
+  var h='<div class="action-bar">';
+  if(hint) h+=hint;
+  h+='<div class="ab-row">';
+  if(back) h+='<button class="ab-back" onclick="prev()">'+back.label+'</button>';
+  if(next) h+='<button class="ab-next" onclick="nextStep()"'+(next.disabled?' disabled':'')+'>'+next.label+'</button>';
+  if(submit) h+='<button class="ab-submit" onclick="'+submit.fn+'">'+submit.label+'</button>';
+  h+='</div></div>';
+  document.getElementById('actionBar').innerHTML=h;
+}
+
+// ── NAV ──
+function nextStep(){
+  var ta=document.getElementById('commentTa'); if(ta) R.userComment=ta.value;
+  if(step===0 && R.media.length===0){ toast('Add at least one video or photo to continue'); return; }
+  if(step<STEPS.length-1){ step++; render(); }
+}
+function prev(){
+  if(step>0){ step--; render(); }
+  else goBack();
+}
+function goBack(){ toast('← Returning to DolSafe home'); }
+function goHome(){ window.location.reload(); }
+function newReport(){
+  R={category:null,media:[],recording:false,recSec:0,severity:null,userComment:'',
+    ai:{what:{text:'',edited:false,editing:false},who:{text:'',edited:false,editing:false},
+        where:{text:'',edited:false,editing:false},timeline:{text:'',edited:false,editing:false},
+        risk:{text:'',edited:false,editing:false}},
+    aiConfidence:0,submitted:false,reportId:null};
+  step=0; render();
+}
+
+// ── TOAST ──
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ── BOOT ──
+window.addEventListener('load',function(){ render(); });
+</script>
+</body>
+</html>

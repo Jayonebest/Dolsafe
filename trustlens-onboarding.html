@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TrustLens · Enterprise Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02070F;--bg2:#060D1A;--bg3:#091628;--bg4:#0C1F3A;
+  --border:#162E52;--border2:#1E3D6A;
+  --blue:#3B9EFF;--blue2:#1A6FC4;--blue3:#0A2A5A;
+  --green:#22C55E;--green2:#16A34A;
+  --yellow:#F59E0B;--orange:#F97316;--red:#DC2626;
+  --purple:#8B5CF6;--cyan:#06B6D4;
+  --text:#E2E8F0;--muted:#94A3B8;--dim:#64748B;--dimmer:#3D5066;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%;font-family:var(--sans);background:var(--bg);color:var(--text)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(59,158,255,.07),transparent);pointer-events:none;z-index:0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes checkDraw{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(2,7,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 28px;gap:14px}
+.logo{font-size:17px;font-weight:900}.logo span{color:var(--blue)}
+.tb-tag{font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono);letter-spacing:1.5px}
+.sep{width:1px;height:22px;background:var(--border)}
+.admin-pill{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:8px;background:var(--bg3);border:1px solid var(--border)}
+.av{width:24px;height:24px;border-radius:6px;background:var(--blue2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;font-family:var(--mono)}
+
+/* PROGRESS */
+.progress{position:relative;z-index:1;background:var(--bg2);border-bottom:1px solid var(--border);padding:20px 28px 28px}
+.steps{display:flex;align-items:center;max-width:900px;margin:0 auto}
+.sc{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);color:var(--dim);background:var(--bg3);transition:all .3s;flex-shrink:0;position:relative}
+.sc.done{background:var(--green);border-color:var(--green);color:white}
+.sc.active{background:var(--blue3);border-color:var(--blue);color:var(--blue)}
+.slabel{position:absolute;top:38px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);white-space:nowrap}
+.sc.active .slabel{color:var(--blue)}
+.sc.done .slabel{color:var(--green)}
+.connector{flex:1;height:2px;background:var(--border);margin:0 6px;transition:background .4s}
+.connector.done{background:var(--green)}
+
+/* MAIN */
+.main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:28px 28px 100px}
+
+/* STEP HEADER */
+.shdr{margin-bottom:24px;animation:fadeIn .4s ease}
+.snum{font-size:10px;font-weight:700;color:var(--blue);font-family:var(--mono);letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.snum::before{content:'';display:block;width:20px;height:2px;background:var(--blue)}
+.stitle{font-size:26px;font-weight:900;letter-spacing:-.5px;margin-bottom:6px}
+.sdesc{font-size:13px;color:var(--muted);line-height:1.6;max-width:560px}
+
+/* FORM */
+.fg{display:grid;gap:14px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;font-family:var(--mono)}
+.req{color:var(--red)}
+.inp{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;padding:11px 13px;font-size:12px;color:var(--text);outline:none;font-family:var(--mono);transition:all .2s}
+.inp:focus{border-color:var(--blue);background:var(--bg4);box-shadow:0 0 0 3px rgba(59,158,255,.08)}
+.inp::placeholder{color:var(--dim)}
+.sel{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;padding:11px 13px;font-size:12px;color:var(--text);outline:none;font-family:var(--mono);cursor:pointer;transition:all .2s;appearance:none}
+.sel:focus{border-color:var(--blue)}
+.ta{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;padding:11px 13px;font-size:12px;color:var(--text);outline:none;font-family:var(--mono);resize:vertical;min-height:72px;transition:all .2s}
+.ta:focus{border-color:var(--blue)}
+.hint{font-size:9px;color:var(--dimmer);font-family:var(--mono);margin-top:2px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:12px;animation:fadeIn .3s ease}
+.chdr{padding:13px 17px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.ctitle{font-size:12px;font-weight:700;flex:1}
+.cbody{padding:17px}
+
+/* EXAMPLE HINT */
+.eg{background:rgba(59,158,255,.06);border:1px solid rgba(59,158,255,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.5;margin-bottom:18px}
+.eg strong{color:var(--blue)}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:7px;font-size:8px;font-weight:700;font-family:var(--mono)}
+.tag-blue{background:rgba(59,158,255,.12);color:var(--blue);border:1px solid rgba(59,158,255,.25)}
+.tag-green{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.tag-yellow{background:rgba(245,158,11,.1);color:var(--yellow);border:1px solid rgba(245,158,11,.25)}
+.tag-dim{background:rgba(100,116,139,.1);color:var(--dim);border:1px solid var(--border)}
+
+/* ADD BUTTON */
+.addbtn{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;border:1.5px dashed var(--border);background:transparent;color:var(--dim);font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:all .2s;font-family:var(--sans)}
+.addbtn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,158,255,.04)}
+
+/* SITE CARD */
+.site-card{background:var(--bg2);border:2px solid rgba(59,158,255,.2);border-radius:12px;padding:15px;margin-bottom:10px;animation:slideUp .3s ease}
+
+/* ZONE ITEM */
+.zone-item{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:9px;margin-bottom:6px;animation:fadeIn .3s ease}
+.zone-item:hover{border-color:var(--border2)}
+
+/* CAMERA LAYOUT */
+.cam-layout{display:flex;gap:14px;align-items:flex-start}
+.cam-left{flex:1;min-width:0}
+.cam-right{width:310px;flex-shrink:0;position:sticky;top:74px}
+
+/* CAMERA ROW */
+.cam-row{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg3);margin-bottom:6px;cursor:pointer;transition:all .15s}
+.cam-row:hover{border-color:var(--border2)}
+.cam-row.editing{border-color:var(--blue);background:rgba(59,158,255,.07)}
+.sensor-chip{font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+
+/* EDIT PANEL */
+.edit-panel{background:var(--bg2);border:1.5px solid var(--blue);border-radius:12px;overflow:hidden;animation:fadeIn .25s ease}
+.edit-panel-empty{background:var(--bg2);border:1.5px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center}
+.ep-hdr{padding:12px 14px;background:rgba(59,158,255,.08);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ep-scroll{padding:14px;max-height:68vh;overflow-y:auto}
+.ep-scroll::-webkit-scrollbar{width:2px}
+.ep-scroll::-webkit-scrollbar-thumb{background:var(--border)}
+.ep-section{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.2px;font-family:var(--mono);margin:12px 0 8px}
+.ep-section:first-child{margin-top:0}
+.ep-divider{height:1px;background:var(--border);margin:12px 0}
+
+/* SENSOR BLOCK */
+.sensor-block{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px}
+.sensor-hdr{padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s}
+.sensor-hdr:hover{background:rgba(255,255,255,.02)}
+.sensor-fields{padding:0 12px 10px}
+.sf-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(22,46,82,.3)}
+.sf-row:last-child{border-bottom:none}
+.sf-label{font-size:10px;color:var(--muted);flex:1;font-family:var(--mono)}
+.toggle{width:30px;height:16px;border-radius:8px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle-knob{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:white;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* USER TABLE */
+.utbl{width:100%;border-collapse:collapse}
+.utbl th{padding:8px 11px;font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);border-bottom:1px solid var(--border);text-align:left}
+.utbl td{padding:10px 11px;border-bottom:1px solid rgba(22,46,82,.35);font-size:11px}
+.utbl tr:hover td{background:rgba(59,158,255,.03)}
+.utbl tr:last-child td{border-bottom:none}
+
+/* EMPLOYEE TABLE */
+.etbl{width:100%;border-collapse:collapse;min-width:780px}
+.etbl th{padding:8px 11px;font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);border-bottom:1px solid var(--border);text-align:left}
+.etbl td{padding:9px 11px;border-bottom:1px solid rgba(22,46,82,.3);font-size:11px;vertical-align:top}
+.etbl tr:hover td{background:rgba(59,158,255,.02)}
+
+/* TIER CARDS */
+.tier-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.tier-card{border:2px solid var(--border);border-radius:12px;padding:17px;cursor:pointer;transition:all .2s;position:relative}
+.tier-card:hover{transform:translateY(-1px)}
+.tier-card.sel{transform:translateY(-2px)}
+.tier-std.sel{border-color:var(--green);background:rgba(34,197,94,.06);box-shadow:0 4px 20px rgba(34,197,94,.1)}
+.tier-ext.sel{border-color:var(--blue);background:rgba(59,158,255,.06);box-shadow:0 4px 20px rgba(59,158,255,.1)}
+.tier-inv.sel{border-color:var(--yellow);background:rgba(245,158,11,.06);box-shadow:0 4px 20px rgba(245,158,11,.1)}
+.tier-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .2s}
+
+/* REVIEW */
+.review-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:10px}
+.review-hdr{padding:11px 15px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;font-family:var(--mono);display:flex;align-items:center;gap:8px}
+.review-row{display:flex;gap:12px;padding:7px 15px;border-bottom:1px solid rgba(22,46,82,.3);font-size:12px}
+.review-row:last-child{border-bottom:none}
+.rk{color:var(--dim);font-family:var(--mono);min-width:160px;flex-shrink:0}
+.rv{font-weight:600}
+.hierarchy{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.9;padding:14px 16px}
+
+/* NAV */
+.nav-row{display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.btn-pri{padding:13px 26px;background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:700;color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.btn-pri:hover{opacity:.9;transform:translateY(-1px)}
+.btn-sec{padding:12px 20px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+.btn-sec:hover{border-color:var(--border2);color:var(--text)}
+.btn-green{padding:13px 26px;background:linear-gradient(135deg,var(--green),var(--green2));border:none;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;gap:7px}
+.sp{flex:1}
+
+/* MINI MODAL */
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:flex-end;justify-content:center}
+.moverlay.open{display:flex;animation:fadeIn .2s ease}
+.mbox{background:var(--bg2);border-radius:18px 18px 0 0;border:1px solid var(--border);width:100%;max-width:520px;padding:20px;animation:slideUp .3s ease;max-height:88vh;overflow-y:auto}
+.mbox::-webkit-scrollbar{width:2px}
+.mbox h3{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.mclose{font-size:20px;color:var(--dim);cursor:pointer;background:none;border:none;line-height:1}
+
+/* IMPORT MODE TABS */
+.import-tabs{display:flex;gap:6px;margin-bottom:14px}
+.import-tab{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;text-align:center;font-size:11px;font-weight:700;color:var(--dim);transition:all .15s;font-family:var(--sans)}
+.import-tab.active{border-color:var(--blue);background:rgba(59,158,255,.1);color:var(--blue)}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(16px);padding:9px 18px;border-radius:16px;font-size:11px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;font-family:var(--mono)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast-ok{background:var(--green);color:white}
+.toast-warn{background:var(--orange);color:white}
+
+/* OFFBOARDING */
+.ob-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ob-card{background:rgba(0,0,0,.2);border-radius:9px;padding:12px;display:flex;gap:9px}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Trust<span>Lens</span></div>
+  <div class="sep"></div>
+  <div class="tb-tag">Enterprise Onboarding</div>
+  <div style="flex:1"></div>
+  <div class="admin-pill">
+    <div class="av">TL</div>
+    <div>
+      <div style="font-size:11px;font-weight:700;font-family:var(--mono)">TrustLens Admin</div>
+      <div style="font-size:8px;color:var(--dim);font-family:var(--mono)">Global Administrator</div>
+    </div>
+  </div>
+</div>
+
+<div class="progress"><div class="steps" id="stepsEl"></div></div>
+
+<div class="main"><div id="content"></div></div>
+
+<!-- ZONE MODAL -->
+<div class="moverlay" id="zoneModal">
+  <div class="mbox">
+    <h3>Add zone <button class="mclose" onclick="closeModal('zoneModal')">×</button></h3>
+    <div class="fg fg2" style="margin-bottom:12px">
+      <div class="field"><label class="lbl">Zone name <span class="req">*</span></label><input class="inp" id="zm_name" placeholder="e.g. Platform A · Uptown 1/2/3"></div>
+      <div class="field"><label class="lbl">Zone type</label>
+        <select class="sel" id="zm_type">
+          <option>Platform</option><option>Mezzanine</option><option>Fare gate array</option>
+          <option>Concourse</option><option>Entrance / Exit</option><option>Track level</option>
+          <option>Baggage area</option><option>Lobby</option><option>Perimeter</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label class="lbl">Capacity</label><input class="inp" id="zm_cap" placeholder="e.g. 800 persons"></div>
+      <div class="field"><label class="lbl">Icon</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;padding:8px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)" id="zm_icons"></div>
+      </div>
+    </div>
+    <button onclick="confirmZone()" style="width:100%;padding:11px;background:var(--blue);border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;color:white;cursor:pointer">+ Add zone</button>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="moverlay" id="userModal">
+  <div class="mbox">
+    <h3>Add user <button class="mclose" onclick="closeModal('userModal')">×</button></h3>
+    <div class="fg fg2" style="margin-bottom:12px">
+      <div class="field"><label class="lbl">Full name <span class="req">*</span></label><input class="inp" id="um_name" placeholder="James Rivera"></div>
+      <div class="field"><label class="lbl">Employee ID</label><input class="inp" id="um_empid" placeholder="MTA-042"></div>
+      <div class="field"><label class="lbl">Email <span class="req">*</span></label><input class="inp" id="um_email" type="email" placeholder="j.rivera@mta.nyc.gov"></div>
+      <div class="field"><label class="lbl">Phone</label><input class="inp" id="um_phone" placeholder="+1 (212) 000-0000"></div>
+      <div class="field"><label class="lbl">Role</label>
+        <select class="sel" id="um_role">
+          <option value="site-admin">Site Administrator</option>
+          <option value="site-commander">Site Commander</option>
+          <option value="zone-analyst">Zone Analyst</option>
+          <option value="dispatcher">Dispatcher</option>
+          <option value="auditor">Auditor</option>
+        </select>
+      </div>
+      <div class="field"><label class="lbl">Site access</label><select class="sel" id="um_site"></select></div>
+    </div>
+    <button onclick="confirmUser()" style="width:100%;padding:11px;background:var(--blue);border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;color:white;cursor:pointer">+ Add user</button>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ════════════════════════════════
+// TRUSTLENS ONBOARDING ENGINE
+// ════════════════════════════════
+
+// ALL TOP-LEVEL STATE
+var step = 0;
+var activeSiteId = null;
+var activeCamId = null;
+var zoneModalSiteId = null;
+var selectedZoneIcon = '🚉';
+var importMode = 'manual';
+
+var STEPS = [
+  {label:'Organization'}, {label:'Sites'}, {label:'Zones'},
+  {label:'Cameras'}, {label:'Users'}, {label:'DolSafe'},
+  {label:'Retention'}, {label:'Review'}
+];
+
+// DATA
+var org = {
+  name:'MTA New York', short:'MTA', industry:'transit',
+  address:'2 Broadway, New York, NY 10004',
+  contact:'Michael Kemper', email:'m.kemper@mta.nyc.gov', phone:'+1 (212) 878-7000',
+  contract:'government', cameras:'15,396', golive:'2026-09-01', logo:'🚇'
+};
+
+var sites = [];
+var zones = [];
+var cameras = [];
+var users = [];
+var employees = [];
+var retentionTier = 'standard';
+
+// ── UTILS ──
+function uid() { return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function val(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toast(msg, type) {
+  var t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type === 'warn' ? 'toast-warn' : 'toast-ok');
+  clearTimeout(t._t);
+  t._t = setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function getSite(id) { return sites.find(function(s) { return s.id === id; }); }
+function getZone(id) { return zones.find(function(z) { return z.id === id; }); }
+function getCam(id)  { return cameras.find(function(c) { return c.id === id; }); }
+function getEmp(id)  { return employees.find(function(e) { return e.id === id; }); }
+
+// ── PROGRESS ──
+function renderProgress() {
+  var el = document.getElementById('stepsEl');
+  el.innerHTML = '';
+  STEPS.forEach(function(s, i) {
+    var cls = i < step ? 'done' : i === step ? 'active' : '';
+    var inner = i < step
+      ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20" style="animation:checkDraw .4s ease forwards"/></svg>'
+      : String(i + 1);
+    var circle = document.createElement('div');
+    circle.style.position = 'relative';
+    circle.innerHTML = '<div class="sc ' + cls + '">' + inner + '<div class="slabel">' + s.label + '</div></div>';
+    el.appendChild(circle);
+    if (i < STEPS.length - 1) {
+      var conn = document.createElement('div');
+      conn.className = 'connector' + (i < step ? ' done' : '');
+      el.appendChild(conn);
+    }
+  });
+}
+
+// ── ROUTER ──
+function render() {
+  renderProgress();
+  var fns = [s0, s1, s2, s3, s4, s5, s6, s7];
+  var c = document.getElementById('content');
+  c.innerHTML = '';
+  fns[step]();
+}
+
+function go(n) {
+  if (!validate()) return;
+  step += n;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function validate() {
+  if (step === 0 && !org.name)  { toast('Organization name required', 'warn'); return false; }
+  if (step === 1 && !sites.length) { toast('Add at least one site', 'warn'); return false; }
+  if (step === 2 && !zones.length) { toast('Add at least one zone', 'warn'); return false; }
+  if (step === 3 && !cameras.length) { toast('Add at least one camera', 'warn'); return false; }
+  return true;
+}
+
+// ─────────────────────────────────────────
+// STEP 0 — ORGANIZATION
+// ─────────────────────────────────────────
+function s0() {
+  var c = document.getElementById('content');
+  c.innerHTML =
+    hdr(1, 'Create the organization', 'Top-level entity in TrustLens. Every site, zone, camera, and user belongs to this organization.') +
+    '<div class="eg">🚇 Following this example with <strong>MTA New York</strong> — Metropolitan Transportation Authority.</div>' +
+    '<div class="card"><div class="chdr"><div class="ctitle">Organization identity</div></div>' +
+    '<div class="cbody"><div class="fg fg2" style="margin-bottom:12px">' +
+    field('Organization name', 'o_name', org.name, 'Metropolitan Transportation Authority') +
+    field('Short name', 'o_short', org.short, 'MTA') +
+    selField('Industry', 'o_ind', ['Public Transit','Rail / Amtrak','Airport / Aviation','Education / University','Corporate / Enterprise','Healthcare','Government / Federal','Stadium / Events','Other']) +
+    field('HQ Address', 'o_addr', org.address, '2 Broadway, New York, NY 10004') +
+    '</div></div></div>' +
+    '<div class="card"><div class="chdr"><div class="ctitle">Primary security contact</div></div>' +
+    '<div class="cbody"><div class="fg fg3">' +
+    field('Full name', 'o_cname', org.contact, 'Michael Kemper') +
+    field('Email', 'o_cemail', org.email, 'm.kemper@mta.nyc.gov') +
+    field('Phone', 'o_cphone', org.phone, '+1 (212) 878-7000') +
+    '</div></div></div>' +
+    '<div class="card"><div class="chdr"><div class="ctitle">Contract &amp; scope</div></div>' +
+    '<div class="cbody"><div class="fg fg3">' +
+    selField('Contract type', 'o_contract', ['Government / Municipal','Enterprise (annual)','Pilot (90-day)','Federal contract']) +
+    field('Expected camera count', 'o_cams', org.cameras, '15,000') +
+    '<div class="field"><label class="lbl">Go-live target</label><input class="inp" type="date" id="o_golive" value="' + org.golive + '"></div>' +
+    '</div></div></div>' +
+    nav(false, true, 'Continue to Sites');
+}
+
+// ─────────────────────────────────────────
+// STEP 1 — SITES
+// ─────────────────────────────────────────
+function s1() {
+  if (!sites.length) {
+    sites = [
+      {id:uid(), name:'Times Square–42nd St', address:'Times Square, Manhattan, NY', icon:'🗽', type:'Subway Station'},
+      {id:uid(), name:'Penn Station', address:'8th Ave & 31st St, New York, NY', icon:'🚂', type:'Rail Terminal'},
+    ];
+  }
+  var c = document.getElementById('content');
+  var siteHTML = sites.map(function(s) {
+    return '<div class="site-card">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+        '<span style="font-size:18px">' + s.icon + '</span>' +
+        '<div style="flex:1;font-size:13px;font-weight:700">' + s.name + '</div>' +
+        '<div class="tag tag-blue">' + s.type + '</div>' +
+        '<button onclick="removeSite(\'' + s.id + '\')" style="padding:2px 8px;border-radius:5px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--red);font-size:9px;cursor:pointer;font-family:var(--mono)">Remove</button>' +
+      '</div>' +
+      '<div class="fg fg2">' +
+      '<div class="field"><label class="lbl">Site name</label><input class="inp" value="' + s.name + '" onchange="updateSite(\'' + s.id + '\',\'name\',this.value)"></div>' +
+      '<div class="field"><label class="lbl">Type</label><select class="sel" onchange="updateSite(\'' + s.id + '\',\'type\',this.value)">' +
+        ['Subway Station','Rail Terminal','Airport Terminal','Campus','Office Building','Stadium','Hospital','Government Building','Other'].map(function(t) {
+          return '<option' + (s.type === t ? ' selected' : '') + '>' + t + '</option>';
+        }).join('') +
+      '</select></div>' +
+      '<div class="field"><label class="lbl">Address</label><input class="inp" value="' + s.address + '" onchange="updateSite(\'' + s.id + '\',\'address\',this.value)"></div>' +
+      '<div class="field"><label class="lbl">Icon</label><div style="display:flex;gap:5px;flex-wrap:wrap;padding:7px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">' +
+        ['🗽','🚂','✈️','🎓','🏢','🏥','🏛️','🏟️','🚪','🚉','🛤️'].map(function(ic) {
+          return '<span onclick="updateSite(\'' + s.id + '\',\'icon\',\'' + ic + '\');s1()" style="font-size:16px;cursor:pointer;padding:3px;border-radius:5px;background:' + (s.icon === ic ? 'rgba(59,158,255,.25)' : 'transparent') + '">' + ic + '</span>';
+        }).join('') +
+      '</div></div>' +
+      '</div></div>';
+  }).join('');
+
+  c.innerHTML =
+    hdr(2, 'Define sites', 'A site is a physical location. Each site contains zones, and zones contain cameras.') +
+    '<div class="eg">🚇 MTA example: Times Square station and Penn Station are two separate sites, each with their own zones and cameras.</div>' +
+    siteHTML +
+    '<button class="addbtn" onclick="addSite()" style="margin-bottom:20px"><div style="width:20px;height:20px;border-radius:5px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center">+</div>Add another site</button>' +
+    nav(true, true, 'Continue to Zones');
+}
+
+function addSite() {
+  sites.push({id:uid(), name:'New Site', address:'', icon:'🏢', type:'Office Building'});
+  s1();
+}
+function removeSite(id) {
+  sites = sites.filter(function(s) { return s.id !== id; });
+  zones = zones.filter(function(z) { return z.siteId !== id; });
+  cameras = cameras.filter(function(c) { return c.siteId !== id; });
+  s1(); toast('Site removed');
+}
+function updateSite(id, field, val) {
+  var s = getSite(id); if (s) s[field] = val;
+}
+
+// ─────────────────────────────────────────
+// STEP 2 — ZONES
+// ─────────────────────────────────────────
+function s2() {
+  if (!activeSiteId && sites.length) activeSiteId = sites[0].id;
+  autoZones();
+  renderS2();
+}
+
+function autoZones() {
+  sites.forEach(function(site) {
+    var existing = zones.filter(function(z) { return z.siteId === site.id; });
+    if (existing.length) return;
+    var presets = site.type === 'Subway Station'
+      ? [{name:'Platform A · Uptown', type:'Platform', icon:'🚉', cap:'800 persons'},
+         {name:'Platform B · Downtown', type:'Platform', icon:'🚇', cap:'800 persons'},
+         {name:'Mezzanine · Fare gates', type:'Fare gate array', icon:'🎫', cap:'300 persons'},
+         {name:'Street entrances', type:'Entrance / Exit', icon:'🚪', cap:'500 persons'}]
+      : site.type === 'Rail Terminal'
+      ? [{name:'Main Concourse', type:'Concourse', icon:'🏛️', cap:'2000 persons'},
+         {name:'Track Level · Gates 1–11', type:'Track level', icon:'🛤️', cap:'1000 persons'},
+         {name:'Amtrak Entrance · 8th Ave', type:'Entrance / Exit', icon:'🚪', cap:'400 persons'},
+         {name:'Baggage & Ticketing', type:'Baggage area', icon:'🧳', cap:'300 persons'}]
+      : [{name:'Main Entrance', type:'Entrance / Exit', icon:'🚪', cap:'200 persons'},
+         {name:'Main Area', type:'Lobby', icon:'🛋️', cap:'500 persons'}];
+    presets.forEach(function(p) {
+      zones.push({id:uid(), siteId:site.id, name:p.name, type:p.type, icon:p.icon, capacity:p.cap});
+    });
+  });
+}
+
+function renderS2() {
+  var c = document.getElementById('content');
+  var tabs = sites.map(function(s) {
+    return '<div onclick="activeSiteId=\'' + s.id + '\';renderS2()" style="padding:6px 12px;border-radius:8px;border:1px solid ' +
+      (activeSiteId === s.id ? 'var(--blue)' : 'var(--border)') +
+      ';background:' + (activeSiteId === s.id ? 'rgba(59,158,255,.1)' : 'var(--bg3)') +
+      ';cursor:pointer;font-size:10px;font-weight:700;font-family:var(--mono);color:' +
+      (activeSiteId === s.id ? 'var(--blue)' : 'var(--dim)') + '">' +
+      s.icon + ' ' + s.name + '</div>';
+  }).join('');
+
+  var cur = getSite(activeSiteId);
+  var curZones = zones.filter(function(z) { return z.siteId === activeSiteId; });
+  var zHTML = curZones.length
+    ? curZones.map(function(z) {
+        return '<div class="zone-item">' +
+          '<div style="width:32px;height:32px;border-radius:7px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">' + z.icon + '</div>' +
+          '<div style="flex:1"><div style="font-size:11px;font-weight:700">' + z.name + '</div>' +
+          '<div style="font-size:9px;color:var(--dim);font-family:var(--mono)">' + z.type + (z.capacity ? ' · ' + z.capacity : '') + '</div></div>' +
+          '<div class="tag tag-blue">' + cameras.filter(function(cam) { return cam.zoneId === z.id; }).length + ' cams</div>' +
+          '<div onclick="removeZone(\'' + z.id + '\')" style="width:22px;height:22px;border-radius:5px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--red)">×</div>' +
+          '</div>';
+      }).join('')
+    : '<div style="padding:20px;text-align:center;font-size:10px;color:var(--dim);font-family:var(--mono)">No zones yet.</div>';
+
+  c.innerHTML =
+    hdr(3, 'Define zones within each site', 'Zones are areas within a site. An analyst can be assigned to a zone, restricting their view to just that area.') +
+    '<div class="eg">🚇 MTA Times Square: Platform A · Uptown 1/2/3 · Platform B · Downtown N/Q/R · Mezzanine · Fare gates · Street entrances</div>' +
+    '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">' + tabs + '</div>' +
+    '<div class="card"><div class="chdr"><div class="ctitle">' + (cur ? cur.icon + ' ' + cur.name : '') + ' · Zones</div><div style="font-size:10px;color:var(--dim);font-family:var(--mono)">' + curZones.length + ' zones</div></div>' +
+    '<div class="cbody"><div id="zoneList">' + zHTML + '</div>' +
+    '<button class="addbtn" style="margin-top:8px" onclick="openZoneModal(\'' + activeSiteId + '\')"><div style="width:20px;height:20px;border-radius:5px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center">+</div>Add zone</button>' +
+    '</div></div>' +
+    nav(true, true, 'Continue to Cameras');
+}
+
+function openZoneModal(siteId) {
+  zoneModalSiteId = siteId;
+  document.getElementById('zm_name').value = '';
+  document.getElementById('zm_cap').value = '';
+  selectedZoneIcon = '🚉';
+  var icons = ['🚉','🚇','🎫','🏛️','🛤️','🚪','🏢','🛋️','👔','🅿️','🧳','⚽','🎓','🔒','⚠️'];
+  document.getElementById('zm_icons').innerHTML = icons.map(function(ic) {
+    return '<span onclick="selectedZoneIcon=\'' + ic + '\';highlightIcon(this)" style="font-size:16px;cursor:pointer;padding:3px;border-radius:5px">' + ic + '</span>';
+  }).join('');
+  document.getElementById('zoneModal').classList.add('open');
+}
+
+function highlightIcon(el) {
+  el.parentNode.querySelectorAll('span').forEach(function(s) { s.style.background = ''; });
+  el.style.background = 'rgba(59,158,255,.25)';
+}
+
+function confirmZone() {
+  var name = val('zm_name');
+  if (!name) { toast('Zone name required', 'warn'); return; }
+  zones.push({id:uid(), siteId:zoneModalSiteId, name:name, type:val('zm_type') || 'Platform', icon:selectedZoneIcon, capacity:val('zm_cap')});
+  closeModal('zoneModal'); renderS2();
+  toast('Zone added: ' + name);
+}
+
+function removeZone(id) {
+  zones = zones.filter(function(z) { return z.id !== id; });
+  cameras = cameras.filter(function(c) { return c.zoneId !== id; });
+  renderS2(); toast('Zone removed');
+}
+
+// ─────────────────────────────────────────
+// STEP 3 — CAMERAS
+// ─────────────────────────────────────────
+function s3() {
+  if (!activeSiteId && sites.length) activeSiteId = sites[0].id;
+  autoCameras();
+  if (!activeCamId) {
+    var first = cameras.find(function(c) { return c.siteId === activeSiteId; });
+    if (first) activeCamId = first.id;
+  }
+  renderS3();
+}
+
+function autoCameras() {
+  sites.forEach(function(site) {
+    var siteCams = cameras.filter(function(c) { return c.siteId === site.id; });
+    if (siteCams.length) return;
+    var siteZones = zones.filter(function(z) { return z.siteId === site.id; });
+    siteZones.forEach(function(zone, i) {
+      var num = String(cameras.length + 1).padStart(3, '0');
+      cameras.push({
+        id:uid(), siteId:site.id, zoneId:zone.id,
+        name:'CAM-' + num + ' · ' + zone.name.split('·')[0].trim(),
+        url:'', hw:'Axis P3245-V', position:'Ceiling mount',
+        resolution:'4MP', fov:'110°', notes:'',
+        sensors:{CAM:true, RF:true, THM:i===0},
+        cam:{fps:'30 fps', rppg:true, gait:true, tremor:true, resp:true, cloth:true, obj:true},
+        rf:{wifi24:true, wifi5:true, bt:true, f433:true, cell:true, drone:true, ukrf:true, tier:'site-default'},
+        thm:{model:'FLIR Lepton 3.5', threshold:'+0.5°C above baseline', adr:true, coldspot:true, fever:true, facetemp:true}
+      });
+    });
+  });
+}
+
+function renderS3() {
+  var c = document.getElementById('content');
+  var tabs = sites.map(function(s) {
+    var cnt = cameras.filter(function(cam) { return cam.siteId === s.id; }).length;
+    return '<div onclick="activeSiteId=\'' + s.id + '\';activeCamId=null;renderS3()" style="padding:6px 12px;border-radius:8px;border:1px solid ' +
+      (activeSiteId === s.id ? 'var(--blue)' : 'var(--border)') + ';background:' +
+      (activeSiteId === s.id ? 'rgba(59,158,255,.1)' : 'var(--bg3)') + ';cursor:pointer;font-size:10px;font-weight:700;font-family:var(--mono);color:' +
+      (activeSiteId === s.id ? 'var(--blue)' : 'var(--dim)') + '">' +
+      s.icon + ' ' + s.name + ' (' + cnt + ')</div>';
+  }).join('');
+
+  var leftHTML = '';
+  var siteZones = zones.filter(function(z) { return z.siteId === activeSiteId; });
+  siteZones.forEach(function(zone) {
+    var zoneCams = cameras.filter(function(cam) { return cam.zoneId === zone.id; });
+    var camRows = zoneCams.map(function(cam) {
+      var chips = Object.keys(cam.sensors).filter(function(k) { return cam.sensors[k]; }).map(function(k) {
+        var color = k === 'CAM' ? '#3B9EFF' : k === 'RF' ? '#06B6D4' : '#F97316';
+        return '<span class="sensor-chip" style="background:' + color + '18;color:' + color + ';border:1px solid ' + color + '33">' + k + '</span>';
+      }).join('');
+      var isEd = activeCamId === cam.id;
+      return '<div class="cam-row' + (isEd ? ' editing' : '') + '" onclick="selectCam(\'' + cam.id + '\')">' +
+        '<div style="font-size:15px">📹</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:' + (isEd ? 'var(--blue)' : 'var(--text)') + '">' + cam.name + '</div>' +
+          '<div style="font-size:8px;color:var(--dim);font-family:var(--mono);margin-bottom:3px">' + cam.hw + (cam.position ? ' · ' + cam.position : '') + '</div>' +
+          '<div style="display:flex;gap:3px">' + chips + '</div>' +
+        '</div>' +
+        '<div onclick="event.stopPropagation();removeCam(\'' + cam.id + '\')" style="padding:1px 6px;border-radius:4px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--red);font-size:8px;cursor:pointer;font-family:var(--mono)">×</div>' +
+        '</div>';
+    }).join('');
+
+    leftHTML +=
+      '<div style="margin-bottom:14px">' +
+        '<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">' +
+          '<span style="font-size:13px">' + zone.icon + '</span>' +
+          '<div style="font-size:11px;font-weight:700;flex:1">' + zone.name + '</div>' +
+          '<div style="font-size:9px;color:var(--dim);font-family:var(--mono)">' + zoneCams.length + ' cam' + (zoneCams.length !== 1 ? 's' : '') + '</div>' +
+          '<button onclick="quickAddCam(\'' + zone.id + '\',\'' + activeSiteId + '\')" style="padding:3px 9px;border-radius:6px;background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.25);color:var(--blue);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--mono)">+ Add</button>' +
+        '</div>' +
+        '<div id="qaf_' + zone.id + '" style="display:none;margin-bottom:8px;padding:12px;background:rgba(59,158,255,.04);border:1.5px dashed rgba(59,158,255,.3);border-radius:9px">' +
+          '<div style="font-size:9px;font-weight:700;color:var(--blue);font-family:var(--mono);margin-bottom:10px">📹 New camera in ' + zone.name + '</div>' +
+          '<div class="fg fg2" style="margin-bottom:8px">' +
+            '<div class="field"><label class="lbl" style="font-size:8px">Camera name</label><input class="inp" id="qn_' + zone.id + '" placeholder="CAM-001 · Turnstile N" style="padding:8px 10px;font-size:11px"></div>' +
+            '<div class="field"><label class="lbl" style="font-size:8px">Hardware</label><select class="sel" id="qh_' + zone.id + '" style="padding:8px 10px;font-size:11px"><option>Axis P3245-V</option><option>Bosch FLEXIDOME 5100i</option><option>Hikvision DS-2CD2143G2</option><option>FLIR FC-Series (Thermal)</option><option>Generic IP Camera</option><option>Body Camera</option></select></div>' +
+          '</div>' +
+          '<div style="margin-bottom:8px"><label class="lbl" style="font-size:8px;display:block;margin-bottom:5px">Sensors</label>' +
+            '<div style="display:flex;gap:12px;padding:8px;background:var(--bg4);border-radius:7px;border:1px solid var(--border)">' +
+              '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px"><input type="checkbox" id="qc_' + zone.id + '" checked style="accent-color:#3B9EFF"><span style="color:#3B9EFF;font-family:var(--mono);font-weight:700;font-size:9px">📷 CAM</span></label>' +
+              '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px"><input type="checkbox" id="qr_' + zone.id + '" checked style="accent-color:#06B6D4"><span style="color:#06B6D4;font-family:var(--mono);font-weight:700;font-size:9px">📡 RF</span></label>' +
+              '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px"><input type="checkbox" id="qt_' + zone.id + '" style="accent-color:#F97316"><span style="color:#F97316;font-family:var(--mono);font-weight:700;font-size:9px">🌡️ THM</span></label>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px">' +
+            '<button onclick="saveQuickCam(\'' + zone.id + '\',\'' + activeSiteId + '\')" style="flex:1;padding:8px;background:var(--blue);border:none;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer">✓ Save camera</button>' +
+            '<button onclick="hideQaf(\'' + zone.id + '\')" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--dim);cursor:pointer;font-family:var(--sans)">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+        (camRows || '<div style="padding:10px;text-align:center;font-size:9px;color:var(--dim);font-family:var(--mono)">No cameras — click + Add</div>') +
+      '</div>';
+  });
+
+  c.innerHTML =
+    hdr(4, 'Configure cameras & sensors', 'Add cameras to each zone. Click any camera to edit its full configuration — name, stream, position, and sensor stack.') +
+    '<div class="eg">🚇 MTA: Turnstile cameras → CAM + RF + THM &nbsp;·&nbsp; Platform cameras → CAM + RF &nbsp;·&nbsp; Stairwell → CAM only</div>' +
+    '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">' + tabs + '</div>' +
+    '<div class="cam-layout">' +
+      '<div class="cam-left">' + leftHTML + '</div>' +
+      '<div class="cam-right" id="editPanel">' + buildEditPanel() + '</div>' +
+    '</div>' +
+    nav(true, true, 'Continue to Users');
+}
+
+function quickAddCam(zoneId, siteId) {
+  var el = document.getElementById('qaf_' + zoneId);
+  if (el) {
+    el.style.display = 'block';
+    var ni = document.getElementById('qn_' + zoneId);
+    if (ni) { ni.value = 'CAM-' + String(cameras.length + 1).padStart(3, '0'); ni.focus(); }
+  }
+}
+function hideQaf(zoneId) {
+  var el = document.getElementById('qaf_' + zoneId);
+  if (el) el.style.display = 'none';
+}
+function saveQuickCam(zoneId, siteId) {
+  var name = val('qn_' + zoneId);
+  if (!name) { toast('Camera name required', 'warn'); return; }
+  var cam = {
+    id:uid(), siteId:siteId, zoneId:zoneId, name:name,
+    url:'', hw:val('qh_' + zoneId) || 'Generic IP Camera',
+    position:'Ceiling mount', resolution:'4MP', fov:'110°', notes:'',
+    sensors:{
+      CAM: document.getElementById('qc_' + zoneId) ? document.getElementById('qc_' + zoneId).checked : true,
+      RF:  document.getElementById('qr_' + zoneId) ? document.getElementById('qr_' + zoneId).checked : true,
+      THM: document.getElementById('qt_' + zoneId) ? document.getElementById('qt_' + zoneId).checked : false,
+    },
+    cam:{fps:'30 fps',rppg:true,gait:true,tremor:true,resp:true,cloth:true,obj:true},
+    rf:{wifi24:true,wifi5:true,bt:true,f433:true,cell:true,drone:true,ukrf:true,tier:'site-default'},
+    thm:{model:'FLIR Lepton 3.5',threshold:'+0.5°C above baseline',adr:true,coldspot:true,fever:true,facetemp:true}
+  };
+  cameras.push(cam);
+  activeCamId = cam.id;
+  toast('✅ ' + name + ' added'); renderS3();
+}
+function selectCam(id) { activeCamId = id; renderS3(); }
+function removeCam(id) {
+  if (activeCamId === id) activeCamId = null;
+  cameras = cameras.filter(function(c) { return c.id !== id; });
+  renderS3(); toast('Camera removed');
+}
+
+function buildEditPanel() {
+  if (!activeCamId) {
+    return '<div class="edit-panel-empty">' +
+      '<div style="font-size:36px;margin-bottom:12px;opacity:.3">📹</div>' +
+      '<div style="font-size:12px;font-weight:700;color:var(--dim);margin-bottom:5px">Select a camera to configure</div>' +
+      '<div style="font-size:10px;color:var(--dimmer);font-family:var(--mono);line-height:1.6">Click any camera to edit its full configuration, sensor stack, and sensor settings.</div></div>';
+  }
+  var cam = getCam(activeCamId);
+  if (!cam) return '';
+  var zone = getZone(cam.zoneId) || {name:'Unknown', icon:'📍'};
+  var site = getSite(cam.siteId) || {name:'Unknown', icon:'🏢'};
+
+  return '<div class="edit-panel">' +
+    '<div class="ep-hdr">' +
+      '<span style="font-size:14px">📹</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cam.name + '</div>' +
+        '<div style="font-size:8px;color:var(--dim);font-family:var(--mono)">' + site.icon + ' ' + site.name + ' · ' + zone.icon + ' ' + zone.name + '</div>' +
+      '</div>' +
+      '<button onclick="activeCamId=null;renderS3()" style="font-size:16px;color:var(--dim);cursor:pointer;background:none;border:none;line-height:1">×</button>' +
+    '</div>' +
+    '<div class="ep-scroll">' +
+      '<div class="ep-section">Basic information</div>' +
+      '<div class="fg" style="margin-bottom:10px">' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Camera name</label><input class="inp" value="' + cam.name + '" onchange="camSet(\'' + cam.id + '\',\'name\',this.value);updatePanelTitle(this.value)" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="fg fg2">' +
+          '<div class="field"><label class="lbl" style="font-size:8px">Stream URL (RTSP)</label><input class="inp" value="' + (cam.url||'') + '" placeholder="rtsp://192.168.x.x:554/stream" oninput="camSet(\'' + cam.id + '\',\'url\',this.value)" style="padding:8px 10px;font-size:11px;font-family:var(--mono)"></div>' +
+          '<div class="field"><label class="lbl" style="font-size:8px">Hardware</label><select class="sel" onchange="camSet(\'' + cam.id + '\',\'hw\',this.value)" style="padding:8px 10px;font-size:11px">' +
+            ['Axis P3245-V','Bosch FLEXIDOME 5100i','Hikvision DS-2CD2143G2','Hanwha XNV-8080R','FLIR FC-Series (Thermal)','Generic IP Camera','Body Camera','Other'].map(function(h) {
+              return '<option' + (cam.hw===h?' selected':'') + '>' + h + '</option>';
+            }).join('') +
+          '</select></div>' +
+          '<div class="field"><label class="lbl" style="font-size:8px">Position</label><select class="sel" onchange="camSet(\'' + cam.id + '\',\'position\',this.value)" style="padding:8px 10px;font-size:11px">' +
+            ['Ceiling mount','Wall mount','Corner mount','Pole mount','Body camera','Vehicle mount','PTZ'].map(function(p) {
+              return '<option' + (cam.position===p?' selected':'') + '>' + p + '</option>';
+            }).join('') +
+          '</select></div>' +
+          '<div class="field"><label class="lbl" style="font-size:8px">Resolution</label><select class="sel" onchange="camSet(\'' + cam.id + '\',\'resolution\',this.value)" style="padding:8px 10px;font-size:11px">' +
+            ['2MP (1080p)','4MP (2K)','8MP (4K)','12MP','Thermal only'].map(function(r) {
+              return '<option' + (cam.resolution===r?' selected':'') + '>' + r + '</option>';
+            }).join('') +
+          '</select></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ep-divider"></div>' +
+      '<div class="ep-section">Sensor stack</div>' +
+      buildSensorBlock(cam, 'CAM', '📷', 'Visual AI · Behavioral analysis', '#3B9EFF',
+        [{type:'sel',label:'Frame rate',key:'fps',vals:['15 fps','24 fps','30 fps','60 fps']},
+         {type:'tog',label:'rPPG heart rate',key:'rppg'},{type:'tog',label:'Gait analysis',key:'gait'},
+         {type:'tog',label:'Micro-tremor',key:'tremor'},{type:'tog',label:'Respiratory rate',key:'resp'},
+         {type:'tog',label:'Clothing flag',key:'cloth'},{type:'tog',label:'Object placement',key:'obj'}]) +
+      buildSensorBlock(cam, 'RF', '📡', 'Radio frequency · Device intelligence', '#06B6D4',
+        [{type:'tog',label:'Wi-Fi 2.4GHz',key:'wifi24'},{type:'tog',label:'Wi-Fi 5GHz',key:'wifi5'},
+         {type:'tog',label:'Bluetooth / BLE',key:'bt'},{type:'tog',label:'433MHz key fob',key:'f433'},
+         {type:'tog',label:'Cellular 700–900MHz',key:'cell'},{type:'tog',label:'Drone RF',key:'drone'},
+         {type:'tog',label:'Unknown RF auto-flag',key:'ukrf'},
+         {type:'sel',label:'Session tier',key:'tier',vals:['site-default','standard-72h','extended-14d','investigative-30d']}]) +
+      buildSensorBlock(cam, 'THM', '🌡️', 'Thermal · Through-clothing detection', '#F97316',
+        [{type:'sel',label:'Module model',key:'model',vals:['FLIR Lepton 3.5','FLIR Tau 2','Seek Thermal CompactPRO','InfiRay C200','Other']},
+         {type:'sel',label:'Alert threshold',key:'threshold',vals:['+0.3°C above baseline','+0.5°C above baseline','+0.8°C above baseline','+1.0°C above baseline']},
+         {type:'tog',label:'Adrenaline signature',key:'adr'},{type:'tog',label:'Concealed cold spot',key:'coldspot'},
+         {type:'tog',label:'Fever detection',key:'fever'},{type:'tog',label:'Facial temp',key:'facetemp'}]) +
+      '<div class="ep-divider"></div>' +
+      '<div class="field"><label class="lbl" style="font-size:8px">Notes</label><textarea class="ta" oninput="camSet(\'' + cam.id + '\',\'notes\',this.value)" placeholder="Installation details, known blind spots..." style="font-size:11px;min-height:54px">' + (cam.notes||'') + '</textarea></div>' +
+    '</div>' +
+    '<div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--bg3);display:flex;gap:7px">' +
+      '<button onclick="toast(\'✅ Configuration saved\')" style="flex:1;padding:9px;background:var(--green);border:none;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer">✓ Saved</button>' +
+      '<button onclick="removeCam(\'' + cam.id + '\')" style="padding:9px 12px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);border-radius:7px;font-size:11px;color:var(--red);cursor:pointer;font-family:var(--sans)">Remove</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function buildSensorBlock(cam, code, icon, desc, color, fields) {
+  var enabled = cam.sensors[code];
+  var subObj = code === 'CAM' ? cam.cam : code === 'RF' ? cam.rf : cam.thm;
+  var fieldHTML = fields.map(function(f) {
+    if (f.type === 'tog') {
+      var isOn = subObj[f.key] !== false;
+      return '<div class="sf-row">' +
+        '<div class="sf-label">' + f.label + '</div>' +
+        '<div class="toggle" style="background:' + (isOn ? color : 'var(--border)') + '" onclick="toggleCamSetting(\'' + cam.id + '\',\'' + code + '\',\'' + f.key + '\',this,\'' + color + '\')">' +
+          '<div class="toggle-knob" style="left:' + (isOn ? '16px' : '2px') + '"></div>' +
+        '</div></div>';
+    }
+    return '<div class="sf-row">' +
+      '<div class="sf-label">' + f.label + '</div>' +
+      '<select style="background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:9px;padding:2px 5px;font-family:var(--mono)" onchange="camSubSet(\'' + cam.id + '\',\'' + code + '\',\'' + f.key + '\',this.value)">' +
+        f.vals.map(function(v) { return '<option' + (subObj[f.key]===v?' selected':'') + '>' + v + '</option>'; }).join('') +
+      '</select></div>';
+  }).join('');
+
+  return '<div class="sensor-block">' +
+    '<div class="sensor-hdr" onclick="toggleSensor(\'' + cam.id + '\',\'' + code + '\',\'' + color + '\')" style="background:' + (enabled ? color + '0D' : 'transparent') + '">' +
+      '<span style="font-size:13px">' + icon + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:11px;font-weight:700;color:' + (enabled ? color : 'var(--dim)') + '">' + code + ' sensor</div>' +
+        '<div style="font-size:9px;color:var(--dim);font-family:var(--mono)">' + desc + '</div>' +
+      '</div>' +
+      '<div style="width:34px;height:18px;border-radius:9px;background:' + (enabled ? color : 'var(--border)') + ';position:relative;transition:background .2s">' +
+        '<div style="position:absolute;top:3px;left:' + (enabled ? '17px' : '3px') + ';width:12px;height:12px;border-radius:50%;background:white;transition:left .2s"></div>' +
+      '</div>' +
+    '</div>' +
+    (enabled ? '<div class="sensor-fields">' + fieldHTML + '</div>' : '') +
+  '</div>';
+}
+
+function toggleSensor(camId, code, color) {
+  var cam = getCam(camId); if (!cam) return;
+  cam.sensors[code] = !cam.sensors[code];
+  var ep = document.getElementById('editPanel');
+  if (ep) ep.innerHTML = buildEditPanel();
+  toast((cam.sensors[code] ? '✅ ' : '❌ ') + code + ' sensor ' + (cam.sensors[code] ? 'enabled' : 'disabled'));
+}
+
+function toggleCamSetting(camId, code, key, el, color) {
+  var cam = getCam(camId); if (!cam) return;
+  var sub = code === 'CAM' ? cam.cam : code === 'RF' ? cam.rf : cam.thm;
+  sub[key] = !sub[key];
+  el.style.background = sub[key] ? color : 'var(--border)';
+  var knob = el.querySelector('.toggle-knob');
+  if (knob) knob.style.left = sub[key] ? '16px' : '2px';
+}
+
+function camSet(id, field, val) { var c = getCam(id); if (c) c[field] = val; }
+function camSubSet(id, code, key, val) {
+  var c = getCam(id); if (!c) return;
+  var sub = code === 'CAM' ? c.cam : code === 'RF' ? c.rf : c.thm;
+  sub[key] = val;
+}
+function updatePanelTitle(name) {
+  var el = document.querySelector('.ep-hdr div div:first-child');
+  if (el) el.textContent = name;
+}
+
+// ─────────────────────────────────────────
+// STEP 4 — USERS
+// ─────────────────────────────────────────
+function s4() {
+  if (!users.length) {
+    users = [
+      {id:uid(),name:'Michael Kemper',empId:'MTA-001',email:'m.kemper@mta.nyc.gov',phone:'+1 (212) 878-7000',role:'site-admin',siteAccess:'ALL'},
+      {id:uid(),name:'James Rivera',empId:'MTA-042',email:'j.rivera@mta.nyc.gov',phone:'',role:'site-commander',siteAccess:sites[0]?sites[0].id:'ALL'},
+      {id:uid(),name:'Angela Chen',empId:'MTA-087',email:'a.chen@mta.nyc.gov',phone:'',role:'zone-analyst',siteAccess:sites[1]?sites[1].id:'ALL'},
+    ];
+  }
+  var rl = {
+    'site-admin':['Site Admin','var(--purple)'],
+    'site-commander':['Site Commander','var(--blue)'],
+    'zone-analyst':['Zone Analyst','var(--green)'],
+    'dispatcher':['Dispatcher','var(--cyan)'],
+    'auditor':['Auditor','var(--dim)'],
+  };
+  var rows = users.map(function(u) {
+    var r = rl[u.role] || ['Unknown','var(--dim)'];
+    var sn = u.siteAccess === 'ALL' ? 'All sites' : (getSite(u.siteAccess)||{name:'—'}).name;
+    return '<tr><td style="font-weight:700">' + u.name + '</td>' +
+      '<td style="font-family:var(--mono);color:var(--dim)">' + (u.empId||'—') + '</td>' +
+      '<td style="font-family:var(--mono);font-size:10px;color:var(--dim)">' + u.email + '</td>' +
+      '<td><span style="background:' + r[1] + '18;color:' + r[1] + ';border:1px solid ' + r[1] + '44;padding:2px 8px;border-radius:7px;font-size:9px;font-weight:700;font-family:var(--mono)">' + r[0] + '</span></td>' +
+      '<td style="font-size:10px;color:var(--muted)">' + sn + '</td>' +
+      '<td><button onclick="removeUser(\'' + u.id + '\')" style="padding:2px 7px;border-radius:5px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--red);font-size:8px;cursor:pointer;font-family:var(--mono)">Remove</button></td></tr>';
+  }).join('');
+
+  var c = document.getElementById('content');
+  c.innerHTML =
+    hdr(5, 'Add users & assign roles', 'Every dispatch action is attributed to a user by Employee ID. This defines who can see what and whose name appears on every audit trail.') +
+    '<div class="eg">🚇 MTA: Kemper (CSO) sees all sites. Rivera (Site Commander) sees Times Square only. Chen (Analyst) sees Penn Station only.</div>' +
+    '<div class="card"><div class="chdr"><div class="ctitle">User roster</div><div style="font-size:10px;color:var(--dim);font-family:var(--mono)">' + users.length + ' users</div></div>' +
+    '<div style="padding:0"><table class="utbl"><thead><tr><th>Name</th><th>Employee ID</th><th>Email</th><th>Role</th><th>Site access</th><th></th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div></div>' +
+    '<button class="addbtn" style="margin-bottom:20px" onclick="openUserModal()"><div style="width:20px;height:20px;border-radius:5px;background:rgba(59,158,255,.1);display:flex;align-items:center;justify-content:center">+</div>Add user</button>' +
+    nav(true, true, 'Continue to DolSafe');
+}
+
+function openUserModal() {
+  ['um_name','um_empid','um_email','um_phone'].forEach(function(id) {
+    var e = document.getElementById(id); if (e) e.value = '';
+  });
+  var sel = document.getElementById('um_site');
+  if (sel) sel.innerHTML = '<option value="ALL">All sites</option>' + sites.map(function(s) {
+    return '<option value="' + s.id + '">' + s.icon + ' ' + s.name + '</option>';
+  }).join('');
+  document.getElementById('userModal').classList.add('open');
+}
+function confirmUser() {
+  var name = val('um_name'), email = val('um_email');
+  if (!name || !email) { toast('Name and email required', 'warn'); return; }
+  users.push({id:uid(), name:name, empId:val('um_empid'), email:email, phone:val('um_phone'), role:val('um_role'), siteAccess:val('um_site')});
+  closeModal('userModal'); s4(); toast('User added: ' + name);
+}
+function removeUser(id) { users = users.filter(function(u) { return u.id !== id; }); s4(); toast('User removed'); }
+
+// ─────────────────────────────────────────
+// STEP 5 — DOLSAFE PROVISIONING
+// ─────────────────────────────────────────
+function s5() {
+  if (!employees.length) {
+    employees = users.map(function(u) {
+      return {
+        id:uid(), name:u.name, empId:u.empId||'', dept:'Security Operations',
+        workEmail:u.email, personalEmail:'',
+        site:u.siteAccess==='ALL'?'All sites':(getSite(u.siteAccess)||{name:'All sites'}).name,
+        role:u.role, status:'pending', workNotif:true, emergencyAlerts:true,
+      };
+    });
+    var extras = [
+      {name:'Carlos Mendez',empId:'MTA-201',dept:'Transit Operations'},
+      {name:'Sarah Johnson',empId:'MTA-202',dept:'Customer Service'},
+      {name:'David Park',empId:'MTA-203',dept:'Facilities'},
+      {name:'Maria Santos',empId:'MTA-204',dept:'Engineering'},
+      {name:'Kevin Williams',empId:'MTA-205',dept:'Administration'},
+      {name:'Priya Patel',empId:'MTA-206',dept:'Transit Operations'},
+    ];
+    extras.forEach(function(e) {
+      var parts = e.name.toLowerCase().split(' ');
+      employees.push({
+        id:uid(), name:e.name, empId:e.empId, dept:e.dept,
+        workEmail:parts[0]+'.'+parts[1]+'@mta.nyc.gov', personalEmail:'',
+        site:'All sites', role:'dispatcher', status:'pending',
+        workNotif:true, emergencyAlerts:true,
+      });
+    });
+  }
+  renderS5();
+}
+
+function renderS5() {
+  var pending = employees.filter(function(e) { return e.status === 'pending'; }).length;
+  var sent    = employees.filter(function(e) { return e.status === 'sent'; }).length;
+  var active  = employees.filter(function(e) { return e.status === 'active'; }).length;
+
+  var tabHTML =
+    '<div class="import-tabs">' +
+    '<div class="import-tab' + (importMode==='manual'?' active':'') + '" onclick="setImportMode(\'manual\')">👤 Add manually</div>' +
+    '<div class="import-tab' + (importMode==='csv'?' active':'') + '" onclick="setImportMode(\'csv\')">📄 Import CSV</div>' +
+    '<div class="import-tab' + (importMode==='directory'?' active':'') + '" onclick="setImportMode(\'directory\')">🏢 LDAP / Directory</div>' +
+    '</div>';
+
+  var importHTML = '';
+  if (importMode === 'manual') {
+    importHTML =
+      '<div class="fg fg3" style="margin-bottom:10px">' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Full name <span class="req">*</span></label><input class="inp" id="ne_name" placeholder="James Rivera" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Employee ID</label><input class="inp" id="ne_empid" placeholder="MTA-301" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Department</label><input class="inp" id="ne_dept" placeholder="Transit Operations" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Work email <span class="req">*</span></label><input class="inp" id="ne_work" type="email" placeholder="name@mta.nyc.gov" style="padding:8px 10px;font-size:11px"><div class="hint" style="color:var(--blue)">📧 Receives TrustLens alerts</div></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Personal email</label><input class="inp" id="ne_personal" type="email" placeholder="personal@gmail.com" style="padding:8px 10px;font-size:11px"><div class="hint" style="color:var(--green)">✅ Retained after offboarding</div></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Site</label><select class="sel" id="ne_site" style="padding:8px 10px;font-size:11px"><option value="ALL">All sites</option>' + sites.map(function(s){return '<option>'+s.icon+' '+s.name+'</option>';}).join('') + '</select></div>' +
+      '</div>' +
+      '<button onclick="addEmployee()" style="padding:9px 18px;background:var(--blue);border:none;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer">+ Add employee</button>';
+  } else if (importMode === 'csv') {
+    importHTML =
+      '<div style="padding:20px;background:var(--bg3);border-radius:9px;border:2px dashed var(--border);text-align:center">' +
+        '<div style="font-size:28px;margin-bottom:10px">📄</div>' +
+        '<div style="font-size:13px;font-weight:700;margin-bottom:6px">Drop CSV or click to upload</div>' +
+        '<div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-bottom:12px">Columns: name, employee_id, work_email, personal_email, department, site</div>' +
+        '<div style="display:flex;gap:8px;justify-content:center">' +
+        '<button onclick="toast(\'✅ 47 employees imported from CSV\')" style="padding:8px 16px;background:var(--blue);border:none;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer">Choose CSV file</button>' +
+        '<button onclick="downloadTemplate()" style="padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans)">↓ Template</button>' +
+        '</div></div>';
+  } else {
+    importHTML =
+      '<div class="fg fg2" style="margin-bottom:10px">' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Directory type</label><select class="sel" style="padding:8px 10px;font-size:11px"><option>Microsoft Active Directory</option><option>Azure AD / Entra ID</option><option>Google Workspace</option><option>Okta</option><option>LDAP</option></select></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Directory URL</label><input class="inp" placeholder="ldap://directory.mta.nyc.gov" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Service account</label><input class="inp" placeholder="svc-trustlens@mta.nyc.gov" style="padding:8px 10px;font-size:11px"></div>' +
+        '<div class="field"><label class="lbl" style="font-size:8px">Password</label><input class="inp" type="password" placeholder="••••••••" style="padding:8px 10px;font-size:11px"></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="toast(\'✅ Connection test successful · 4,847 employees found\')" style="padding:9px 14px;background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.25);border-radius:7px;font-size:11px;font-weight:700;color:var(--blue);cursor:pointer;font-family:var(--mono)">Test connection</button>' +
+        '<button onclick="toast(\'⚡ Syncing 4,847 employees...\')" style="padding:9px 18px;background:var(--blue);border:none;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer">Sync directory →</button>' +
+      '</div>';
+  }
+
+  var tableRows = employees.map(function(emp) {
+    var stColor = emp.status==='active'?'var(--green)':emp.status==='sent'?'var(--cyan)':'var(--yellow)';
+    var stBg = emp.status==='active'?'rgba(34,197,94,.12)':emp.status==='sent'?'rgba(6,182,212,.12)':'rgba(245,158,11,.08)';
+    var stLabel = emp.status==='active'?'✅ DolSafe active':emp.status==='sent'?('📧 Sent'+(emp.invitedAt?' · '+new Date(emp.invitedAt).toLocaleDateString():'')):('⏳ Pending');
+    var personalCell = emp.personalEmail
+      ? '<span style="font-size:11px;color:var(--green);font-family:var(--mono)">' + emp.personalEmail + '</span>'
+      : '<input placeholder="personal@gmail.com" onchange="setPersonalEmail(\'' + emp.id + '\',this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:10px;color:var(--text);outline:none;font-family:var(--mono);width:160px" type="email">';
+    return '<tr>' +
+      '<td style="font-weight:700">' + emp.name + '</td>' +
+      '<td style="font-family:var(--mono);color:var(--dim);font-size:10px">' + (emp.empId||'—') + '</td>' +
+      '<td style="font-size:10px;color:var(--muted)">' + emp.dept + '</td>' +
+      '<td><div style="font-size:11px;color:var(--blue);font-family:var(--mono)">' + emp.workEmail + '</div><div style="font-size:8px;color:var(--dim)">📧 duty alerts</div></td>' +
+      '<td>' + personalCell + '<div style="font-size:8px;color:var(--green);margin-top:2px">✅ retained post-exit</div></td>' +
+      '<td>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+          '<label style="display:flex;align-items:center;gap:4px;font-size:9px;cursor:pointer"><input type="checkbox"' + (emp.workNotif?' checked':'') + ' onchange="toggleEmpPref(\'' + emp.id + '\',\'workNotif\',this.checked)" style="accent-color:var(--blue)"> Work</label>' +
+          '<label style="display:flex;align-items:center;gap:4px;font-size:9px;cursor:pointer"><input type="checkbox"' + (emp.emergencyAlerts?' checked':'') + ' onchange="toggleEmpPref(\'' + emp.id + '\',\'emergencyAlerts\',this.checked)" style="accent-color:var(--red)"> SOS</label>' +
+        '</div>' +
+      '</td>' +
+      '<td><span style="background:' + stBg + ';color:' + stColor + ';border:1px solid ' + stColor + '44;padding:2px 8px;border-radius:7px;font-size:9px;font-weight:700;font-family:var(--mono)">' + stLabel + '</span></td>' +
+      '<td><div style="display:flex;gap:4px">' +
+        '<button onclick="sendInvite(\'' + emp.id + '\')" style="padding:2px 7px;border-radius:5px;background:rgba(59,158,255,.1);border:1px solid rgba(59,158,255,.2);color:var(--blue);font-size:8px;cursor:pointer;font-family:var(--mono)">📧</button>' +
+        '<button onclick="removeEmployee(\'' + emp.id + '\')" style="padding:2px 7px;border-radius:5px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--red);font-size:8px;cursor:pointer;font-family:var(--mono)">×</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  var c = document.getElementById('content');
+  c.innerHTML =
+    hdr(6, 'DolSafe employee provisioning', 'When a company joins TrustLens, every employee automatically gets DolSafe. Two email channels per person — work email for employer alerts, personal email retained forever even after leaving.') +
+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">' +
+    ['📧 Work email|Duty alerts · CrowdLens requests · Incident notifications · Shift briefings · Revoked on offboarding',
+     '📱 Personal email|DolSafe retained forever · SOS + trusted contacts · Morning briefing · Never removed by employer',
+     '🔐 Two channels|Employer data plane ≠ Personal data plane · Architecturally separated · No TrustLens data via personal account'
+    ].map(function(item) {
+      var p = item.split('|');
+      return '<div style="background:rgba(59,158,255,.06);border:1px solid rgba(59,158,255,.15);border-radius:10px;padding:12px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:5px">' + p[0] + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);line-height:1.5;font-family:var(--mono)">' + p[1] + '</div></div>';
+    }).join('') +
+    '</div>' +
+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">' +
+    [{n:employees.length,l:'Total',c:'#3B9EFF',bg:'rgba(59,158,255,.08)',bc:'rgba(59,158,255,.25)'},
+     {n:pending,l:'Pending',c:'#F59E0B',bg:'rgba(245,158,11,.08)',bc:'rgba(245,158,11,.25)'},
+     {n:sent,l:'Invite sent',c:'#06B6D4',bg:'rgba(6,182,212,.08)',bc:'rgba(6,182,212,.25)'},
+     {n:active,l:'Active',c:'#22C55E',bg:'rgba(34,197,94,.08)',bc:'rgba(34,197,94,.25)'},
+    ].map(function(x) {
+      return '<div style="background:' + x.bg + ';border:1px solid ' + x.bc + ';border-radius:9px;padding:11px;text-align:center">' +
+        '<div style="font-size:22px;font-weight:900;color:' + x.c + ';font-family:var(--mono)">' + x.n + '</div>' +
+        '<div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:' + x.c + ';font-family:var(--mono)">' + x.l + '</div></div>';
+    }).join('') +
+    '</div>' +
+
+    '<div class="card" style="margin-bottom:12px"><div class="chdr"><div class="ctitle">Import employees</div><div class="tag tag-dim">Choose method below</div></div>' +
+    '<div class="cbody">' + tabHTML + importHTML + '</div></div>' +
+
+    '<div class="card"><div class="chdr"><div class="ctitle">Employee DolSafe roster</div>' +
+    '<div style="display:flex;gap:6px">' +
+      '<button onclick="sendAllInvites()" style="padding:4px 10px;border-radius:6px;background:var(--blue);border:none;color:white;font-size:9px;font-weight:700;cursor:pointer;font-family:var(--mono)">📱 Send DolSafe invites</button>' +
+    '</div></div>' +
+    '<div style="overflow-x:auto"><table class="etbl"><thead><tr>' +
+      '<th>Name</th><th>Emp ID</th><th>Department</th>' +
+      '<th>Work email <span style="color:var(--blue)">(TrustLens)</span></th>' +
+      '<th>Personal email <span style="color:var(--green)">(retained)</span></th>' +
+      '<th>Notif.</th><th>Status</th><th></th>' +
+    '</tr></thead><tbody>' + tableRows + '</tbody></table></div></div>' +
+
+    '<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:14px;margin-bottom:16px">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px">⚖️ Offboarding policy</div>' +
+    '<div class="ob-grid">' +
+    [{icon:'❌',title:'Work email — revoked instantly',desc:'On offboarding, all employer notification channels are immediately cut. No more duty assignments, CrowdLens requests, or organizational alerts.'},
+     {icon:'✅',title:'Personal email — retained forever',desc:'DolSafe stays on their phone at no cost. Personal email remains registered. SOS, trusted contacts, and community safety features remain active.'},
+     {icon:'🔒',title:'Employer data — never accessible post-exit',desc:'No TrustLens intelligence, camera feeds, or organizational data is accessible through the personal DolSafe account after offboarding.'},
+     {icon:'📋',title:'Audit trail — preserved permanently',desc:'All dispatch actions and duty records under this Employee ID remain in the TrustLens audit log. The record exists; the access does not.'},
+    ].map(function(r) {
+      return '<div class="ob-card"><div style="font-size:16px;flex-shrink:0">' + r.icon + '</div><div><div style="font-size:11px;font-weight:700;margin-bottom:3px">' + r.title + '</div><div style="font-size:10px;color:var(--muted);line-height:1.5">' + r.desc + '</div></div></div>';
+    }).join('') +
+    '</div></div>' +
+    nav(true, true, 'Continue to Retention');
+}
+
+function setImportMode(mode) { importMode = mode; renderS5(); }
+
+function addEmployee() {
+  var name = val('ne_name'), work = val('ne_work');
+  if (!name || !work) { toast('Name and work email required', 'warn'); return; }
+  employees.push({
+    id:uid(), name:name, empId:val('ne_empid'), dept:val('ne_dept')||'General',
+    workEmail:work, personalEmail:val('ne_personal'), site:'All sites',
+    role:'dispatcher', status:'pending', workNotif:true, emergencyAlerts:true,
+  });
+  importMode = 'manual'; renderS5(); toast('Employee added: ' + name);
+}
+function setPersonalEmail(id, v) { var e = getEmp(id); if (e) { e.personalEmail = v; toast('Personal email saved for ' + e.name); } }
+function toggleEmpPref(id, field, val) { var e = getEmp(id); if (e) e[field] = val; }
+function sendInvite(id) {
+  var e = getEmp(id); if (!e) return;
+  showInvitePreview([e], function() {
+    e.status = 'sent';
+    e.invitedAt = new Date().toISOString();
+    e.inviteToken = 'DS-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    renderS5();
+    toast('📧 DolSafe invite sent to ' + (e.workEmail||e.personalEmail));
+  });
+}
+function sendAllInvites() {
+  var pending = employees.filter(function(e) { return e.status === 'pending'; });
+  if (!pending.length) { toast('All employees already invited', 'warn'); return; }
+  showInvitePreview(pending, function() {
+    pending.forEach(function(e) {
+      e.status = 'sent';
+      e.invitedAt = new Date().toISOString();
+      e.inviteToken = 'DS-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    });
+    renderS5();
+    toast('⚡ ' + pending.length + ' DolSafe invites sent');
+  });
+}
+function removeEmployee(id) { employees = employees.filter(function(e) { return e.id !== id; }); renderS5(); toast('Employee removed'); }
+function downloadTemplate() {
+  var csv = 'name,employee_id,work_email,personal_email,department,site\nJohn Smith,EMP-001,j.smith@company.com,john@gmail.com,Operations,Main Site';
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'dolsafe_employees_template.csv'; a.click();
+  toast('↓ Template downloaded');
+}
+
+// ─────────────────────────────────────────
+// STEP 6 — RETENTION TIER
+// ─────────────────────────────────────────
+function s6() {
+  var tiers = [
+    {id:'standard',cls:'tier-std',emoji:'🟢',name:'Standard',ttl:'72-hour session',
+     desc:'Single incident window. Cleanest legal position. No additional documentation required. Best for new deployments and pilots.',
+     reqs:['✅ Activate immediately','✅ GDPR Art.5(e) clear','✅ No SIA required'],color:'var(--green)'},
+    {id:'extended',cls:'tier-ext',emoji:'🔵',name:'Extended',ttl:'14-day session',
+     desc:'Multi-day reconnaissance detection. Repeat offender recognition. Weekly pattern baselines. Requires DPA and public notice.',
+     reqs:['📄 Sign Data Processing Agreement','📌 Post public notice at entrances','📋 File SIA if NYC jurisdiction'],color:'var(--blue)'},
+    {id:'investigative',cls:'tier-inv',emoji:'🟡',name:'Investigative',ttl:'30-day session',
+     desc:'Active investigation support. Cross-site correlation. Law enforcement only. Written legal authority required before activation.',
+     reqs:['⚖️ Submit written legal authority','👮 Confirm LE agency credentials','📝 Document active case number'],color:'var(--yellow)'},
+  ];
+
+  var tierHTML = tiers.map(function(t) {
+    var isSel = retentionTier === t.id;
+    return '<div class="tier-card ' + t.cls + (isSel?' sel':'') + '" onclick="setTier(\'' + t.id + '\')">' +
+      '<div class="tier-check" style="color:' + t.color + (isSel?';background:' + t.color + ';border-color:' + t.color:'') + '">' + (isSel?'✓':'') + '</div>' +
+      '<div style="font-size:22px;margin-bottom:7px">' + t.emoji + '</div>' +
+      '<div style="font-size:13px;font-weight:900;color:' + t.color + ';margin-bottom:3px">' + t.name + '</div>' +
+      '<div style="font-size:11px;font-weight:700;color:' + t.color + ';font-family:var(--mono);margin-bottom:8px">' + t.ttl + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px">' + t.desc + '</div>' +
+      '<div style="font-size:9px;font-family:var(--mono)">' + t.reqs.map(function(r) { return '<div style="color:' + t.color + ';margin-bottom:3px">' + r + '</div>'; }).join('') + '</div>' +
+    '</div>';
+  }).join('');
+
+  var c = document.getElementById('content');
+  c.innerHTML =
+    hdr(7, 'Choose session retention tier', 'How long anonymous device hashes are held in RAM for behavioral pattern detection. All data lives in memory only — never disk.') +
+    '<div class="tier-grid">' + tierHTML + '</div>' +
+    nav(true, true, 'Continue to Review');
+}
+
+function setTier(t) {
+  retentionTier = t;
+  s6();
+}
+
+// ─────────────────────────────────────────
+// STEP 7 — REVIEW
+// ─────────────────────────────────────────
+function s7() {
+  var tl = {standard:'Standard · 72h',extended:'Extended · 14 days',investigative:'Investigative · 30 days'};
+  var tc = {standard:'var(--green)',extended:'var(--blue)',investigative:'var(--yellow)'};
+
+  var hier = '<div class="hierarchy">' +
+    '<div style="color:var(--blue);font-weight:700">' + org.logo + ' ' + org.name + ' (' + (org.short||'ORG') + ')</div>' +
+    sites.map(function(site) {
+      return '<div style="padding-left:16px">├─ ' + site.icon + ' ' + site.name +
+        zones.filter(function(z) { return z.siteId === site.id; }).map(function(zone) {
+          return '<div style="padding-left:32px;color:var(--dim)">├─ ' + zone.icon + ' ' + zone.name +
+            cameras.filter(function(cam) { return cam.zoneId === zone.id; }).map(function(cam) {
+              var sensors = Object.keys(cam.sensors).filter(function(k){return cam.sensors[k];}).join('+');
+              return '<div style="padding-left:48px;color:var(--dimmer)">└─ 📹 ' + cam.name + ' <span style="color:var(--blue3)">[' + sensors + ']</span></div>';
+            }).join('') + '</div>';
+        }).join('') + '</div>';
+    }).join('') + '</div>';
+
+  var c = document.getElementById('content');
+  c.innerHTML =
+    hdr(8, 'Review & activate', 'Review the complete configuration before activating the organization in TrustLens.') +
+    '<div class="review-card"><div class="review-hdr">📐 Organization hierarchy</div>' + hier + '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+    '<div class="review-card"><div class="review-hdr">🏢 Organization</div><div>' +
+    [['Name',org.name],['Short',org.short||'—'],['Industry',org.industry||'—'],['Contact',org.contact+' · '+org.email]].map(function(r){return '<div class="review-row"><div class="rk">'+r[0]+'</div><div class="rv">'+r[1]+'</div></div>';}).join('')+
+    '</div></div>' +
+    '<div class="review-card"><div class="review-hdr">📊 Summary</div><div>' +
+    [['Sites',sites.length+' sites'],['Zones',zones.length+' zones'],['Cameras',cameras.length+' cameras'],['Users',users.length+' users'],['Employees',employees.length+' DolSafe provisioned'],['Retention',tl[retentionTier]]].map(function(r){
+      return '<div class="review-row"><div class="rk">'+r[0]+'</div><div class="rv" style="color:'+(r[0]==='Retention'?tc[retentionTier]:'inherit')+'">'+r[1]+'</div></div>';
+    }).join('') + '</div></div></div>' +
+    '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:11px;padding:14px;margin-bottom:18px;display:flex;align-items:flex-start;gap:11px">' +
+      '<div style="font-size:18px;flex-shrink:0">✅</div>' +
+      '<div><div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:3px">Ready to activate</div>' +
+      '<div style="font-size:12px;color:var(--muted);line-height:1.6">Once activated: credentials emailed · cameras begin connecting · session engine initializes at ' + tl[retentionTier] + ' · first alert within minutes of camera connection.</div></div>' +
+    '</div>' +
+    '<div class="nav-row"><button class="btn-sec" onclick="go(-1)">← Back</button><div class="sp"></div>' +
+    '<button class="btn-green" onclick="activate()">⚡ Activate ' + (org.short||org.name) + ' on TrustLens</button></div>';
+}
+
+// ─────────────────────────────────────────
+// ACTIVATION
+// ─────────────────────────────────────────
+function activate() {
+  var steps = [
+    'Creating organization record',
+    'Provisioning ' + sites.length + ' sites & ' + zones.length + ' zones',
+    'Registering ' + cameras.length + ' cameras',
+    'Provisioning DolSafe for ' + employees.length + ' employees',
+    'Sending work email invitations',
+    'Initializing ' + (retentionTier === 'standard' ? '72h' : retentionTier === 'extended' ? '14-day' : '30-day') + ' session engine',
+    'Activating TrustLens Edge nodes',
+  ];
+  var c = document.getElementById('content');
+  c.innerHTML = '<div style="padding:60px 20px;text-align:center">' +
+    '<div style="font-size:48px;margin-bottom:18px">⚡</div>' +
+    '<div style="font-size:20px;font-weight:800;margin-bottom:10px;color:var(--blue)">Activating ' + org.name + '…</div>' +
+    '<div style="font-size:12px;color:var(--dim);font-family:var(--mono);margin-bottom:24px">Please wait…</div>' +
+    '<div style="max-width:320px;margin:0 auto">' +
+    steps.map(function(s, i) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);animation:fadeIn .3s ease ' + (i*0.15) + 's both">' +
+        '<div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--blue);animation:spin .6s linear infinite;flex-shrink:0"></div>' +
+        '<div style="font-size:11px;font-family:var(--mono);color:var(--muted)">' + s + '</div></div>';
+    }).join('') +
+    '</div></div>';
+  setTimeout(showSuccess, 3000);
+}
+
+function showSuccess() {
+  var tl = {standard:'Standard · 72-hour',extended:'Extended · 14-day',investigative:'Investigative · 30-day'};
+  var c = document.getElementById('content');
+  renderProgress();
+  c.innerHTML = '<div style="text-align:center;padding:40px 20px;animation:fadeIn .5s ease">' +
+    '<div style="font-size:60px;margin-bottom:18px">🐬</div>' +
+    '<div style="font-size:30px;font-weight:900;letter-spacing:-.5px;color:var(--green);margin-bottom:10px">' + org.name + ' is live</div>' +
+    '<div style="font-size:14px;color:var(--muted);line-height:1.7;max-width:500px;margin:0 auto 28px">' +
+      'TrustLens is active across ' + sites.length + ' sites, ' + zones.length + ' zones, and ' + cameras.length + ' cameras. ' +
+      employees.length + ' employees provisioned with DolSafe. Session engine running at ' + tl[retentionTier] + '.' +
+    '</div>' +
+    '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;max-width:580px;margin:0 auto 24px;text-align:left">' +
+    [
+      {i:'📧',t:'Credentials sent',d:users.map(function(u){return u.name;}).join(', ') + ' received TrustLens login links.'},
+      {i:'📱',t:'DolSafe invites sent',d:employees.length + ' employees received work email DolSafe invitations.'},
+      {i:'📹',t:'Cameras connecting',d:cameras.length + ' cameras attempting RTSP connections. Edge nodes online within 15 min.'},
+      {i:'🧠',t:'Baseline learning',d:'TrustLens will learn behavioral baselines for each zone over the first 24 hours.'},
+      {i:'🔒',t:'Session engine active',d:'Device hash store initialized at ' + tl[retentionTier] + ' retention. RAM only — no disk.'},
+    ].map(function(x) {
+      return '<div style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-size:18px;flex-shrink:0">' + x.i + '</div>' +
+        '<div><div style="font-size:12px;font-weight:700;margin-bottom:2px">' + x.t + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);line-height:1.5">' + x.d + '</div></div></div>';
+    }).join('') +
+    '</div>' +
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+      '<button onclick="location.reload()" style="padding:12px 22px;background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:700;color:white;cursor:pointer">Onboard another →</button>' +
+      '<button onclick="toast(\'Opening TrustLens Command...\')" style="padding:12px 22px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-family:var(--sans);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer">Open Command Dashboard</button>' +
+    '</div></div>';
+}
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function hdr(n, title, desc) {
+  return '<div class="shdr">' +
+    '<div class="snum">Step ' + n + ' of ' + STEPS.length + '</div>' +
+    '<div class="stitle">' + title + '</div>' +
+    '<div class="sdesc">' + desc + '</div></div>';
+}
+
+function field(label, id, value, placeholder) {
+  return '<div class="field"><label class="lbl">' + label + '</label>' +
+    '<input class="inp" id="' + id + '" value="' + (value||'') + '" placeholder="' + (placeholder||'') + '"></div>';
+}
+
+function selField(label, id, opts) {
+  return '<div class="field"><label class="lbl">' + label + '</label>' +
+    '<select class="sel" id="' + id + '">' + opts.map(function(o){return '<option>'+o+'</option>';}).join('') + '</select></div>';
+}
+
+function nav(back, next, nextLabel) {
+  return '<div class="nav-row">' +
+    (back ? '<button class="btn-sec" onclick="go(-1)">← Back</button>' : '') +
+    '<div class="sp"></div>' +
+    (next ? '<button class="btn-pri" onclick="go(1)">' + nextLabel + ' →</button>' : '') +
+  '</div>';
+}
+
+// ─────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────
+window.addEventListener('load', function() { render(); });
+</script>
+</body>
+</html>

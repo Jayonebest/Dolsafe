@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DolSafe · Deploy Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#F9FAFB;font-family:'Inter',sans-serif;color:#111827;line-height:1.6}
+.page{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+
+/* HERO */
+.hero{text-align:center;padding:40px 0 48px;border-bottom:2px solid #E5E7EB;margin-bottom:48px}
+.hero-dolphin{font-size:56px;margin-bottom:16px;display:block}
+.hero-title{font-size:36px;font-weight:900;color:#111827;letter-spacing:-.6px;margin-bottom:8px}
+.hero-sub{font-size:16px;color:#6B7280;font-weight:500;max-width:520px;margin:0 auto 20px;line-height:1.65}
+.hero-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hero-chip{font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px}
+
+/* PHASE */
+.phase{margin-bottom:48px}
+.phase-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;
+  padding-bottom:14px;border-bottom:2px solid #E5E7EB}
+.phase-num{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;font-weight:900;color:white;flex-shrink:0}
+.phase-title{font-size:22px;font-weight:900;color:#111827;letter-spacing:-.3px}
+.phase-sub{font-size:13px;color:#6B7280;font-weight:500;margin-top:2px}
+.phase-time{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+  margin-left:auto;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:16px}
+.step{background:white;border-radius:16px;overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);border:1px solid #E5E7EB}
+.step-hdr{padding:14px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.step-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px}
+.step-info{flex:1}
+.step-title{font-size:15px;font-weight:700;color:#111827;margin-bottom:2px}
+.step-desc{font-size:13px;color:#6B7280;font-weight:500}
+.step-body{padding:0 18px 16px 58px;display:none}
+.step-body.open{display:block}
+
+/* CODE BLOCKS */
+.code-block{background:#111827;border-radius:12px;padding:14px 16px;margin:10px 0;
+  position:relative;overflow-x:auto}
+.code-block code{font-family:'JetBrains Mono',monospace;font-size:13px;color:#E5E7EB;
+  white-space:pre;display:block;line-height:1.7}
+.code-block .comment{color:#6B7280}
+.code-block .cmd{color:#86EFAC}
+.code-block .path{color:#93C5FD}
+.code-block .out{color:#FCD34D}
+.copy-btn{position:absolute;top:10px;right:10px;padding:4px 10px;border-radius:7px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.7);font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .15s}
+.copy-btn:hover{background:rgba(255,255,255,.2);color:white}
+
+/* INFO BLOCKS */
+.info-box{border-radius:12px;padding:13px 15px;margin:10px 0;
+  display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:500;line-height:1.55}
+.info-icon{font-size:17px;flex-shrink:0;margin-top:1px}
+.info-tip{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8}
+.info-warn{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.info-ok{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+
+/* FILE LIST */
+.file-list{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;
+  padding:12px 14px;margin:10px 0}
+.fl-title{font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:8px}
+.fl-items{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.fl-item{font-size:12px;font-family:'JetBrains Mono',monospace;color:#374151;
+  display:flex;align-items:center;gap:6px;padding:3px 0}
+.fl-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* URL BOX */
+.url-box{background:#ECFDF5;border:2px solid #A7F3D0;border-radius:12px;
+  padding:14px 16px;margin:14px 0;text-align:center}
+.url-label{font-size:11px;font-weight:700;color:#065F46;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:6px}
+.url-text{font-size:16px;font-weight:800;color:#059669;font-family:'JetBrains Mono',monospace}
+
+/* RESULT CARD */
+.result-card{background:white;border:2px solid #D1FAE5;border-radius:16px;
+  padding:20px;margin:20px 0;text-align:center}
+.rc-icon{font-size:44px;margin-bottom:12px;display:block}
+.rc-title{font-size:20px;font-weight:900;color:#065F46;margin-bottom:6px}
+.rc-sub{font-size:13px;color:#374151;font-weight:500;line-height:1.6;margin-bottom:14px}
+.rc-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.rc-link{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .15s}
+.rc-link:active{transform:scale(.97)}
+
+/* SHARE TABLE */
+.share-table{width:100%;border-collapse:collapse;margin:10px 0}
+.share-table th{background:#F9FAFB;padding:10px 12px;text-align:left;font-size:12px;
+  font-weight:700;color:#6B7280;border-bottom:2px solid #E5E7EB}
+.share-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+.share-table tr:last-child td{border:none}
+
+@media(max-width:600px){
+  .fl-items{grid-template-columns:1fr}
+  .hero-title{font-size:28px}
+  .phase-title{font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <span class="hero-dolphin">🐬</span>
+    <div class="hero-title">Deploy DolSafe live</div>
+    <div class="hero-sub">Push all your files to GitHub and get a live URL in under 20 minutes. No coding experience needed — every command is here to copy-paste.</div>
+    <div class="hero-chips">
+      <span class="hero-chip" style="background:#DBEAFE;color:#1E40AF">Windows PC</span>
+      <span class="hero-chip" style="background:#D1FAE5;color:#065F46">Free · $0</span>
+      <span class="hero-chip" style="background:#F3E8FF;color:#5B21B6">~20 minutes</span>
+      <span class="hero-chip" style="background:#FEF3C7;color:#92400E">No coding needed</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- PHASE 1: GITHUB               -->
+  <!-- ═══════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num" style="background:#1A56DB">1</div>
+      <div>
+        <div class="phase-title">Set up GitHub</div>
+        <div class="phase-sub">Create a free account and upload your files — this is where your code lives</div>
+      </div>
+      <div class="phase-time" style="background:#EFF6FF;color:#1E40AF">5 min</div>
+    </div>
+
+    <div class="steps">
+
+      <!-- STEP 1.1 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#EFF6FF;color:#1E40AF">1</div>
+          <div class="step-info">
+            <div class="step-title">Create a GitHub account</div>
+            <div class="step-desc">Free account at github.com — takes 2 minutes</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-tip"><div class="info-icon">💡</div><div>GitHub is where developers store and share code. Think of it like Google Drive but for code files. It is free and what Vercel reads to deploy your site.</div></div>
+          <div style="font-size:13px;font-weight:600;color:#374151;margin:10px 0 6px">Steps:</div>
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>Go to <strong>github.com</strong> in your browser</li>
+            <li>Click <strong>Sign up</strong> — top right</li>
+            <li>Enter your email, create a password, pick a username (e.g. <code style="background:#F3F4F6;padding:1px 5px;border-radius:4px;font-family:monospace">johnnydolsafe</code>)</li>
+            <li>Verify your email — GitHub sends a code</li>
+            <li>Skip all the optional setup questions — click <strong>Skip personalization</strong></li>
+          </ol>
+          <div class="info-box info-ok" style="margin-top:10px"><div class="info-icon">✅</div><div>You are done when you see the GitHub dashboard — a dark page with "Welcome to GitHub".</div></div>
+        </div>
+      </div>
+
+      <!-- STEP 1.2 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#EFF6FF;color:#1E40AF">2</div>
+          <div class="step-info">
+            <div class="step-title">Create a new repository</div>
+            <div class="step-desc">A repository is a folder on GitHub — create one called "dolsafe"</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+            <li>Click the <strong>+</strong> button — top right of GitHub — then <strong>New repository</strong></li>
+            <li>Repository name: <code style="background:#F3F4F6;padding:1px 5px;border-radius:4px;font-family:monospace">dolsafe</code></li>
+            <li>Set to <strong>Public</strong> (required for free Vercel deploy)</li>
+            <li>Check <strong>Add a README file</strong></li>
+            <li>Click the green <strong>Create repository</strong> button</li>
+          </ol>
+          <div class="info-box info-ok"><div class="info-icon">✅</div><div>You now have a repository at: <strong>github.com/YOUR-USERNAME/dolsafe</strong></div></div>
+        </div>
+      </div>
+
+      <!-- STEP 1.3 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#EFF6FF;color:#1E40AF">3</div>
+          <div class="step-info">
+            <div class="step-title">Upload your HTML files</div>
+            <div class="step-desc">Drag and drop all 15 DolSafe files into GitHub — no command line needed</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-tip"><div class="info-icon">💡</div><div>You can upload files directly in the browser — no Git commands needed for this step.</div></div>
+
+          <div class="file-list">
+            <div class="fl-title">Files to upload — your dolsafe folder</div>
+            <div class="fl-items">
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-home.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-briefing.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-smartreport.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-sos.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-onboarding.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#3B82F6"></div>dolsafe-settings.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-enterprise-v2.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-dispatch.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-analytics.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-audit.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-incident.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-crowdlens.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#7C3AED"></div>trustlens-onboarding.html</div>
+              <div class="fl-item"><div class="fl-dot" style="background:#059669"></div>deploy-guide.html</div>
+            </div>
+          </div>
+
+          <div style="font-size:13px;font-weight:600;color:#374151;margin:12px 0 6px">How to upload:</div>
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>In your new GitHub repo, click <strong>Add file → Upload files</strong></li>
+            <li>Open your <strong>dolsafe</strong> folder on Windows</li>
+            <li>Select all HTML files (<strong>Ctrl+A</strong> to select all)</li>
+            <li>Drag them into the GitHub upload window</li>
+            <li>Wait for all files to appear in the list</li>
+            <li>Scroll down — click <strong>Commit changes</strong> (the green button)</li>
+          </ol>
+          <div class="info-box info-ok"><div class="info-icon">✅</div><div>All files now appear in your repository. You should see them listed at github.com/YOUR-USERNAME/dolsafe</div></div>
+        </div>
+      </div>
+
+      <!-- STEP 1.4 — index.html -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#EFF6FF;color:#1E40AF">4</div>
+          <div class="step-info">
+            <div class="step-title">Create an index.html — the front door</div>
+            <div class="step-desc">Vercel needs a home page — this links all your screens together</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-tip"><div class="info-icon">💡</div><div>When someone visits your URL with no file specified (e.g. <code>dolsafe.vercel.app</code>), Vercel shows <strong>index.html</strong>. You need to create this file.</div></div>
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+            <li>In your GitHub repo, click <strong>Add file → Create new file</strong></li>
+            <li>Name it exactly: <code style="background:#F3F4F6;padding:1px 5px;border-radius:4px;font-family:monospace">index.html</code></li>
+            <li>Paste this code into the editor:</li>
+          </ol>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code><span class="comment">&lt;!-- DolSafe · Product Demo Hub --&gt;</span>
+<span class="cmd">&lt;meta http-equiv="refresh" content="0; url=dolsafe-home.html"&gt;</span></code>
+          </div>
+          <div style="font-size:13px;color:#374151;font-weight:500;margin:8px 0">This automatically redirects visitors to the DolSafe home screen.</div>
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px" start="4">
+            <li>Click <strong>Commit new file</strong></li>
+          </ol>
+        </div>
+      </div>
+
+    </div><!-- end steps -->
+  </div><!-- end phase 1 -->
+
+
+  <!-- ═══════════════════════════════ -->
+  <!-- PHASE 2: VERCEL                -->
+  <!-- ═══════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num" style="background:#7C3AED">2</div>
+      <div>
+        <div class="phase-title">Deploy on Vercel</div>
+        <div class="phase-sub">Connect your GitHub repo — Vercel gives you a live HTTPS URL instantly</div>
+      </div>
+      <div class="phase-time" style="background:#F5F3FF;color:#5B21B6">5 min</div>
+    </div>
+
+    <div class="steps">
+
+      <!-- STEP 2.1 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F5F3FF;color:#5B21B6">1</div>
+          <div class="step-info">
+            <div class="step-title">Create a Vercel account</div>
+            <div class="step-desc">Free hosting — sign up with your GitHub account (one click)</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>Go to <strong>vercel.com</strong></li>
+            <li>Click <strong>Sign Up</strong></li>
+            <li>Choose <strong>Continue with GitHub</strong></li>
+            <li>Click <strong>Authorize Vercel</strong> when GitHub asks</li>
+            <li>Select <strong>Hobby (free)</strong> plan</li>
+            <li>Enter your name — click <strong>Continue</strong></li>
+          </ol>
+          <div class="info-box info-ok" style="margin-top:10px"><div class="info-icon">✅</div><div>You are now on the Vercel dashboard. It looks like a clean white page that says "Let's build something new."</div></div>
+        </div>
+      </div>
+
+      <!-- STEP 2.2 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F5F3FF;color:#5B21B6">2</div>
+          <div class="step-info">
+            <div class="step-title">Import your GitHub repository</div>
+            <div class="step-desc">Connect the "dolsafe" repo — Vercel deploys it automatically</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>On the Vercel dashboard click <strong>Add New → Project</strong></li>
+            <li>Under "Import Git Repository" you should see your <strong>dolsafe</strong> repo listed</li>
+            <li>Click <strong>Import</strong> next to it</li>
+            <li>On the Configure Project screen — leave everything as default</li>
+            <li>Click the big <strong>Deploy</strong> button</li>
+          </ol>
+          <div class="info-box info-warn" style="margin-top:10px"><div class="info-icon">⚠️</div><div>If you do not see your repo listed, click "Adjust GitHub App Permissions" and give Vercel access to your dolsafe repo.</div></div>
+          <div class="info-box info-ok"><div class="info-icon">⏱️</div><div>Vercel deploys in about 30 seconds. You will see a progress bar and then a big congratulations screen with confetti.</div></div>
+        </div>
+      </div>
+
+      <!-- STEP 2.3 -->
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F5F3FF;color:#5B21B6">3</div>
+          <div class="step-info">
+            <div class="step-title">Get your live URL</div>
+            <div class="step-desc">Vercel gives you a permanent HTTPS link — share it with MTA and LIU today</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div style="font-size:13px;color:#374151;font-weight:500;margin-bottom:10px">After deployment Vercel shows you two URLs:</div>
+          <div class="url-box">
+            <div class="url-label">Your live URL (example)</div>
+            <div class="url-text">dolsafe.vercel.app</div>
+          </div>
+          <div class="info-box info-tip"><div class="info-icon">💡</div><div>Vercel also gives you a unique URL like <code>dolsafe-abc123.vercel.app</code>. Both work. You can share either one.</div></div>
+
+          <div style="font-size:13px;font-weight:700;color:#374151;margin:12px 0 8px">Share these specific links with your contacts:</div>
+          <table class="share-table">
+            <thead><tr><th>Who</th><th>Send this link</th><th>What they see</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700">MTA Michael Kemper</td><td style="font-family:monospace;font-size:12px">dolsafe.vercel.app/trustlens-enterprise-v2.html</td><td>TrustLens command dashboard</td></tr>
+              <tr><td style="font-weight:700">LIU Director of Safety</td><td style="font-family:monospace;font-size:12px">dolsafe.vercel.app/dolsafe-home.html</td><td>DolSafe employee app</td></tr>
+              <tr><td style="font-weight:700">LIU pilot demo</td><td style="font-family:monospace;font-size:12px">dolsafe.vercel.app/trustlens-dispatch.html</td><td>Officer response screen</td></tr>
+              <tr><td style="font-weight:700">Investor / demo</td><td style="font-family:monospace;font-size:12px">dolsafe.vercel.app</td><td>Home screen (index redirect)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- PHASE 3: UPDATE FILES          -->
+  <!-- ═══════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num" style="background:#059669">3</div>
+      <div>
+        <div class="phase-title">Update files anytime</div>
+        <div class="phase-sub">Every time you upload a new version to GitHub, Vercel redeploys automatically in 30 seconds</div>
+      </div>
+      <div class="phase-time" style="background:#ECFDF5;color:#065F46">Ongoing</div>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#ECFDF5;color:#065F46">1</div>
+          <div class="step-info">
+            <div class="step-title">Replace a file on GitHub</div>
+            <div class="step-desc">Drag the updated file into GitHub — Vercel picks it up in 30 seconds</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>Go to <strong>github.com/YOUR-USERNAME/dolsafe</strong></li>
+            <li>Click <strong>Add file → Upload files</strong></li>
+            <li>Drag in your updated HTML file</li>
+            <li>GitHub asks "This file already exists — replace it?" — click <strong>OK</strong></li>
+            <li>Click <strong>Commit changes</strong></li>
+            <li>Wait 30 seconds — Vercel redeploys automatically</li>
+            <li>Refresh your live URL — the update is live</li>
+          </ol>
+          <div class="info-box info-ok"><div class="info-icon">✅</div><div>You never need to touch Vercel again after the first deploy. GitHub push = automatic redeploy. Every time.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- PHASE 4: CUSTOM DOMAIN (OPT)  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num" style="background:#F59E0B">4</div>
+      <div>
+        <div class="phase-title">Custom domain (optional)</div>
+        <div class="phase-sub">Point dolsafe.app or trustlens.io to your Vercel deploy — looks professional for MTA pitch</div>
+      </div>
+      <div class="phase-time" style="background:#FFFBEB;color:#92400E">Optional · $12/yr</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#FFFBEB;color:#92400E">1</div>
+          <div class="step-info">
+            <div class="step-title">Buy a domain and connect it</div>
+            <div class="step-desc">dolsafe.app is $12/year at Namecheap — Vercel connects it in 3 clicks</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-tip"><div class="info-icon">💡</div><div>Skip this for the first demo. <code>dolsafe.vercel.app</code> works perfectly and looks fine in a pitch. Do this after you have your first meeting confirmed.</div></div>
+          <ol style="font-size:13px;color:#374151;font-weight:500;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+            <li>Buy <strong>dolsafe.app</strong> at namecheap.com (~$12/year)</li>
+            <li>In Vercel dashboard → your project → <strong>Settings → Domains</strong></li>
+            <li>Type <code>dolsafe.app</code> → click <strong>Add</strong></li>
+            <li>Vercel shows you two DNS records to add</li>
+            <li>Go to Namecheap → Advanced DNS → add those two records</li>
+            <li>Wait 10 minutes → your domain is live with HTTPS</li>
+          </ol>
+          <div class="url-box">
+            <div class="url-label">Result — your branded URL</div>
+            <div class="url-text">https://dolsafe.app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card">
+    <span class="rc-icon">🚀</span>
+    <div class="rc-title">You are live</div>
+    <div class="rc-sub">
+      Every screen is now accessible from a real URL you can share from your phone, paste in an email, or open on any device during a demo.<br><br>
+      <strong>Send MTA this link:</strong> <code style="background:#F3F4F6;padding:2px 8px;border-radius:6px;font-size:13px">dolsafe.vercel.app/trustlens-enterprise-v2.html</code><br>
+      <strong>Send LIU this link:</strong> <code style="background:#F3F4F6;padding:2px 8px;border-radius:6px;font-size:13px">dolsafe.vercel.app/dolsafe-home.html</code>
+    </div>
+    <div class="rc-links">
+      <div class="rc-link" style="background:#1A56DB;color:white" onclick="alert('Open github.com in your browser')">Open GitHub →</div>
+      <div class="rc-link" style="background:#7C3AED;color:white" onclick="alert('Open vercel.com in your browser')">Open Vercel →</div>
+      <div class="rc-link" style="background:#F3F4F6;color:#374151" onclick="window.print()">🖨️ Print guide</div>
+    </div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="phase" style="margin-top:40px">
+    <div class="phase-header">
+      <div class="phase-num" style="background:#374151">?</div>
+      <div>
+        <div class="phase-title">Troubleshooting</div>
+        <div class="phase-sub">Common issues and how to fix them in 30 seconds</div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F9FAFB;color:#374151">!</div>
+          <div class="step-info">
+            <div class="step-title">Vercel shows a 404 error</div>
+            <div class="step-desc">The page cannot be found</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-warn"><div class="info-icon">⚠️</div><div><strong>Cause:</strong> You forgot to create index.html, or the filename has a typo.<br><br><strong>Fix:</strong> Make sure all filenames in GitHub exactly match what you type in the URL. GitHub filenames are case-sensitive. <code>dolsafe-home.html</code> ≠ <code>DolSafe-Home.html</code></div></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F9FAFB;color:#374151">!</div>
+          <div class="step-info">
+            <div class="step-title">Morning briefing does not load (blank screen)</div>
+            <div class="step-desc">The Claude API call is failing</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-warn"><div class="info-icon">⚠️</div><div><strong>Cause:</strong> The Claude API call in dolsafe-briefing.html needs an API key passed in the request headers — the current version relies on the claude.ai context. In a standalone deploy, the API call will fail.<br><br><strong>Fix:</strong> The file already has fallback data built in — it shows cached briefing data if the API fails. For a demo this works fine. For a real app you would add your Anthropic API key to the fetch headers.</div></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-hdr" onclick="toggleStep(this)">
+          <div class="step-num" style="background:#F9FAFB;color:#374151">!</div>
+          <div class="step-info">
+            <div class="step-title">I do not see my repo in Vercel</div>
+            <div class="step-desc">Vercel cannot find the GitHub repository</div>
+          </div>
+          <div style="font-size:20px;color:#D1D5DB;margin-top:2px" class="chevron">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info-box info-warn"><div class="info-icon">⚠️</div><div><strong>Fix:</strong> In Vercel → Import Project → click <strong>"Adjust GitHub App Permissions"</strong> → on GitHub select <strong>All repositories</strong> → Save. Go back to Vercel and try again.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end page -->
+
+<script>
+function toggleStep(hdr){
+  var body = hdr.nextElementSibling;
+  var chevron = hdr.querySelector('.chevron');
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  if(chevron) chevron.textContent = isOpen ? '▼' : '▲';
+}
+
+function copyCode(btn){
+  var block = btn.parentElement.querySelector('code');
+  var text = block.innerText || block.textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent = 'Copied ✓';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+// Auto-open first step of each phase
+window.addEventListener('load', function(){
+  document.querySelectorAll('.step:first-child .step-body').forEach(function(b){
+    b.classList.add('open');
+    var chevron = b.previousElementSibling.querySelector('.chevron');
+    if(chevron) chevron.textContent = '▲';
+  });
+});
+</script>
+</body>
+</html>

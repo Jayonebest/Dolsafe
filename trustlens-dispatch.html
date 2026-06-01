@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TrustLens · Officer Dispatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F5FA;--white:#FFFFFF;--border:#E5E7EB;--border2:#D1D5DB;
+  --blue:#1A56DB;--blue-light:#EFF6FF;--blue-border:#BFDBFE;
+  --green:#059669;--green-light:#ECFDF5;--green-border:#A7F3D0;
+  --red:#DC2626;--red-light:#FEF2F2;--red-border:#FECACA;
+  --yellow:#D97706;--yellow-light:#FFFBEB;--yellow-border:#FDE68A;
+  --orange:#EA580C;--orange-light:#FFF7ED;--orange-border:#FED7AA;
+  --purple:#7C3AED;--purple-light:#F5F3FF;--purple-border:#DDD6FE;
+  --text:#111827;--muted:#6B7280;--dim:#9CA3AF;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);font-family:var(--sans);color:var(--text);min-height:100%}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes ping{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.4);opacity:0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes checkPop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--blue);padding:0 16px;height:52px;display:flex;
+  align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 8px rgba(26,86,219,.25)}
+.tb-left{display:flex;align-items:center;gap:10px}
+.logo{font-size:15px;font-weight:900;color:white;letter-spacing:-.3px}
+.logo span{color:#93C5FD}
+.tb-sep{width:1px;height:18px;background:rgba(255,255,255,.25)}
+.tb-tag{font-size:10px;font-weight:700;color:rgba(255,255,255,.75);font-family:var(--mono)}
+.tb-right{display:flex;align-items:center;gap:8px}
+.officer-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 11px}
+.op-av{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white}
+.op-name{font-size:11px;font-weight:700;color:white}
+.op-role{font-size:9px;color:rgba(255,255,255,.65);font-family:var(--mono)}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+
+/* ── ALERT LIST VIEW ── */
+.page-hdr{padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:20px;font-weight:900;color:var(--text);letter-spacing:-.4px}
+.page-sub{font-size:12px;color:var(--muted);font-weight:500;margin-top:2px}
+.live-badge{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;
+  background:var(--green-light);border:1px solid var(--green-border);
+  font-size:11px;font-weight:700;color:var(--green)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse .9s infinite}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:0;padding:0 16px 12px;overflow-x:auto}
+.filter-tabs::-webkit-scrollbar{display:none}
+.ft{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+  color:var(--muted);border:1.5px solid transparent;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.ft.on{background:var(--blue);color:white;border-color:var(--blue)}
+.ft:not(.on):hover{background:white;border-color:var(--border)}
+
+/* ALERT CARDS */
+.alerts-wrap{padding:0 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+.alert-card{background:white;border-radius:16px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);cursor:pointer;transition:all .15s;
+  animation:fadeUp .3s ease;border:2px solid transparent}
+.alert-card:active{transform:scale(.99)}
+.alert-card.unack{border-color:var(--red-border)}
+.alert-card.investigating{border-color:var(--yellow-border)}
+.alert-card.resolved{border-color:var(--green-border);opacity:.75}
+.ac-top{padding:14px 14px 10px;display:flex;gap:11px;align-items:flex-start}
+.ac-sev{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;position:relative}
+.ac-sev-ring{position:absolute;inset:0;border-radius:12px;animation:pulse .9s infinite}
+.ac-body{flex:1;min-width:0}
+.ac-id{font-size:10px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:3px}
+.ac-threat{font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.3}
+.ac-meta{font-size:12px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ac-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.ac-score{font-size:20px;font-weight:900;font-family:var(--mono)}
+.ac-time{font-size:10px;color:var(--dim);font-weight:500;font-family:var(--mono)}
+
+/* RISK SCORE BAR */
+.ac-score-bar{margin:0 14px 10px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.ac-score-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* STATUS ROW */
+.ac-status-row{padding:9px 14px;background:var(--bg);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.ac-status-chip{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+.ac-officer{font-size:11px;color:var(--muted);font-weight:500;font-family:var(--mono)}
+
+/* SENSOR CHIPS */
+.sensor-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.sc{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:var(--mono)}
+.sc-cam{background:#DBEAFE;color:#1E40AF}
+.sc-rf{background:#CFFAFE;color:#0E7490}
+.sc-thm{background:#FED7AA;color:#9A3412}
+
+/* ── DETAIL VIEW ── */
+.detail-hdr{background:white;padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px}
+.back-btn{width:34px;height:34px;border-radius:10px;background:var(--bg);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:18px;cursor:pointer;font-weight:700;color:var(--text)}
+.detail-title{font-size:15px;font-weight:800;flex:1}
+.detail-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;font-family:var(--mono)}
+
+/* ALERT HERO */
+.alert-hero{margin:12px 16px;background:white;border-radius:16px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.ah-top{padding:16px;display:flex;gap:12px;align-items:flex-start}
+.ah-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:24px;flex-shrink:0}
+.ah-body{flex:1}
+.ah-id{font-size:10px;font-weight:700;color:var(--dim);font-family:var(--mono);margin-bottom:4px}
+.ah-threat{font-size:18px;font-weight:900;color:var(--text);margin-bottom:6px;line-height:1.3;letter-spacing:-.3px}
+.ah-desc{font-size:13px;color:var(--muted);font-weight:500;line-height:1.55}
+.ah-score{font-size:32px;font-weight:900;font-family:var(--mono);margin-bottom:2px}
+.ah-score-lbl{font-size:10px;font-weight:700;font-family:var(--mono)}
+.ah-meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border)}
+.ah-meta-item{padding:11px 14px;text-align:center;border-right:1px solid var(--border)}
+.ah-meta-item:last-child{border-right:none}
+.ahm-val{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ahm-lbl{font-size:10px;color:var(--dim);font-weight:600}
+.ah-score-bar{height:6px;background:var(--border);margin:0 16px 14px;border-radius:3px;overflow:hidden}
+.ah-score-fill{height:100%;border-radius:3px}
+
+/* ASSIGN SECTION */
+.section{margin:0 16px 12px}
+.sec-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec-title::before{content:'';display:block;width:14px;height:2px;background:var(--blue)}
+.officer-cards{display:flex;flex-direction:column;gap:7px}
+.officer-card{background:white;border-radius:12px;padding:11px 13px;
+  border:2px solid var(--border);display:flex;align-items:center;gap:10px;
+  cursor:pointer;transition:all .15s}
+.officer-card:hover{border-color:var(--blue)}
+.officer-card:active{transform:scale(.98)}
+.officer-card.assigned{border-color:var(--blue);background:var(--blue-light)}
+.oc-av{width:36px;height:36px;border-radius:10px;background:var(--blue-light);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.oc-name{font-size:13px;font-weight:700;flex:1}
+.oc-status{font-size:10px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px}
+.oc-dist{font-size:11px;color:var(--muted);font-family:var(--mono);font-weight:500}
+.oc-assign-btn{padding:6px 14px;border-radius:8px;background:var(--blue);border:none;
+  font-family:var(--sans);font-size:12px;font-weight:700;color:white;cursor:pointer;white-space:nowrap}
+.oc-assigned-badge{padding:6px 12px;border-radius:8px;background:var(--blue-light);
+  font-size:11px;font-weight:700;color:var(--blue);font-family:var(--mono)}
+
+/* ── OFFICER RESPONSE VIEW ── */
+.response-view{padding:0 16px 24px}
+
+/* STATUS TIMELINE */
+.status-timeline{background:white;border-radius:16px;padding:14px;margin-bottom:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.st-item{display:flex;gap:10px;margin-bottom:12px}
+.st-item:last-child{margin:0}
+.st-dot-col{display:flex;flex-direction:column;align-items:center;gap:0}
+.st-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;border:2px solid}
+.st-line{width:2px;flex:1;min-height:12px;background:var(--border);margin:2px 0;border-radius:1px}
+.st-content{flex:1;padding-top:3px}
+.st-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:1px}
+.st-time{font-size:10px;color:var(--dim);font-family:var(--mono)}
+
+/* 5 BIG BUTTONS */
+.response-btns{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.resp-btn{width:100%;padding:16px 18px;border-radius:14px;border:none;
+  font-family:var(--sans);font-size:15px;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;gap:12px;transition:all .15s;text-align:left}
+.resp-btn:active{transform:scale(.98)}
+.resp-btn .rb-icon{font-size:22px;flex-shrink:0}
+.resp-btn .rb-text{flex:1}
+.resp-btn .rb-title{display:block;font-size:15px;font-weight:800}
+.resp-btn .rb-sub{display:block;font-size:11px;font-weight:500;opacity:.75;margin-top:1px}
+.resp-btn .rb-arrow{font-size:18px;opacity:.5;flex-shrink:0}
+.rb-ack{background:#EFF6FF;color:#1E40AF;border:2px solid #BFDBFE}
+.rb-inv{background:#FFFBEB;color:#92400E;border:2px solid #FDE68A}
+.rb-res{background:#ECFDF5;color:#065F46;border:2px solid #A7F3D0}
+.rb-fa{background:#F9FAFB;color:#374151;border:2px solid #E5E7EB}
+.rb-esc{background:#FEF2F2;color:#991B1B;border:2px solid #FECACA}
+
+/* OPTIONAL NOTE */
+.note-field{background:white;border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:12px}
+.nf-hdr{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);
+  font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+.nf-optional{font-size:10px;font-weight:500;color:var(--dim)}
+.note-ta{width:100%;border:none;outline:none;padding:12px 14px;font-family:var(--sans);
+  font-size:14px;color:var(--text);resize:none;min-height:72px;background:white;line-height:1.55}
+.note-ta::placeholder{color:var(--dim)}
+.quick-notes{padding:8px 14px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border)}
+.qn{padding:6px 12px;border-radius:20px;background:var(--bg);border:1px solid var(--border);
+  font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s}
+.qn:active{background:var(--blue-light);border-color:var(--blue-border);color:var(--blue)}
+
+/* CONFIRMED INCIDENT PANEL */
+.incident-panel{background:var(--red-light);border:2px solid var(--red-border);
+  border-radius:14px;padding:14px;margin-bottom:12px;display:none}
+.ip-title{font-size:13px;font-weight:800;color:var(--red);margin-bottom:10px}
+.ip-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ip-btn{padding:11px 10px;border-radius:10px;background:white;border:2px solid var(--border);
+  font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:all .15s;color:var(--text)}
+.ip-btn:active{transform:scale(.97)}
+.ip-btn.sel{border-color:var(--red);background:var(--red-light);color:var(--red)}
+.ip-icon{font-size:18px;flex-shrink:0}
+
+/* OUTCOME SCREEN */
+.outcome-screen{padding:24px 16px;text-align:center;animation:fadeUp .4s ease}
+.outcome-icon{font-size:64px;margin-bottom:16px;display:block;animation:checkPop .5s ease}
+.outcome-title{font-size:24px;font-weight:900;letter-spacing:-.4px;margin-bottom:6px}
+.outcome-sub{font-size:14px;color:var(--muted);font-weight:500;line-height:1.6;margin-bottom:20px}
+.outcome-card{background:white;border-radius:16px;padding:14px;text-align:left;
+  box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:12px;border:1px solid var(--border)}
+.oc-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px}
+.oc-row:last-child{border:none}
+.oc-key{color:var(--muted);font-weight:500}
+.oc-val{font-weight:700;color:var(--text);font-family:var(--mono);font-size:12px}
+.learns-card{background:var(--blue-light);border:1px solid var(--blue-border);
+  border-radius:14px;padding:13px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start}
+.lc-icon{font-size:18px;flex-shrink:0}
+.lc-title{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:3px}
+.lc-desc{font-size:12px;color:#3B82F6;font-weight:500;line-height:1.5}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;
+  border-top:1px solid var(--border);display:flex;padding:8px 8px 16px;
+  box-shadow:0 -4px 16px rgba(0,0,0,.08);z-index:90}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px;border-radius:10px;cursor:pointer;transition:all .15s}
+.bn-item.active{background:var(--blue-light)}
+.bn-icon{font-size:20px;color:var(--dim);transition:color .15s}
+.bn-label{font-size:9px;font-weight:700;color:var(--dim);font-family:var(--mono)}
+.bn-item.active .bn-icon,.bn-item.active .bn-label{color:var(--blue)}
+.bn-badge{width:17px;height:17px;border-radius:50%;background:var(--red);color:white;
+  font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative}
+
+/* TOAST */
+.toast{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:var(--green)}.toast.r{background:var(--red)}.toast.b{background:var(--blue)}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:15px;border-radius:12px;background:var(--blue);border:none;
+  font-family:var(--sans);font-size:15px;font-weight:800;color:white;cursor:pointer}
+.btn-secondary{width:100%;padding:13px;border-radius:12px;background:white;
+  border:1.5px solid var(--border);font-family:var(--sans);font-size:14px;
+  font-weight:700;color:var(--text);cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="logo">Trust<span>Lens</span></div>
+    <div class="tb-sep"></div>
+    <div class="tb-tag">Officer Response</div>
+  </div>
+  <div class="tb-right">
+    <div class="officer-pill">
+      <div class="op-av">OS</div>
+      <div>
+        <div class="op-name">Officer Smith</div>
+        <div class="op-role">MTA-Security · Unit 4</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW: ALERT LIST -->
+<div class="view active" id="v-list">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Alerts</div>
+      <div class="page-sub">4 active · 2 assigned to you</div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+
+  <div class="filter-tabs">
+    <div class="ft on" onclick="filterAlerts('all',this)">All (4)</div>
+    <div class="ft" onclick="filterAlerts('mine',this)">Mine (2)</div>
+    <div class="ft" onclick="filterAlerts('unack',this)">New (1)</div>
+    <div class="ft" onclick="filterAlerts('resolved',this)">Resolved (1)</div>
+  </div>
+
+  <div class="alerts-wrap" id="alertList"></div>
+  <div style="height:72px"></div>
+</div>
+
+<!-- VIEW: ALERT DETAIL + ASSIGN -->
+<div class="view" id="v-detail">
+  <div class="detail-hdr">
+    <button class="back-btn" onclick="showList()">‹</button>
+    <div class="detail-title" id="detailTitle">Alert detail</div>
+    <div class="detail-badge" id="detailBadge"></div>
+  </div>
+
+  <div class="alert-hero" id="alertHero"></div>
+
+  <div class="section" id="assignSection">
+    <div class="sec-title">Assign officer</div>
+    <div class="officer-cards" id="officerCards"></div>
+  </div>
+
+  <div style="height:72px"></div>
+</div>
+
+<!-- VIEW: OFFICER RESPONSE -->
+<div class="view" id="v-response">
+  <div class="detail-hdr">
+    <button class="back-btn" onclick="showDetail()">‹</button>
+    <div class="detail-title" id="respTitle">Respond to alert</div>
+    <div class="detail-badge" style="background:#FEF3C7;color:#92400E;font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px" id="respTimer">0:00</div>
+  </div>
+
+  <div style="padding:12px 16px 0">
+    <!-- Compact alert summary -->
+    <div style="background:white;border-radius:14px;padding:12px 14px;margin-bottom:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;gap:10px;align-items:center" id="respAlertSummary">
+    </div>
+
+    <!-- Status timeline -->
+    <div class="status-timeline" id="statusTimeline"></div>
+
+    <!-- 5 BIG RESPONSE BUTTONS -->
+    <div class="sec-title" style="margin-bottom:8px">What is the situation?</div>
+    <div class="response-btns">
+      <button class="resp-btn rb-ack" onclick="respond('acknowledge')">
+        <span class="rb-icon">👀</span>
+        <span class="rb-text"><span class="rb-title">Acknowledge</span><span class="rb-sub">I see the alert · heading to location</span></span>
+        <span class="rb-arrow">›</span>
+      </button>
+      <button class="resp-btn rb-inv" onclick="respond('investigating')">
+        <span class="rb-icon">🔍</span>
+        <span class="rb-text"><span class="rb-title">Investigating</span><span class="rb-sub">On scene · assessing the situation</span></span>
+        <span class="rb-arrow">›</span>
+      </button>
+      <button class="resp-btn rb-res" onclick="respond('resolved')">
+        <span class="rb-icon">✅</span>
+        <span class="rb-text"><span class="rb-title">Resolved</span><span class="rb-sub">Situation handled · all clear</span></span>
+        <span class="rb-arrow">›</span>
+      </button>
+      <button class="resp-btn rb-fa" onclick="respond('false_alarm')">
+        <span class="rb-icon">🟢</span>
+        <span class="rb-text"><span class="rb-title">False Alarm</span><span class="rb-sub">No threat · normal situation</span></span>
+        <span class="rb-arrow">›</span>
+      </button>
+      <button class="resp-btn rb-esc" onclick="respond('escalate')">
+        <span class="rb-icon">🚨</span>
+        <span class="rb-text"><span class="rb-title">Escalate</span><span class="rb-sub">Real incident · need backup / 911</span></span>
+        <span class="rb-arrow">›</span>
+      </button>
+    </div>
+
+    <!-- Confirmed incident type (shows on escalate) -->
+    <div class="incident-panel" id="incidentPanel">
+      <div class="ip-title">🚨 What type of incident?</div>
+      <div class="ip-grid" id="incidentGrid"></div>
+    </div>
+
+    <!-- Optional note -->
+    <div class="note-field">
+      <div class="nf-hdr">
+        <span>Add a note</span>
+        <span class="nf-optional">Optional · 1 tap or type</span>
+      </div>
+      <textarea class="note-ta" id="noteField" placeholder="e.g. Individual waiting for Uber. No threat observed."></textarea>
+      <div class="quick-notes" id="quickNotes"></div>
+    </div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitResponse()" style="margin-bottom:8px">Submit response</button>
+    <button class="btn-secondary" onclick="showDetail()">← Back to alert</button>
+  </div>
+  <div style="height:24px"></div>
+</div>
+
+<!-- VIEW: OUTCOME CONFIRMED -->
+<div class="view" id="v-outcome">
+  <div class="detail-hdr">
+    <div style="width:34px"></div>
+    <div class="detail-title">Response logged</div>
+    <div></div>
+  </div>
+  <div class="outcome-screen" id="outcomeContent"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="bn-item active" onclick="showList()">
+    <div class="bn-icon">🚨</div>
+    <div class="bn-label">Alerts</div>
+  </div>
+  <div class="bn-item" onclick="toast('Map view','b')">
+    <div class="bn-icon">🗺️</div>
+    <div class="bn-label">Map</div>
+  </div>
+  <div class="bn-item" onclick="toast('Radio','b')">
+    <div class="bn-icon">📻</div>
+    <div class="bn-label">Radio</div>
+  </div>
+  <div class="bn-item" onclick="toast('Shift log','b')">
+    <div class="bn-icon">📋</div>
+    <div class="bn-label">Log</div>
+  </div>
+  <div class="bn-item" onclick="toast('Profile','b')">
+    <div class="bn-icon">👤</div>
+    <div class="bn-label">Profile</div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ══════════════════════════════════════════
+// TRUSTLENS OFFICER RESPONSE ENGINE
+// ══════════════════════════════════════════
+
+var currentAlert = null;
+var currentOfficer = null;
+var responseStartTime = null;
+var timerIv = null;
+var selectedIncidentType = null;
+var currentStatus = null;
+
+// ── ALERT DATA ──
+var ALERTS = [
+  {
+    id:'#1042', score:84, threat:'Repeated loitering near employee entrance',
+    desc:'Subject detected loitering near restricted employee entrance for 14 minutes. Three zone crossings. Behavioral risk score elevated by RF signal pattern.',
+    location:'Times Sq · Employee entrance · Gate B',
+    time:'8 min ago', age:8,
+    icon:'👁️', iconBg:'#FEF3C7', iconColor:'#92400E',
+    severity:'high', sensors:['CAM','RF'],
+    status:'unack', officer:null,
+    quickNotes:['Waiting for someone','Authorized employee','No threat observed','Individual left area'],
+  },
+  {
+    id:'#1041', score:96, threat:'Unattended package · Platform B north bench',
+    desc:'Package stationary 4 minutes 20 seconds. Owner exited zone. Thermal cold-spot detected. No retrieval attempt.',
+    location:'Times Sq · Platform B · North bench',
+    time:'12 min ago', age:12,
+    icon:'📦', iconBg:'#FEE2E2', iconColor:'#991B1B',
+    severity:'critical', sensors:['CAM','RF','THM'],
+    status:'investigating', officer:'Officer Jones',
+    quickNotes:['Package claimed by owner','Empty / harmless','Forwarded to bomb squad','Owner identified'],
+  },
+  {
+    id:'#1040', score:71, threat:'Suspicious behavior · Fare gate area',
+    desc:'Individual pacing near fare gates for 9 minutes. Device signal blackout 30s. No fare payment detected.',
+    location:'Penn Station · Fare gate array C',
+    time:'24 min ago', age:24,
+    icon:'🚫', iconBg:'#FFF7ED', iconColor:'#9A3412',
+    severity:'elevated', sensors:['CAM','RF'],
+    status:'investigating', officer:'Officer Smith',
+    quickNotes:['Waiting for friend','MetroCard issue','No threat','Asked to move on'],
+  },
+  {
+    id:'#1039', score:78, threat:'Physical altercation · Main concourse',
+    desc:'Pose estimation flagged rapid limb contact. Two subjects. Crowd contraction 3.2m radius.',
+    location:'Grand Central · Main Concourse',
+    time:'41 min ago', age:41,
+    icon:'🥊', iconBg:'#FEE2E2', iconColor:'#991B1B',
+    severity:'high', sensors:['CAM','THM'],
+    status:'resolved', officer:'Officer Brown',
+    outcome:'Resolved', resolutionTime:'6 min',
+    quickNotes:[],
+  },
+];
+
+var OFFICERS = [
+  {id:'smith', name:'Officer Smith', emoji:'👮', dist:'2 min away', status:'Available · Unit 4'},
+  {id:'jones', name:'Officer Jones', emoji:'👮', dist:'4 min away', status:'On patrol · Unit 2'},
+  {id:'patel', name:'Officer Patel', emoji:'👮', dist:'6 min away', status:'Available · Unit 7'},
+];
+
+var INCIDENT_TYPES = [
+  {id:'trespass',   icon:'🚫', label:'Trespass'},
+  {id:'assault',    icon:'🥊', label:'Assault'},
+  {id:'medical',    icon:'🚑', label:'Medical'},
+  {id:'weapon',     icon:'⚠️', label:'Weapon'},
+  {id:'vandalism',  icon:'🔨', label:'Vandalism'},
+  {id:'package',    icon:'📦', label:'Susp. Package'},
+  {id:'theft',      icon:'💼', label:'Theft'},
+  {id:'other',      icon:'📋', label:'Other'},
+];
+
+// ── ALERT LIST ──
+var filterMode = 'all';
+
+function filterAlerts(mode, el){
+  filterMode = mode;
+  document.querySelectorAll('.ft').forEach(function(e){e.classList.remove('on');});
+  el.classList.add('on');
+  renderAlertList();
+}
+
+function renderAlertList(){
+  var list = document.getElementById('alertList');
+  var filtered = ALERTS.filter(function(a){
+    if(filterMode==='mine') return a.officer==='Officer Smith';
+    if(filterMode==='unack') return a.status==='unack';
+    if(filterMode==='resolved') return a.status==='resolved';
+    return true;
+  });
+
+  list.innerHTML = filtered.map(function(a){
+    var scoreColor = a.score>=90?'var(--red)':a.score>=75?'var(--orange)':a.score>=60?'var(--yellow)':'var(--green)';
+    var statusConfig = {
+      unack:       {label:'● New alert',     bg:'var(--red-light)',    color:'var(--red)',    border:'var(--red-border)'},
+      investigating:{label:'🔍 Investigating',bg:'var(--yellow-light)',color:'var(--yellow)', border:'var(--yellow-border)'},
+      resolved:    {label:'✅ Resolved',      bg:'var(--green-light)', color:'var(--green)',  border:'var(--green-border)'},
+      false_alarm: {label:'🟢 False alarm',   bg:'#F9FAFB',            color:'var(--muted)',  border:'var(--border)'},
+    };
+    var st = statusConfig[a.status] || statusConfig.unack;
+    var cardCls = 'alert-card '+a.status;
+
+    return '<div class="'+cardCls+'" onclick="openAlert(\''+a.id+'\')">'+
+      '<div class="ac-top">'+
+        '<div class="ac-sev" style="background:'+a.iconBg+'">'+
+          (a.status==='unack'?'<div class="ac-sev-ring" style="background:'+a.iconBg+';border:2px solid '+a.iconColor+'40"></div>':'')+
+          a.icon+
+        '</div>'+
+        '<div class="ac-body">'+
+          '<div class="ac-id">Alert '+a.id+' · '+a.location.split('·')[0].trim()+'</div>'+
+          '<div class="ac-threat">'+a.threat+'</div>'+
+          '<div class="ac-meta">'+
+            '<span>📍 '+a.location.split('·').slice(1).join('·').trim()+'</span>'+
+            '<span style="color:var(--dim)">·</span>'+
+            '<span>'+a.time+'</span>'+
+          '</div>'+
+          '<div class="sensor-chips">'+
+            a.sensors.map(function(s){return '<span class="sc sc-'+s.toLowerCase()+'">'+s+'</span>';}).join('')+
+          '</div>'+
+        '</div>'+
+        '<div class="ac-right">'+
+          '<div class="ac-score" style="color:'+scoreColor+'">'+a.score+'</div>'+
+          '<div style="font-size:9px;color:var(--dim);font-family:var(--mono)">risk</div>'+
+          (a.officer?'<div style="font-size:9px;color:var(--dim);font-family:var(--mono);text-align:right;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.officer.split(' ')[1]+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="ac-score-bar"><div class="ac-score-fill" style="width:'+a.score+'%;background:'+scoreColor+'"></div></div>'+
+      '<div class="ac-status-row">'+
+        '<div class="ac-status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.label+'</div>'+
+        '<div class="ac-officer">'+(a.officer||'Unassigned')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── OPEN ALERT DETAIL ──
+function openAlert(id){
+  currentAlert = ALERTS.find(function(a){return a.id===id;});
+  if(!currentAlert) return;
+  renderDetail();
+  showView('v-detail');
+}
+
+function renderDetail(){
+  var a = currentAlert;
+  var scoreColor = a.score>=90?'var(--red)':a.score>=75?'var(--orange)':a.score>=60?'var(--yellow)':'var(--green)';
+
+  document.getElementById('detailTitle').textContent = 'Alert '+a.id;
+
+  var statusLabels = {unack:'NEW',investigating:'INVESTIGATING',resolved:'RESOLVED',false_alarm:'FALSE ALARM'};
+  var statusColors = {unack:['var(--red-light)','var(--red)'],investigating:['var(--yellow-light)','var(--yellow)'],resolved:['var(--green-light)','var(--green)'],false_alarm:['#F9FAFB','var(--muted)']};
+  var sc = statusColors[a.status]||statusColors.unack;
+  var badge = document.getElementById('detailBadge');
+  badge.style.background=sc[0]; badge.style.color=sc[1];
+  badge.style.fontFamily='var(--mono)'; badge.style.fontSize='10px';
+  badge.style.fontWeight='700'; badge.style.padding='4px 10px'; badge.style.borderRadius='20px';
+  badge.textContent=statusLabels[a.status]||a.status.toUpperCase();
+
+  document.getElementById('alertHero').innerHTML=
+    '<div class="ah-top">'+
+      '<div class="ah-icon" style="background:'+a.iconBg+'">'+a.icon+'</div>'+
+      '<div class="ah-body">'+
+        '<div class="ah-id">Alert '+a.id+' · Detected '+a.time+'</div>'+
+        '<div class="ah-threat">'+a.threat+'</div>'+
+        '<div class="ah-desc">'+a.desc+'</div>'+
+        '<div class="sensor-chips" style="margin-top:7px">'+
+          a.sensors.map(function(s){return '<span class="sc sc-'+s.toLowerCase()+'">'+s+'</span>';}).join('')+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div class="ah-score" style="color:'+scoreColor+'">'+a.score+'</div>'+
+        '<div class="ah-score-lbl" style="color:'+scoreColor+'">RISK</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="ah-score-bar"><div class="ah-score-fill" style="width:'+a.score+'%;background:'+scoreColor+'"></div></div>'+
+    '<div class="ah-meta-grid">'+
+      '<div class="ah-meta-item"><div class="ahm-val">'+a.location.split('·')[0].trim()+'</div><div class="ahm-lbl">Site</div></div>'+
+      '<div class="ah-meta-item"><div class="ahm-val">'+a.location.split('·').slice(1).join('').trim()+'</div><div class="ahm-lbl">Zone</div></div>'+
+      '<div class="ah-meta-item"><div class="ahm-val">'+(a.officer||'Unassigned')+'</div><div class="ahm-lbl">Officer</div></div>'+
+    '</div>';
+
+  // Officer assignment
+  var assignSec = document.getElementById('assignSection');
+  if(a.status==='resolved'||a.status==='false_alarm'){
+    assignSec.style.display='none';
+  } else {
+    assignSec.style.display='block';
+    document.getElementById('officerCards').innerHTML=
+      OFFICERS.map(function(o){
+        var isAssigned = a.officer===o.name;
+        return '<div class="officer-card'+(isAssigned?' assigned':'')+'" onclick="assignOfficer(\''+o.id+'\')">'+
+          '<div class="oc-av">'+o.emoji+'</div>'+
+          '<div style="flex:1">'+
+            '<div class="oc-name">'+o.name+'</div>'+
+            '<div class="oc-status"><div style="width:6px;height:6px;border-radius:50%;background:var(--green)"></div>'+o.status+'</div>'+
+          '</div>'+
+          '<div class="oc-dist">'+o.dist+'</div>'+
+          (isAssigned
+            ? '<div class="oc-assigned-badge">Assigned ✓</div>'
+            : '<button class="oc-assign-btn" onclick="event.stopPropagation();assignOfficer(\''+o.id+'\')">Assign</button>'
+          )+
+        '</div>';
+      }).join('')+
+      (a.officer?'<button style="width:100%;padding:13px;border-radius:12px;background:var(--blue);border:none;font-family:var(--sans);font-size:14px;font-weight:800;color:white;cursor:pointer;margin-top:2px" onclick="showResponse()">📋 Officer response →</button>':'');
+  }
+}
+
+function assignOfficer(id){
+  var o = OFFICERS.find(function(x){return x.id===id;});
+  if(!o) return;
+  currentAlert.officer = o.name;
+  currentAlert.status = 'investigating';
+  currentOfficer = o;
+  renderDetail();
+  renderAlertList();
+  toast('✅ '+o.name+' assigned','g');
+}
+
+// ── RESPONSE VIEW ──
+function showResponse(){
+  if(!currentAlert.officer){ toast('Assign an officer first'); return; }
+  responseStartTime = Date.now();
+  currentStatus = null;
+  selectedIncidentType = null;
+  document.getElementById('noteField').value = '';
+  renderResponseView();
+  showView('v-response');
+
+  // Start timer
+  clearInterval(timerIv);
+  timerIv = setInterval(function(){
+    var elapsed = Math.floor((Date.now()-responseStartTime)/1000);
+    var m=Math.floor(elapsed/60), s=String(elapsed%60).padStart(2,'0');
+    var el=document.getElementById('respTimer');
+    if(el) el.textContent=m+':'+s;
+  },1000);
+}
+
+function renderResponseView(){
+  var a = currentAlert;
+  document.getElementById('respTitle').textContent='Alert '+a.id;
+
+  // Compact summary
+  var scoreColor = a.score>=90?'var(--red)':a.score>=75?'var(--orange)':a.score>=60?'var(--yellow)':'var(--green)';
+  document.getElementById('respAlertSummary').innerHTML=
+    '<div style="font-size:22px">'+a.icon+'</div>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.threat+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);font-weight:500">'+a.location+'</div>'+
+    '</div>'+
+    '<div style="font-size:20px;font-weight:900;color:'+scoreColor+';font-family:var(--mono)">'+a.score+'</div>';
+
+  // Timeline
+  renderTimeline([
+    {dot:'🔔',label:'Alert detected',time:a.time,color:'var(--red)',done:true},
+    {dot:'👤',label:a.officer+' assigned',time:'Just now',color:'var(--blue)',done:true},
+    {dot:'🔍',label:'Investigation in progress',time:'Now',color:'var(--yellow)',done:false},
+    {dot:'✅',label:'Awaiting outcome',time:'—',color:'var(--dim)',done:false},
+  ]);
+
+  // Incident type grid
+  document.getElementById('incidentGrid').innerHTML=
+    INCIDENT_TYPES.map(function(t){
+      return '<button class="ip-btn" id="itype_'+t.id+'" onclick="selectIncidentType(\''+t.id+'\')">'+
+        '<span class="ip-icon">'+t.icon+'</span>'+t.label+
+      '</button>';
+    }).join('');
+
+  // Quick notes based on alert type
+  document.getElementById('quickNotes').innerHTML=
+    (a.quickNotes||[]).map(function(n){
+      return '<div class="qn" onclick="setNote(\''+n+'\')">'+n+'</div>';
+    }).join('');
+}
+
+function renderTimeline(steps){
+  var el=document.getElementById('statusTimeline'); if(!el) return;
+  el.innerHTML='<div class="sec-title" style="margin-bottom:10px">Timeline</div>'+
+    steps.map(function(s,i){
+      return '<div class="st-item">'+
+        '<div class="st-dot-col">'+
+          '<div class="st-dot" style="background:'+(s.done?s.color:'#F9FAFB')+';border-color:'+(s.done?s.color:'var(--border)')+';color:'+(s.done?'white':'var(--dim)')+'">'+
+            (s.done?'✓':(i+1))+
+          '</div>'+
+          (i<steps.length-1?'<div class="st-line"></div>':'')+
+        '</div>'+
+        '<div class="st-content">'+
+          '<div class="st-label" style="color:'+(s.done?'var(--text)':'var(--dim)')+'">'+s.label+'</div>'+
+          '<div class="st-time">'+s.time+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+}
+
+// ── ONE-TAP RESPONSE ──
+function respond(status){
+  currentStatus = status;
+
+  // Highlight active button
+  document.querySelectorAll('.resp-btn').forEach(function(b){b.style.opacity='.5';});
+  var map={acknowledge:'rb-ack',investigating:'rb-inv',resolved:'rb-res',false_alarm:'rb-fa',escalate:'rb-esc'};
+  var activeBtn = document.querySelector('.'+map[status]);
+  if(activeBtn) activeBtn.style.opacity='1';
+
+  // Show incident type panel for escalate
+  var panel = document.getElementById('incidentPanel');
+  panel.style.display = status==='escalate'?'block':'none';
+
+  // Pre-fill quick note placeholder
+  var ta = document.getElementById('noteField');
+  if(ta && !ta.value){
+    var placeholders={
+      acknowledge:'Heading to location now.',
+      investigating:'On scene · assessing situation.',
+      resolved:'Situation handled. All clear.',
+      false_alarm:'No threat observed.',
+      escalate:'Real incident confirmed. Backup requested.',
+    };
+    ta.placeholder = placeholders[status]||'Add a note...';
+  }
+
+  // Show confirm button prominent
+  var submitBtn = document.getElementById('submitBtn');
+  if(submitBtn){
+    var colors={acknowledge:'var(--blue)',investigating:'var(--yellow)',resolved:'var(--green)',false_alarm:'#374151',escalate:'var(--red)'};
+    var labels={acknowledge:'✅ Confirm — Acknowledge',investigating:'✅ Confirm — Investigating',resolved:'✅ Confirm — Resolved',false_alarm:'✅ Confirm — False Alarm',escalate:'🚨 Confirm — Escalate'};
+    submitBtn.style.background=colors[status]||'var(--blue)';
+    submitBtn.textContent=labels[status]||'Submit';
+  }
+}
+
+function selectIncidentType(id){
+  selectedIncidentType=id;
+  document.querySelectorAll('.ip-btn').forEach(function(b){b.classList.remove('sel');});
+  var btn=document.getElementById('itype_'+id);
+  if(btn) btn.classList.add('sel');
+}
+
+function setNote(text){
+  var ta=document.getElementById('noteField');
+  if(ta) ta.value=text;
+}
+
+function submitResponse(){
+  if(!currentStatus){ toast('Tap a response button first'); return; }
+  if(currentStatus==='escalate'&&!selectedIncidentType){ toast('Choose the incident type'); return; }
+
+  var elapsed=Math.floor((Date.now()-responseStartTime)/1000);
+  var mins=Math.floor(elapsed/60), secs=String(elapsed%60).padStart(2,'0');
+  var resTime=mins>0?mins+'m '+secs+'s':elapsed+'s';
+  var note=document.getElementById('noteField').value.trim();
+
+  // Update alert
+  currentAlert.status = currentStatus==='false_alarm'?'false_alarm':
+                        currentStatus==='escalate'?'resolved':currentStatus;
+  currentAlert.outcome = currentStatus==='false_alarm'?'False Alarm':
+                         currentStatus==='escalate'?'Confirmed Incident':
+                         currentStatus==='resolved'?'Resolved':'In Progress';
+  currentAlert.resolutionTime = resTime;
+
+  clearInterval(timerIv);
+  renderOutcome(currentStatus, resTime, note);
+  renderAlertList();
+  showView('v-outcome');
+}
+
+function renderOutcome(status, resTime, note){
+  var a = currentAlert;
+  var configs={
+    resolved:    {icon:'✅',title:'Resolved',color:'var(--green)',sub:'Outcome logged. Area is clear. TrustLens has recorded this response.'},
+    false_alarm: {icon:'🟢',title:'False Alarm',color:'var(--muted)',sub:'Logged as false alarm. TrustLens will use this to improve future accuracy.'},
+    escalate:    {icon:'🚨',title:'Escalated',color:'var(--red)',sub:'Incident confirmed. Backup and 911 have been notified. Incident record created.'},
+    acknowledge: {icon:'👀',title:'Acknowledged',color:'var(--blue)',sub:'Alert acknowledged. Continue to update status as situation develops.'},
+    investigating:{icon:'🔍',title:'Investigating',color:'var(--yellow)',sub:'Status updated to investigating. Keep updating as situation develops.'},
+  };
+  var cfg=configs[status]||configs.resolved;
+  var incType=selectedIncidentType?INCIDENT_TYPES.find(function(t){return t.id===selectedIncidentType;}):{icon:'',label:''};
+
+  document.getElementById('outcomeContent').innerHTML=
+    '<div class="outcome-icon">'+cfg.icon+'</div>'+
+    '<div class="outcome-title" style="color:'+cfg.color+'">'+cfg.title+'</div>'+
+    '<div class="outcome-sub">'+cfg.sub+'</div>'+
+
+    '<div class="outcome-card">'+
+      '<div class="oc-row"><div class="oc-key">Alert</div><div class="oc-val">'+a.id+' · Score '+a.score+'</div></div>'+
+      '<div class="oc-row"><div class="oc-key">Threat type</div><div class="oc-val">'+a.threat.slice(0,30)+'…</div></div>'+
+      '<div class="oc-row"><div class="oc-key">Outcome</div><div class="oc-val" style="color:'+cfg.color+'">'+cfg.title+'</div></div>'+
+      (status==='escalate'&&incType?'<div class="oc-row"><div class="oc-key">Incident type</div><div class="oc-val">'+incType.icon+' '+incType.label+'</div></div>':'')+
+      '<div class="oc-row"><div class="oc-key">Officer</div><div class="oc-val">'+a.officer+'</div></div>'+
+      '<div class="oc-row"><div class="oc-key">Response time</div><div class="oc-val" style="color:var(--green)">'+resTime+'</div></div>'+
+      (note?'<div class="oc-row"><div class="oc-key">Note</div><div class="oc-val" style="font-family:var(--sans);font-weight:500;font-size:12px">'+note+'</div></div>':'')+
+    '</div>'+
+
+    '<div class="learns-card">'+
+      '<div class="lc-icon">🧠</div>'+
+      '<div>'+
+        '<div class="lc-title">TrustLens learns from this</div>'+
+        '<div class="lc-desc">'+
+          'Alert type: '+a.threat.split('·')[0].trim()+' · '+
+          'Risk score: '+a.score+' · '+
+          'Outcome: '+cfg.title+' · '+
+          'Resolution: '+resTime+'. '+
+          (status==='false_alarm'?'Similar patterns in this zone will be weighted lower in future.':
+           status==='escalate'?'This pattern flagged for escalation training.':
+           'Feedback recorded. Model updated.')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<button class="btn-primary" onclick="showList()" style="margin-bottom:8px">← Back to alerts</button>'+
+    (status==='escalate'?'<button class="btn-secondary" onclick="toast(\'Incident record created · INC-'+Math.floor(1000+Math.random()*9000)+'\')" style="margin-bottom:0">View incident record →</button>':'');
+}
+
+// ── NAVIGATION ──
+function showList(){ showView('v-list'); clearInterval(timerIv); }
+function showDetail(){ if(currentAlert) renderDetail(); showView('v-detail'); }
+
+function showView(id){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ── BOOT ──
+window.addEventListener('load',function(){
+  renderAlertList();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TrustLens · Session Intelligence Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000810;--bg2:#010F1E;--bg3:#030D1C;--bg4:#051525;
+  --border:#0A2540;--border2:#0E3060;
+  --blue:#00AAFF;--green:#00FF88;--red:#FF2244;--yellow:#FFD700;
+  --orange:#FF6600;--purple:#AA44FF;--cyan:#00FFFF;--white:#F0F8FF;
+  --dim:#1A4060;--dimmer:#0A2030;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--white);font-family:var(--mono);
+  min-height:100%;overflow-x:hidden}
+
+@keyframes blueFlash{0%,44%,56%,100%{opacity:0}48%,52%{opacity:1}}
+@keyframes redFlash{0%,44%,56%,100%{opacity:0}48%,52%{opacity:1}}
+@keyframes scanBeam{0%{left:-4px}100%{left:100vw}}
+@keyframes lightSweep{
+  0%{background:radial-gradient(ellipse 300px 600px at -5% 50%,rgba(0,100,255,.07),transparent)}
+  50%{background:radial-gradient(ellipse 300px 600px at 105% 50%,rgba(255,20,50,.07),transparent)}
+  100%{background:radial-gradient(ellipse 300px 600px at -5% 50%,rgba(0,100,255,.07),transparent)}
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fastPulse{0%,100%{opacity:1}50%{opacity:.1}}
+@keyframes glow{0%,100%{text-shadow:0 0 8px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 56px currentColor}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{transform:scale(.8);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ATMOSPHERE */
+.atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;
+  animation:lightSweep 3s ease-in-out infinite}
+.blue-layer{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:rgba(0,100,255,.05);animation:blueFlash 2s ease-in-out infinite}
+.red-layer{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:rgba(255,20,50,.05);animation:redFlash 2s ease-in-out infinite .9s}
+.scan-line{position:fixed;top:0;bottom:0;width:3px;pointer-events:none;z-index:2;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,170,255,.2) 40%,rgba(0,170,255,.35) 50%,rgba(0,170,255,.2) 60%,transparent 100%);
+  animation:scanBeam 5s linear infinite;opacity:.35}
+
+/* POLICE BAR */
+.police-bar{position:fixed;top:0;left:0;right:0;height:4px;z-index:999;display:flex}
+.pb-seg{flex:1;transition:background .08s}
+.pb-blue{background:var(--blue);box-shadow:0 0 10px var(--blue),0 0 20px rgba(0,170,255,.5)}
+.pb-red{background:var(--red);box-shadow:0 0 10px var(--red),0 0 20px rgba(255,34,68,.5)}
+.pb-off{background:var(--dimmer)}
+
+/* LOGIN SCREEN */
+.login-screen{position:fixed;inset:0;z-index:500;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;
+  padding:36px 32px;width:100%;max-width:440px;animation:popIn .4s ease}
+.login-logo{font-family:var(--sans);font-size:28px;font-weight:900;text-align:center;
+  margin-bottom:6px;animation:glow 3s ease-in-out infinite}
+.login-logo span{color:var(--blue)}
+.login-sub{font-size:10px;color:rgba(240,248,255,.4);text-align:center;
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:28px}
+.login-role-tabs{display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;margin-bottom:20px}
+.lr-tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .2s;letter-spacing:.5px;color:rgba(240,248,255,.4)}
+.lr-tab.on{color:var(--white)}
+.lr-tab.admin.on{background:rgba(255,34,68,.15);color:var(--red);border-right:1px solid rgba(255,34,68,.3)}
+.lr-tab.client.on{background:rgba(0,170,255,.12);color:var(--blue)}
+.login-field{margin-bottom:14px}
+.login-label{font-size:9px;color:rgba(240,248,255,.4);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:5px;display:block}
+.login-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
+  padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--white);
+  outline:none;transition:border-color .2s}
+.login-inp:focus{border-color:var(--blue)}
+.login-inp::placeholder{color:rgba(240,248,255,.2)}
+.login-btn{width:100%;padding:13px;border-radius:10px;border:none;font-family:var(--mono);
+  font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.5px;
+  transition:all .2s;margin-top:4px}
+.login-btn:active{transform:scale(.98)}
+.login-btn.admin-btn{background:linear-gradient(135deg,var(--red),#AA0020);color:white;
+  box-shadow:0 0 20px rgba(255,34,68,.25)}
+.login-btn.client-btn{background:linear-gradient(135deg,var(--blue),#0066AA);color:white;
+  box-shadow:0 0 20px rgba(0,170,255,.2)}
+.login-hint{font-size:9px;color:rgba(240,248,255,.25);text-align:center;margin-top:12px;line-height:1.6}
+.login-org-sel{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
+  padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--white);
+  outline:none;appearance:none;cursor:pointer}
+.login-err{background:rgba(255,34,68,.1);border:1px solid rgba(255,34,68,.3);border-radius:8px;
+  padding:8px 12px;font-size:10px;color:var(--red);margin-bottom:12px;display:none;animation:fadeIn .3s}
+
+/* TOPBAR */
+.topbar{position:sticky;top:4px;z-index:100;background:rgba(0,8,16,.97);
+  backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);
+  height:50px;display:flex;align-items:center;padding:0 20px;gap:14px;
+  box-shadow:0 2px 30px rgba(0,0,0,.8)}
+.logo{font-family:var(--sans);font-size:17px;font-weight:900}
+.logo span{color:var(--blue)}
+.tb-sep{width:1px;height:20px;background:var(--border2)}
+.tb-tag{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.tb-sp{flex:1}
+.tb-role-badge{display:flex;align-items:center;gap:7px;padding:5px 12px;
+  border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.tb-clock{font-size:12px;font-weight:700;color:var(--green);
+  animation:glow 2s ease-in-out infinite;text-align:right}
+.tb-logout{padding:5px 12px;border-radius:7px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);font-family:var(--mono);font-size:10px;
+  color:rgba(240,248,255,.5);cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.tb-logout:hover{color:var(--white);border-color:var(--border2)}
+
+/* ── ADMIN LAYOUT ── */
+.admin-wrap{position:relative;z-index:3}
+
+/* ADMIN HEADER BANNER */
+.admin-banner{background:linear-gradient(135deg,rgba(255,34,68,.1),rgba(170,0,30,.05));
+  border-bottom:1px solid rgba(255,34,68,.2);padding:10px 20px;
+  display:flex;align-items:center;gap:12px}
+.ab-icon{font-size:16px}
+.ab-text{font-size:10px;color:rgba(255,34,68,.8);font-weight:600;letter-spacing:.3px;flex:1}
+.ab-pill{font-size:8px;font-weight:700;padding:3px 9px;border-radius:20px;
+  background:rgba(255,34,68,.15);color:var(--red);border:1px solid rgba(255,34,68,.3);letter-spacing:.5px}
+
+/* ORG SELECTOR */
+.org-bar{padding:10px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;background:rgba(0,8,16,.8)}
+.org-bar-label{font-size:9px;color:rgba(240,248,255,.4);letter-spacing:1.5px;text-transform:uppercase}
+.org-pill-btn{padding:5px 14px;border-radius:20px;font-family:var(--mono);font-size:10px;
+  font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);
+  color:rgba(240,248,255,.5);transition:all .15s;letter-spacing:.3px}
+.org-pill-btn.on{background:rgba(0,170,255,.12);border-color:rgba(0,170,255,.4);color:var(--blue)}
+.org-pill-btn:hover:not(.on){border-color:var(--border2);color:var(--white)}
+
+/* TIER CARDS */
+.tier-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px 16px}
+.tier-card{border-radius:14px;padding:14px;border:1px solid;position:relative;
+  overflow:hidden;cursor:pointer;transition:all .2s}
+.tier-card.t-std{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.04)}
+.tier-card.t-ext{border-color:rgba(0,170,255,.3);background:rgba(0,170,255,.04)}
+.tier-card.t-inv{border-color:rgba(255,214,0,.3);background:rgba(255,214,0,.04)}
+.tier-card.active.t-std{box-shadow:0 0 28px rgba(0,255,136,.25),inset 0 0 20px rgba(0,255,136,.04)}
+.tier-card.active.t-ext{box-shadow:0 0 28px rgba(0,170,255,.25),inset 0 0 20px rgba(0,170,255,.04)}
+.tier-card.active.t-inv{box-shadow:0 0 28px rgba(255,214,0,.25),inset 0 0 20px rgba(255,214,0,.04)}
+.tc-badge{position:absolute;top:10px;right:10px;font-size:8px;font-weight:700;
+  padding:2px 8px;border-radius:20px;letter-spacing:.8px}
+.tc-name{font-family:var(--sans);font-size:18px;font-weight:900;margin-bottom:3px}
+.tc-dur{font-size:10px;font-weight:600;margin-bottom:8px}
+.tc-items{display:flex;flex-direction:column;gap:3px}
+.tc-item{font-size:9px;color:rgba(240,248,255,.5);display:flex;gap:5px;line-height:1.4}
+.tc-item::before{content:'·';flex-shrink:0}
+/* Admin-only controls on tier card */
+.tc-admin-ctrl{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+.tc-assign-btn{width:100%;padding:6px;border-radius:7px;font-family:var(--mono);font-size:9px;
+  font-weight:700;cursor:pointer;border:none;letter-spacing:.5px;transition:all .15s}
+.tc-assign-btn:active{transform:scale(.97)}
+.tc-org-count{font-size:8px;color:rgba(240,248,255,.3);margin-top:5px;text-align:center}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:400px 1fr 360px;gap:0;
+  height:calc(100vh - 285px);position:relative;z-index:3;min-height:440px}
+.panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel:last-child{border-right:none;border-left:1px solid var(--border)}
+.panel-hdr{padding:8px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;background:rgba(0,8,16,.92)}
+.ph-title{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;flex:1}
+.ph-badge{font-size:8px;font-weight:700;padding:2px 7px;border-radius:4px}
+.panel-body{flex:1;overflow-y:auto}
+.panel-body::-webkit-scrollbar{width:2px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* SESSION TABLE */
+.session-stats{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.ss-item{flex:1;padding:7px 10px;border-right:1px solid var(--border);text-align:center}
+.ss-item:last-child{border-right:none}
+.ss-num{font-size:15px;font-weight:700}
+.ss-lbl{font-size:7px;color:rgba(240,248,255,.35);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.tbl-hdr{display:grid;grid-template-columns:140px 46px 48px 88px 74px 30px;
+  padding:5px 10px;border-bottom:1px solid var(--border);
+  font-size:7px;color:rgba(240,248,255,.3);letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
+.tbl-row{display:grid;grid-template-columns:140px 46px 48px 88px 74px 30px;
+  padding:7px 10px;border-bottom:1px solid rgba(10,37,64,.5);
+  font-size:9px;cursor:pointer;transition:background .15s;align-items:center}
+.tbl-row:hover{background:rgba(0,170,255,.05)}
+.tbl-row.flagged{background:rgba(255,34,68,.05);border-left:2px solid var(--red)}
+.hash-cell{color:var(--green);font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hash-cell.flagged{color:var(--red);animation:fastPulse 1s infinite}
+.type-badge{font-size:7px;font-weight:700;padding:2px 5px;border-radius:3px}
+.exp-bar{height:3px;border-radius:2px;background:var(--border2);overflow:hidden;margin-top:2px}
+.exp-fill{height:100%;border-radius:2px}
+
+/* INJECTOR — admin only */
+.device-list{padding:7px}
+.device-item{display:flex;align-items:center;gap:9px;padding:8px 10px;
+  border-radius:9px;border:1px solid var(--border);background:rgba(0,8,16,.7);
+  margin-bottom:5px;cursor:pointer;transition:all .15s}
+.device-item:hover{border-color:var(--border2)}
+.device-item:active{transform:scale(.98)}
+.di-icon{font-size:17px;flex-shrink:0}
+.di-name{font-size:10px;font-weight:600;flex:1}
+.di-freq{font-size:8px;color:rgba(240,248,255,.35);margin-top:1px}
+.di-type{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px}
+.inject-btn{padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:9px;
+  font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:.3px}
+.inject-btn:active{transform:scale(.94)}
+.scenario-wrap{padding:7px;border-top:1px solid var(--border);flex-shrink:0}
+.sc-lbl-row{padding:3px 4px 5px;font-size:8px;color:rgba(240,248,255,.3);letter-spacing:1.5px;text-transform:uppercase}
+.scenario-btn{width:100%;padding:7px 10px;border-radius:7px;font-family:var(--mono);
+  font-size:9px;font-weight:700;cursor:pointer;border:none;text-align:left;
+  transition:all .15s;display:flex;align-items:center;gap:7px;letter-spacing:.3px;margin-bottom:4px}
+.scenario-btn:last-child{margin:0}
+.scenario-btn:active{transform:scale(.98)}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:9px;flex-shrink:0}
+.stat-card{border-radius:10px;border:1px solid;padding:10px 12px}
+.sc-num{font-family:var(--sans);font-size:24px;font-weight:900;margin-bottom:2px}
+.sc-lbl{font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.sc-sub{font-size:8px;margin-top:2px;opacity:.55}
+
+/* ALERTS */
+.alerts-section{flex:1;overflow-y:auto;padding:7px;min-height:80px}
+.alerts-section::-webkit-scrollbar{width:2px}
+.alerts-section::-webkit-scrollbar-thumb{background:var(--border2)}
+.alert-item{padding:8px 10px;border-radius:8px;border:1px solid;margin-bottom:5px;
+  font-size:9px;animation:fadeIn .3s ease}
+.ai-time{font-size:7px;opacity:.45;margin-top:3px}
+.empty-state{padding:20px;text-align:center;font-size:9px;color:rgba(240,248,255,.2);line-height:1.9}
+
+/* COMPLIANCE */
+.compliance-section{border-top:1px solid var(--border);flex-shrink:0}
+.comp-hdr{padding:7px 12px;font-size:8px;font-weight:700;letter-spacing:1.5px;
+  color:rgba(240,248,255,.4);text-transform:uppercase;border-bottom:1px solid var(--border)}
+.comp-row{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;border-bottom:1px solid rgba(10,37,64,.4);font-size:9px}
+.comp-row:last-child{border:none}
+.comp-status{font-size:8px;font-weight:700;padding:2px 7px;border-radius:4px}
+
+/* LOG */
+.log-section{border-top:1px solid var(--border);flex-shrink:0;max-height:120px;overflow-y:auto}
+.log-section::-webkit-scrollbar{display:none}
+.log-hdr{padding:6px 12px;font-size:8px;font-weight:700;letter-spacing:1.5px;
+  color:rgba(240,248,255,.35);text-transform:uppercase;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:rgba(0,8,16,.96);z-index:2}
+.log-clear{font-size:8px;cursor:pointer;color:rgba(240,248,255,.25);
+  padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:none;
+  font-family:var(--mono);transition:all .15s}
+.log-clear:hover{color:var(--white)}
+.log-item{display:flex;gap:7px;padding:4px 12px;font-size:8px;
+  border-bottom:1px solid rgba(10,37,64,.3);animation:fadeIn .3s ease}
+.log-time{color:rgba(240,248,255,.3);flex-shrink:0;width:48px}
+.log-msg{flex:1;line-height:1.4}
+.log-tier{font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;
+  flex-shrink:0;align-self:flex-start;margin-top:1px}
+.wipe-btn{padding:6px 12px;border-radius:6px;font-family:var(--mono);font-size:9px;
+  font-weight:700;cursor:pointer;border:none;letter-spacing:.8px;
+  background:linear-gradient(135deg,var(--red),#AA0020);color:white;
+  box-shadow:0 0 10px rgba(255,34,68,.3);transition:all .2s}
+.wipe-btn:hover{box-shadow:0 0 18px rgba(255,34,68,.55)}
+.wipe-btn:active{transform:scale(.95)}
+
+/* ── CLIENT LAYOUT ── */
+.client-wrap{position:relative;z-index:3}
+.client-banner{background:linear-gradient(135deg,rgba(0,170,255,.08),rgba(0,80,150,.04));
+  border-bottom:1px solid rgba(0,170,255,.2);padding:10px 20px;
+  display:flex;align-items:center;gap:12px}
+.cb-icon{font-size:16px}
+.cb-text{font-size:11px;color:rgba(0,170,255,.8);font-weight:600;flex:1}
+.cb-org{font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;
+  background:rgba(0,170,255,.12);color:var(--blue);border:1px solid rgba(0,170,255,.25);letter-spacing:.5px}
+
+/* CLIENT TIER DISPLAY */
+.client-tier-card{margin:14px 16px;border-radius:16px;padding:18px;
+  border:2px solid;animation:popIn .4s ease}
+.ctc-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.ctc-name{font-family:var(--sans);font-size:24px;font-weight:900;margin-bottom:3px}
+.ctc-dur{font-size:12px;font-weight:600}
+.ctc-badge{font-size:9px;font-weight:700;padding:5px 12px;border-radius:20px;
+  letter-spacing:.8px;text-align:center}
+.ctc-desc{font-size:11px;color:rgba(240,248,255,.55);line-height:1.65;margin-bottom:14px}
+.ctc-items{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ctc-item{background:rgba(255,255,255,.04);border-radius:9px;padding:9px 11px;
+  border:1px solid rgba(255,255,255,.06)}
+.ctci-icon{font-size:16px;margin-bottom:5px}
+.ctci-title{font-size:11px;font-weight:700;margin-bottom:2px}
+.ctci-desc{font-size:10px;color:rgba(240,248,255,.45);line-height:1.4}
+
+/* CLIENT STATS */
+.client-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+  padding:0 16px 14px}
+.csg-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;
+  padding:13px 14px;text-align:center}
+.csg-num{font-family:var(--sans);font-size:26px;font-weight:900;margin-bottom:3px}
+.csg-lbl{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.55}
+
+/* CLIENT COMPLIANCE */
+.client-compliance{margin:0 16px 14px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:14px;overflow:hidden}
+.cc-hdr{padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--border);
+  font-size:9px;font-weight:700;color:rgba(240,248,255,.45);
+  letter-spacing:1.5px;text-transform:uppercase}
+.cc-row{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  border-bottom:1px solid rgba(10,37,64,.5)}
+.cc-row:last-child{border:none}
+.cc-label{font-size:11px;flex:1;color:rgba(240,248,255,.7)}
+.cc-chip{font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px}
+
+/* CLIENT PRIVACY WALL */
+.client-privacy{margin:0 16px 14px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:14px;overflow:hidden}
+.cp-hdr{padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--border);
+  font-size:9px;font-weight:700;color:rgba(240,248,255,.45);
+  letter-spacing:1.5px;text-transform:uppercase}
+.cp-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
+  border-bottom:1px solid rgba(10,37,64,.4);font-size:10px}
+.cp-row:last-child{border:none}
+.cp-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.cp-text{color:rgba(240,248,255,.65);flex:1;line-height:1.45}
+.cp-ok{font-size:9px;font-weight:700;color:var(--green)}
+
+/* CLIENT BLOCKED NOTICE */
+.blocked-notice{margin:12px 16px;background:rgba(255,34,68,.06);
+  border:1px solid rgba(255,34,68,.2);border-radius:12px;padding:13px 15px;
+  display:flex;gap:10px;font-size:11px;color:rgba(255,150,150,.7);line-height:1.55}
+
+/* UPGRADE REQUEST */
+.upgrade-card{margin:0 16px 14px;background:rgba(255,214,0,.04);
+  border:1px solid rgba(255,214,0,.2);border-radius:14px;padding:14px;
+  display:flex;gap:12px;align-items:flex-start}
+.uc-icon{font-size:22px;flex-shrink:0}
+.uc-title{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:4px}
+.uc-desc{font-size:11px;color:rgba(255,214,0,.6);line-height:1.5;margin-bottom:10px}
+.uc-btn{padding:8px 16px;border-radius:9px;font-family:var(--mono);font-size:11px;
+  font-weight:700;cursor:pointer;border:none;
+  background:rgba(255,214,0,.15);color:var(--yellow);
+  border:1px solid rgba(255,214,0,.3);transition:all .15s;letter-spacing:.3px}
+.uc-btn:hover{background:rgba(255,214,0,.25)}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:800;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex;animation:fadeIn .2s ease}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;
+  width:100%;max-width:480px;overflow:hidden}
+.modal-hdr{padding:14px 18px;background:var(--bg3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:800;font-family:var(--sans)}
+.modal-close{font-size:20px;color:rgba(240,248,255,.4);cursor:pointer;background:none;border:none;line-height:1}
+.modal-body{padding:18px}
+.modal-field{margin-bottom:13px}
+.modal-label{font-size:8px;color:rgba(240,248,255,.4);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:5px;display:block}
+.modal-inp{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:10px 13px;font-family:var(--mono);font-size:12px;color:var(--white);outline:none}
+.modal-inp:focus{border-color:var(--blue)}
+.modal-sel{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:10px 13px;font-family:var(--mono);font-size:12px;color:var(--white);outline:none;appearance:none;cursor:pointer}
+.modal-btn{width:100%;padding:12px;border-radius:9px;font-family:var(--mono);font-size:12px;
+  font-weight:700;cursor:pointer;border:none;letter-spacing:.5px;margin-bottom:7px;transition:all .15s}
+.modal-btn:active{transform:scale(.98)}
+.modal-btn-sec{width:100%;padding:11px;border-radius:9px;font-family:var(--mono);font-size:11px;
+  font-weight:600;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid var(--border2);
+  color:rgba(240,248,255,.5);transition:all .15s}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:10px 20px;border-radius:18px;font-size:11px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:999;font-family:var(--mono);letter-spacing:.3px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.t-ok{background:var(--green);color:#001a0a}
+.t-red{background:var(--red);color:white}
+.t-blue{background:var(--blue);color:#001a30}
+</style>
+</head>
+<body>
+
+<div class="atmosphere"></div>
+<div class="blue-layer"></div>
+<div class="red-layer"></div>
+<div class="scan-line"></div>
+<div class="police-bar" id="policeBar"></div>
+
+<!-- ═══════════════════════════════ -->
+<!-- LOGIN SCREEN                   -->
+<!-- ═══════════════════════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Trust<span>Lens</span></div>
+    <div class="login-sub">Session Intelligence Engine · Secure Access</div>
+
+    <div class="login-role-tabs">
+      <div class="lr-tab admin on" id="tab_admin" onclick="switchTab('admin')">
+        🔴 &nbsp;DolSafe Admin
+      </div>
+      <div class="lr-tab client" id="tab_client" onclick="switchTab('client')">
+        🔵 &nbsp;Client Portal
+      </div>
+    </div>
+
+    <div id="loginErr" class="login-err">Invalid credentials. Try again.</div>
+
+    <!-- ADMIN FIELDS -->
+    <div id="adminFields">
+      <div class="login-field">
+        <label class="login-label">Admin email</label>
+        <input class="login-inp" id="adminEmail" type="email" placeholder="admin@dolsafe.app" value="admin@dolsafe.app">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Admin password</label>
+        <input class="login-inp" id="adminPass" type="password" placeholder="••••••••" value="admin123">
+      </div>
+      <button class="login-btn admin-btn" onclick="loginAdmin()">
+        ⚡ Enter Admin Portal
+      </button>
+      <div class="login-hint">DolSafe Inc. internal use only · Full session engine control<br>Tier assignment · Wipe authority · Signal injection</div>
+    </div>
+
+    <!-- CLIENT FIELDS -->
+    <div id="clientFields" style="display:none">
+      <div class="login-field">
+        <label class="login-label">Organization</label>
+        <select class="login-org-sel" id="clientOrg">
+          <option value="mta">🚇 MTA New York</option>
+          <option value="liu">🎓 LIU Brooklyn</option>
+          <option value="amtrak">🚂 Amtrak</option>
+          <option value="nypd">🚔 NYPD Transit</option>
+          <option value="jfk">✈️ JFK Airport</option>
+        </select>
+      </div>
+      <div class="login-field">
+        <label class="login-label">Security contact email</label>
+        <input class="login-inp" id="clientEmail" type="email" placeholder="security@mta.nyc.gov">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Access code</label>
+        <input class="login-inp" id="clientPass" type="password" placeholder="••••••••" value="client123">
+      </div>
+      <button class="login-btn client-btn" onclick="loginClient()">
+        → Enter Client Portal
+      </button>
+      <div class="login-hint">Read-only view · No engine controls accessible<br>Compliance status · Retention tier · Privacy summary</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ -->
+<!-- TOPBAR (shared)                -->
+<!-- ═══════════════════════════════ -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="logo">Trust<span>Lens</span></div>
+  <div class="tb-sep"></div>
+  <div class="tb-tag" id="tbTag" style="color:rgba(0,170,255,.6)">Session Intelligence Engine</div>
+  <div class="tb-sp"></div>
+  <div class="tb-role-badge" id="tbRoleBadge"></div>
+  <div class="tb-clock" id="clockEl">Day 1 · 11:00:00</div>
+  <div class="tb-logout" onclick="logout()">Sign out</div>
+</div>
+
+<!-- ═══════════════════════════════ -->
+<!-- ADMIN VIEW                     -->
+<!-- ═══════════════════════════════ -->
+<div class="admin-wrap" id="adminView" style="display:none">
+
+  <div class="admin-banner">
+    <div class="ab-icon">🔴</div>
+    <div class="ab-text">DolSafe Admin · Full session engine control · Changes affect all client organizations</div>
+    <div class="ab-pill">ADMIN ACCESS</div>
+  </div>
+
+  <!-- ORG SELECTOR -->
+  <div class="org-bar">
+    <div class="org-bar-label">Viewing org:</div>
+    <div class="org-pill-btn on" onclick="selectOrg('all',this)">All orgs</div>
+    <div class="org-pill-btn" onclick="selectOrg('mta',this)">🚇 MTA</div>
+    <div class="org-pill-btn" onclick="selectOrg('liu',this)">🎓 LIU</div>
+    <div class="org-pill-btn" onclick="selectOrg('amtrak',this)">🚂 Amtrak</div>
+    <div class="org-pill-btn" onclick="selectOrg('nypd',this)">🚔 NYPD</div>
+    <div class="org-pill-btn" onclick="selectOrg('jfk',this)">✈️ JFK</div>
+  </div>
+
+  <!-- TIER CARDS WITH ADMIN CONTROLS -->
+  <div class="tier-row">
+    <div class="tier-card t-std active" id="tc_standard" onclick="adminSetTier('standard',this)">
+      <div class="tc-badge" style="background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.25)">DEFAULT</div>
+      <div class="tc-name" style="color:var(--green)">Standard</div>
+      <div class="tc-dur" style="color:rgba(0,255,136,.7)">72-hour · 3 days · RAM only</div>
+      <div class="tc-items">
+        <div class="tc-item">All operators · No legal process</div>
+        <div class="tc-item">Cleanest GDPR position</div>
+        <div class="tc-item">Single incident detection window</div>
+      </div>
+      <div class="tc-admin-ctrl">
+        <button class="tc-assign-btn" style="background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.25)" onclick="event.stopPropagation();openAssignModal('standard')">
+          Assign org to Standard tier →
+        </button>
+        <div class="tc-org-count" id="std_count">3 orgs on this tier</div>
+      </div>
+    </div>
+
+    <div class="tier-card t-ext" id="tc_extended" onclick="adminSetTier('extended',this)">
+      <div class="tc-badge" style="background:rgba(0,170,255,.12);color:var(--blue);border:1px solid rgba(0,170,255,.25)">DPA REQUIRED</div>
+      <div class="tc-name" style="color:var(--blue)">Extended</div>
+      <div class="tc-dur" style="color:rgba(0,170,255,.7)">14-day · 2 weeks · Disk encrypted</div>
+      <div class="tc-items">
+        <div class="tc-item">Signed DPA + posted public notice</div>
+        <div class="tc-item">Multi-day recon detection</div>
+        <div class="tc-item">Repeat offender recognition</div>
+      </div>
+      <div class="tc-admin-ctrl">
+        <button class="tc-assign-btn" style="background:rgba(0,170,255,.1);color:var(--blue);border:1px solid rgba(0,170,255,.25)" onclick="event.stopPropagation();openAssignModal('extended')">
+          Assign org → requires DPA upload
+        </button>
+        <div class="tc-org-count" id="ext_count">1 org on this tier</div>
+      </div>
+    </div>
+
+    <div class="tier-card t-inv" id="tc_investigative" onclick="adminSetTier('investigative',this)">
+      <div class="tc-badge" style="background:rgba(255,214,0,.12);color:var(--yellow);border:1px solid rgba(255,214,0,.25)">LEGAL ORDER</div>
+      <div class="tc-name" style="color:var(--yellow)">Investigative</div>
+      <div class="tc-dur" style="color:rgba(255,214,0,.7)">30-day · 1 month · LE only</div>
+      <div class="tc-items">
+        <div class="tc-item">Law enforcement only</div>
+        <div class="tc-item">Written legal authority required</div>
+        <div class="tc-item">Cross-site correlation enabled</div>
+      </div>
+      <div class="tc-admin-ctrl">
+        <button class="tc-assign-btn" style="background:rgba(255,214,0,.08);color:var(--yellow);border:1px solid rgba(255,214,0,.25)" onclick="event.stopPropagation();openAssignModal('investigative')">
+          Assign LE org → requires legal order
+        </button>
+        <div class="tc-org-count" id="inv_count">1 LE org on this tier</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID: full engine controls -->
+  <div class="main-grid">
+
+    <!-- LEFT: SESSION STORE -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="ph-title" style="color:var(--green)">Session Store · RAM Only</div>
+        <div class="ph-badge" style="background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)" id="recordCount">0 Records</div>
+        <button class="wipe-btn" onclick="wipeSession()">⚡ WIPE</button>
+      </div>
+      <div class="session-stats">
+        <div class="ss-item"><div class="ss-num" style="color:var(--green)" id="st_new">0</div><div class="ss-lbl">New</div></div>
+        <div class="ss-item"><div class="ss-num" style="color:var(--blue)" id="st_return">0</div><div class="ss-lbl">Return</div></div>
+        <div class="ss-item"><div class="ss-num" style="color:var(--red)" id="st_flagged">0</div><div class="ss-lbl">Flagged</div></div>
+      </div>
+      <div class="tbl-hdr">
+        <div>Hash Token</div><div>Type</div><div>Visits</div><div>First Seen</div><div>Expires</div><div>St</div>
+      </div>
+      <div class="panel-body" id="sessionTable">
+        <div class="empty-state">SESSION STORE EMPTY<br>Inject signals or run a scenario →</div>
+      </div>
+      <div class="log-section">
+        <div class="log-hdr">System Log<button class="log-clear" onclick="clearLog()">Clear</button></div>
+        <div id="logItems"></div>
+      </div>
+    </div>
+
+    <!-- CENTER: RF INJECTOR (admin only) -->
+    <div class="panel" style="border-right:1px solid var(--border)">
+      <div class="panel-hdr">
+        <div class="ph-title" style="color:var(--blue)">Signal Injector · Admin Only</div>
+        <div class="ph-badge" style="background:rgba(255,34,68,.1);color:var(--red);border:1px solid rgba(255,34,68,.2)">NOT VISIBLE TO CLIENTS</div>
+      </div>
+      <div class="panel-body">
+        <div style="padding:6px 10px 3px;font-size:7px;color:rgba(240,248,255,.3);letter-spacing:1.5px;text-transform:uppercase">Inject Device Signal</div>
+        <div class="device-list" id="deviceList"></div>
+      </div>
+      <div class="scenario-wrap">
+        <div class="sc-lbl-row">Quick Scenarios</div>
+        <button class="scenario-btn" style="background:rgba(0,255,136,.07);color:var(--green);border:1px solid rgba(0,255,136,.18)" onclick="runScenario('loitering')">👁️ Loitering · device returns 3×</button>
+        <button class="scenario-btn" style="background:rgba(255,34,68,.07);color:var(--red);border:1px solid rgba(255,34,68,.18)" onclick="runScenario('threat')">🚨 Threat · recon + weapon RF</button>
+        <button class="scenario-btn" style="background:rgba(255,214,0,.06);color:var(--yellow);border:1px solid rgba(255,214,0,.18)" onclick="runScenario('crowd')">👥 Crowd · 8 devices in 30s</button>
+        <button class="scenario-btn" style="background:rgba(170,68,255,.07);color:var(--purple);border:1px solid rgba(170,68,255,.18)" onclick="runScenario('le')">🚔 LE response · tactical radios</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: INTELLIGENCE -->
+    <div class="panel">
+      <div class="stats-grid">
+        <div class="stat-card" style="border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.03)">
+          <div class="sc-num" style="color:var(--green)" id="stat_session">0</div>
+          <div class="sc-lbl" style="color:rgba(0,255,136,.55)">In Session</div>
+          <div class="sc-sub">72h window</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(0,170,255,.2);background:rgba(0,170,255,.03)">
+          <div class="sc-num" style="color:var(--blue)" id="stat_first">0</div>
+          <div class="sc-lbl" style="color:rgba(0,170,255,.55)">First-Time</div>
+          <div class="sc-sub">New this session</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(255,34,68,.2);background:rgba(255,34,68,.03)">
+          <div class="sc-num" style="color:var(--red)" id="stat_flagged">0</div>
+          <div class="sc-lbl" style="color:rgba(255,34,68,.55)">Flagged</div>
+          <div class="sc-sub">Active flags</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(170,68,255,.2);background:rgba(170,68,255,.03);grid-column:span 2">
+          <div class="sc-num" style="color:var(--purple)" id="stat_dispatched">0</div>
+          <div class="sc-lbl" style="color:rgba(170,68,255,.55)">Auto-Dispatched</div>
+          <div class="sc-sub">Score ≥ 0.75 · across all orgs</div>
+        </div>
+      </div>
+
+      <div class="panel-hdr" style="border-top:1px solid var(--border)">
+        <div class="ph-title" style="color:rgba(240,248,255,.5)">Intelligence Alerts</div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse .8s infinite"></div>
+      </div>
+      <div class="alerts-section" id="alertsSection">
+        <div class="empty-state">No alerts yet. Inject signals or run a scenario.</div>
+      </div>
+      <div class="compliance-section">
+        <div class="comp-hdr">Compliance · Active Tier: <span id="compTierLabel">Standard</span></div>
+        <div id="compRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ -->
+<!-- CLIENT VIEW                    -->
+<!-- ═══════════════════════════════ -->
+<div class="client-wrap" id="clientView" style="display:none">
+
+  <div class="client-banner">
+    <div class="cb-icon">🔵</div>
+    <div class="cb-text">Read-only compliance view · Session engine controls are managed by DolSafe Inc.</div>
+    <div class="cb-org" id="clientOrgBadge">MTA New York</div>
+  </div>
+
+  <!-- CLIENT TIER DISPLAY -->
+  <div id="clientTierDisplay"></div>
+
+  <!-- CLIENT STATS (read only, no engine data) -->
+  <div class="client-stats-grid" id="clientStatsGrid"></div>
+
+  <!-- WHAT CLIENT CANNOT SEE -->
+  <div class="blocked-notice">
+    <div style="font-size:20px;flex-shrink:0">🔒</div>
+    <div><strong style="color:rgba(255,150,150,.9)">Session engine controls are not accessible to client organizations.</strong><br>
+    The signal injector, raw session store, hash token table, WIPE button, and tier configuration are managed exclusively by DolSafe Inc. administrators. Contact your DolSafe account manager to request a tier change.</div>
+  </div>
+
+  <!-- COMPLIANCE -->
+  <div class="client-compliance">
+    <div class="cc-hdr">Legal Compliance Status · Your Organization</div>
+    <div id="clientCompRows"></div>
+  </div>
+
+  <!-- PRIVACY SUMMARY -->
+  <div class="client-privacy">
+    <div class="cp-hdr">Privacy Architecture · What TrustLens Holds About Your Zone</div>
+    <div id="clientPrivacyRows"></div>
+  </div>
+
+  <!-- UPGRADE REQUEST (for standard tier clients) -->
+  <div class="upgrade-card" id="upgradeCard">
+    <div class="uc-icon">⬆️</div>
+    <div>
+      <div class="uc-title">Need Extended or Investigative tier?</div>
+      <div class="uc-desc">Extended tier (14 days) requires a signed DPA. Investigative tier (30 days) requires a legal order. Contact your DolSafe account manager to begin the upgrade process.</div>
+      <button class="uc-btn" onclick="openUpgradeModal()">Request tier upgrade →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ASSIGN TIER MODAL (admin) -->
+<div class="modal-ov" id="assignModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="assignModalTitle">Assign org to tier</div>
+      <button class="modal-close" onclick="closeModal('assignModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Organization</label>
+        <select class="modal-sel" id="assignOrg">
+          <option>🚇 MTA New York</option>
+          <option>🎓 LIU Brooklyn</option>
+          <option>🚂 Amtrak</option>
+          <option>🚔 NYPD Transit</option>
+          <option>✈️ JFK Airport</option>
+        </select>
+      </div>
+      <div class="modal-field" id="dpaField" style="display:none">
+        <label class="modal-label">DPA document reference</label>
+        <input class="modal-inp" placeholder="DPA-2025-MTA-001 · Signed Nov 2025">
+      </div>
+      <div class="modal-field" id="legalField" style="display:none">
+        <label class="modal-label">Legal order / warrant number</label>
+        <input class="modal-inp" placeholder="Warrant #2025-SUP-7821">
+      </div>
+      <div class="modal-field" id="legalAgencyField" style="display:none">
+        <label class="modal-label">Requesting agency</label>
+        <select class="modal-sel">
+          <option>NYPD — Transit Bureau</option>
+          <option>FBI — NY Field Office</option>
+          <option>DHS — Fusion Center</option>
+          <option>Amtrak Police</option>
+          <option>MTA Police</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Notes</label>
+        <input class="modal-inp" id="assignNotes" placeholder="Reason for tier assignment…">
+      </div>
+      <button class="modal-btn" id="assignConfirmBtn" onclick="confirmAssign()" style="background:linear-gradient(135deg,var(--green),#006630);color:#001a0a">
+        Confirm assignment
+      </button>
+      <button class="modal-btn-sec" onclick="closeModal('assignModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPGRADE REQUEST MODAL (client) -->
+<div class="modal-ov" id="upgradeModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Request tier upgrade</div>
+      <button class="modal-close" onclick="closeModal('upgradeModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Requested tier</label>
+        <select class="modal-sel">
+          <option>Extended — 14 days (requires signed DPA)</option>
+          <option>Investigative — 30 days (requires legal order)</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Business justification</label>
+        <input class="modal-inp" placeholder="Ongoing investigation of repeat trespassing incidents…">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Your security contact</label>
+        <input class="modal-inp" placeholder="security@mta.nyc.gov">
+      </div>
+      <button class="modal-btn" onclick="submitUpgrade()" style="background:linear-gradient(135deg,var(--blue),#0055AA);color:white">
+        Submit request to DolSafe admin
+      </button>
+      <button class="modal-btn-sec" onclick="closeModal('upgradeModal')">Cancel</button>
+      <div style="font-size:9px;color:rgba(240,248,255,.25);text-align:center;margin-top:10px;line-height:1.6">
+        DolSafe Inc. will review your request and contact you within 24 hours.<br>
+        Extended tier requires a signed DPA before activation.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ════════════════════════════════════════════
+// TRUSTLENS SESSION ENGINE · DUAL ACCESS
+// ════════════════════════════════════════════
+
+var currentRole = null; // 'admin' | 'client'
+var currentOrg = 'mta';
+var currentTier = 'standard';
+var sessions = {};
+var expiredCount = 0;
+var dispatchedCount = 0;
+var sessionDay = 1;
+var sessionSec = 11 * 3600;
+var assigningTier = null;
+
+var ORG_TIERS = {
+  mta:'standard', liu:'standard', amtrak:'standard', nypd:'investigative', jfk:'extended'
+};
+var ORG_NAMES = {
+  mta:'MTA New York', liu:'LIU Brooklyn', amtrak:'Amtrak',
+  nypd:'NYPD Transit', jfk:'JFK Airport'
+};
+var ORG_ICONS = {mta:'🚇',liu:'🎓',amtrak:'🚂',nypd:'🚔',jfk:'✈️'};
+
+var TIER_CONFIG = {
+  standard:    {hours:72,  label:'Standard',     color:'var(--green)',  gdpr:'✓ Compliant',ccpa:'✓ Compliant',carpenter:'✓ Clear',nyc:'✓ Clear'},
+  extended:    {hours:336, label:'Extended',     color:'var(--blue)',   gdpr:'DPA Required',ccpa:'✓ Compliant',carpenter:'Review',nyc:'Notice Required'},
+  investigative:{hours:720,label:'Investigative',color:'var(--yellow)', gdpr:'Legal Order',ccpa:'LE Exception',carpenter:'Warrant Required',nyc:'Legal Order'},
+};
+
+var DEVICES = [
+  {id:'PH',icon:'📱',name:'Phone',          freq:'2.4GHz Wi-Fi probe',  score:0.12,color:'#3B9EFF'},
+  {id:'EB',icon:'🎧',name:'Earbuds',        freq:'Bluetooth LE',         score:0.08,color:'#9CA3AF'},
+  {id:'WC',icon:'⌚',name:'Smartwatch',     freq:'BLE heart rate',       score:0.14,color:'#A78BFA'},
+  {id:'LT',icon:'💻',name:'Laptop',         freq:'5GHz Wi-Fi probe',     score:0.18,color:'#60A5FA'},
+  {id:'KF',icon:'🔑',name:'Key Fob',        freq:'433MHz RF burst',      score:0.22,color:'#FCD34D'},
+  {id:'TR',icon:'📻',name:'Tactical Radio', freq:'462MHz GMRS',          score:0.05,color:'#34D399'},
+  {id:'DR',icon:'🚁',name:'Drone',          freq:'5.8GHz video link',    score:0.65,color:'#F87171'},
+];
+
+var COMPLIANCE_LABELS = {gdpr:'GDPR Art.5(e)',ccpa:'CCPA',carpenter:'Carpenter (2018)',nyc:'NYC Camera Rules'};
+var PRIVACY_ROWS = [
+  {icon:'✅',text:'No raw MAC addresses stored — SHA-3 hash tokens only, non-reversible'},
+  {icon:'✅',text:'No facial recognition used at any tier'},
+  {icon:'✅',text:'No names or identities stored — behavioral signals only'},
+  {icon:'✅',text:'Session tokens auto-wiped from RAM at expiry — no disk persistence (Standard)'},
+  {icon:'✅',text:'GPS data from SOS goes directly to 911 — never passes through TrustLens'},
+  {icon:'✅',text:'All community signals (SmartReport) are anonymous at the API layer'},
+];
+
+// ── POLICE BAR ──
+var policeState=0;
+function animatePolice(){
+  var bar=document.getElementById('policeBar'); if(!bar) return;
+  if(!bar.children.length){
+    for(var i=0;i<24;i++){var s=document.createElement('div');s.className='pb-seg';bar.appendChild(s);}
+  }
+  policeState++;
+  var kids=bar.children;
+  for(var j=0;j<24;j++){
+    var phase=(j+policeState)%8;
+    kids[j].className='pb-seg '+(phase<2?'pb-blue':phase<4?'pb-off':phase<6?'pb-red':'pb-off');
+  }
+}
+setInterval(animatePolice,110);
+
+// ── CLOCK ──
+setInterval(function(){
+  sessionSec++;
+  if(sessionSec>=86400){sessionSec=0;sessionDay++;}
+  var h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60),s=sessionSec%60;
+  var el=document.getElementById('clockEl');
+  if(el) el.textContent='Day '+sessionDay+' · '+pad(h)+':'+pad(m)+':'+pad(s);
+},1000);
+function pad(n){return String(n).padStart(2,'0');}
+function clockStr(){
+  var h=Math.floor(sessionSec/3600),m=Math.floor((sessionSec%3600)/60),s=sessionSec%60;
+  return pad(h)+':'+pad(m)+':'+pad(s);
+}
+
+// ═══════════════
+// AUTH
+// ═══════════════
+function switchTab(role){
+  document.getElementById('tab_admin').className='lr-tab admin'+(role==='admin'?' on':'');
+  document.getElementById('tab_client').className='lr-tab client'+(role==='client'?' on':'');
+  document.getElementById('adminFields').style.display=role==='admin'?'block':'none';
+  document.getElementById('clientFields').style.display=role==='client'?'block':'none';
+  document.getElementById('loginErr').style.display='none';
+}
+
+function loginAdmin(){
+  var e=document.getElementById('adminEmail').value;
+  var p=document.getElementById('adminPass').value;
+  if(!e||!p){showErr();return;}
+  currentRole='admin';
+  showApp();
+  renderAdminView();
+  toast('⚡ Admin portal · Full access granted','t-ok');
+}
+
+function loginClient(){
+  var p=document.getElementById('clientPass').value;
+  if(!p){showErr();return;}
+  var orgKey=document.getElementById('clientOrg').value;
+  currentOrg=orgKey;
+  currentRole='client';
+  showApp();
+  renderClientView();
+  toast('✓ '+ORG_NAMES[orgKey]+' · Read-only portal','t-blue');
+}
+
+function showErr(){
+  var el=document.getElementById('loginErr'); if(el) el.style.display='block';
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('topbar').style.display='flex';
+  renderTopbar();
+  // Startup log
+  addLog(clockStr(),'Session engine connected · '+
+    (currentRole==='admin'?'Admin access':'Client access · '+ORG_NAMES[currentOrg]),
+    currentRole==='admin'?'ADM':'CLI');
+}
+
+function renderTopbar(){
+  var tbTag=document.getElementById('tbTag');
+  var tbBadge=document.getElementById('tbRoleBadge');
+  if(currentRole==='admin'){
+    if(tbTag){tbTag.textContent='Session Intelligence Engine';tbTag.style.color='rgba(255,34,68,.6)';}
+    if(tbBadge){
+      tbBadge.innerHTML='<span style="background:rgba(255,34,68,.15);border:1px solid rgba(255,34,68,.3);color:var(--red);padding:4px 11px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.5px">🔴 DOLSAFE ADMIN</span>';
+    }
+  } else {
+    var org=ORG_NAMES[currentOrg]||'Client';
+    if(tbTag){tbTag.textContent=ORG_ICONS[currentOrg]+' '+org+' · Read-only';tbTag.style.color='rgba(0,170,255,.6)';}
+    if(tbBadge){
+      tbBadge.innerHTML='<span style="background:rgba(0,170,255,.12);border:1px solid rgba(0,170,255,.3);color:var(--blue);padding:4px 11px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.5px">🔵 CLIENT PORTAL</span>';
+    }
+  }
+}
+
+function logout(){
+  currentRole=null; sessions={};
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('topbar').style.display='none';
+  document.getElementById('adminView').style.display='none';
+  document.getElementById('clientView').style.display='none';
+}
+
+// ═══════════════
+// ADMIN VIEW
+// ═══════════════
+function renderAdminView(){
+  document.getElementById('adminView').style.display='block';
+  document.getElementById('clientView').style.display='none';
+  renderDeviceList();
+  renderCompliance();
+  addLog(clockStr(),'Admin session started · All org tiers visible · Engine controls unlocked','ADM');
+}
+
+function selectOrg(org, el){
+  currentOrg=org;
+  document.querySelectorAll('.org-pill-btn').forEach(function(e){e.classList.remove('on');});
+  el.classList.add('on');
+  toast((ORG_ICONS[org]||'🌐')+' '+(ORG_NAMES[org]||'All orgs')+' · Session filter applied','t-blue');
+  if(org!=='all') currentTier=ORG_TIERS[org]||'standard';
+  renderCompliance();
+}
+
+function adminSetTier(tier, el){
+  currentTier=tier;
+  document.querySelectorAll('.tier-card').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  var cfg=TIER_CONFIG[tier];
+  document.getElementById('compTierLabel').textContent=cfg.label;
+  renderCompliance();
+  addLog(clockStr(),'Tier view changed to '+cfg.label.toUpperCase(),'ADM');
+}
+
+function openAssignModal(tier){
+  assigningTier=tier;
+  var cfg=TIER_CONFIG[tier];
+  document.getElementById('assignModalTitle').textContent='Assign org → '+cfg.label+' tier';
+  document.getElementById('dpaField').style.display=tier==='extended'?'block':'none';
+  document.getElementById('legalField').style.display=tier==='investigative'?'block':'none';
+  document.getElementById('legalAgencyField').style.display=tier==='investigative'?'block':'none';
+  var btn=document.getElementById('assignConfirmBtn');
+  if(btn){
+    var colors={standard:'linear-gradient(135deg,var(--green),#006630)',
+                extended:'linear-gradient(135deg,var(--blue),#0055AA)',
+                investigative:'linear-gradient(135deg,var(--yellow),#AA8800)'};
+    var textColors={standard:'#001a0a',extended:'white',investigative:'#1a1000'};
+    btn.style.background=colors[tier];btn.style.color=textColors[tier];
+  }
+  document.getElementById('assignModal').classList.add('open');
+}
+
+function confirmAssign(){
+  var orgSel=document.getElementById('assignOrg');
+  var orgName=orgSel?orgSel.value:'Unknown';
+  var tier=assigningTier||'standard';
+  closeModal('assignModal');
+  addLog(clockStr(),orgName+' assigned to '+TIER_CONFIG[tier].label.toUpperCase()+' tier','ADM');
+  toast('✓ '+orgName+' → '+TIER_CONFIG[tier].label+' tier assigned','t-ok');
+}
+
+// ── DEVICE LIST ──
+function renderDeviceList(){
+  var el=document.getElementById('deviceList'); if(!el) return;
+  el.innerHTML=DEVICES.map(function(d){
+    var c=d.color;
+    return '<div class="device-item">'+
+      '<div class="di-icon">'+d.icon+'</div>'+
+      '<div style="flex:1">'+
+        '<div class="di-name">'+d.name+'</div>'+
+        '<div class="di-freq">'+d.freq+'</div>'+
+      '</div>'+
+      '<div class="di-type" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'44">'+d.id+'</div>'+
+      '<button class="inject-btn" style="background:'+c+'15;color:'+c+';border:1px solid '+c+'30"'+
+        ' onclick="injectSignal(\''+d.id+'\')">Inject</button>'+
+    '</div>';
+  }).join('');
+}
+
+// ── INJECT ──
+function injectSignal(typeId){
+  var dev=DEVICES.find(function(d){return d.id===typeId;}); if(!dev) return;
+  var hash=typeId+'-SHA3-'+rndHex(4)+':'+rndHex(4)+':'+rndHex(4)+':'+rndHex(4);
+  var short=hash.slice(0,22)+'...';
+  var existing=Object.values(sessions).find(function(s){return s.type===typeId&&Math.random()>.55;});
+  var isReturn=!!existing;
+  var timeStr='Day '+sessionDay+' · '+clockStr();
+
+  if(isReturn){
+    existing.visits++;
+    existing.score=Math.min(existing.score+0.09,1);
+    if(existing.score>=0.75&&!existing.dispatched){
+      existing.dispatched=true; dispatchedCount++;
+      addAlert('DISPATCH','Auto-dispatch · '+existing.shortHash+' · Score '+existing.score.toFixed(2));
+    }
+  } else {
+    sessions[hash]={hash:hash,shortHash:short,type:typeId,visits:1,
+      firstSeen:timeStr,score:dev.score,flagged:dev.score>=0.5,
+      dispatched:false,color:dev.color};
+    addAlert(dev.score>=0.5?'FLAG':'NEW',
+      (dev.score>=0.5?'High-risk ':'New ')+dev.name+' · '+short+' · Score '+dev.score.toFixed(2));
+  }
+  addLog(clockStr(),(isReturn?'RETURN':'NEW')+' device: '+short+' · Score '+
+    (isReturn?existing.score:dev.score).toFixed(2),'STD');
+  renderSessionTable();
+  updateStats();
+}
+
+// ── SESSION TABLE ──
+function renderSessionTable(){
+  var el=document.getElementById('sessionTable'); if(!el) return;
+  var rows=Object.values(sessions);
+  if(!rows.length){
+    el.innerHTML='<div class="empty-state">SESSION STORE EMPTY<br>Inject signals or run a scenario →</div>';
+    document.getElementById('recordCount').textContent='0 Records';
+    return;
+  }
+  document.getElementById('recordCount').textContent=rows.length+' Record'+(rows.length!==1?'s':'');
+  el.innerHTML=rows.map(function(s){
+    var sc=s.score>=0.75?'var(--red)':s.score>=0.5?'var(--yellow)':s.score>=0.25?'var(--blue)':'var(--green)';
+    var expPct=Math.max(8,100-s.visits*18);
+    var expC=expPct>60?'var(--green)':expPct>30?'var(--yellow)':'var(--red)';
+    return '<div class="tbl-row'+(s.flagged?' flagged':'')+'">'+
+      '<div class="hash-cell'+(s.flagged?' flagged':'')+'">'+s.shortHash+'</div>'+
+      '<div><div class="type-badge" style="background:'+s.color+'22;color:'+s.color+';border:1px solid '+s.color+'44">'+s.type+'</div></div>'+
+      '<div style="font-size:10px;color:'+sc+';font-weight:700">'+s.visits+'</div>'+
+      '<div style="font-size:8px;color:rgba(240,248,255,.4);line-height:1.4">'+s.firstSeen.split('·')[1]?.trim()+'</div>'+
+      '<div><div style="font-size:8px;color:'+expC+'">'+expPct+'h left</div>'+
+        '<div class="exp-bar"><div class="exp-fill" style="width:'+expPct+'%;background:'+expC+'"></div></div></div>'+
+      '<div style="font-size:10px">'+(s.flagged?'🚨':'·')+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateStats(){
+  var rows=Object.values(sessions);
+  var nw=rows.filter(function(s){return s.visits===1;}).length;
+  var rt=rows.filter(function(s){return s.visits>1;}).length;
+  var fl=rows.filter(function(s){return s.flagged;}).length;
+  ['st_new','stat_first'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=nw;});
+  ['st_return'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=rt;});
+  ['st_flagged','stat_flagged'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=fl;});
+  var se=document.getElementById('stat_session');if(se)se.textContent=rows.length;
+  var sd=document.getElementById('stat_dispatched');if(sd)sd.textContent=dispatchedCount;
+}
+
+function addAlert(type, msg){
+  var el=document.getElementById('alertsSection'); if(!el) return;
+  var empty=el.querySelector('.empty-state'); if(empty) empty.remove();
+  var tc={
+    DISPATCH:{bg:'rgba(255,34,68,.08)',bc:'rgba(255,34,68,.3)',lc:'var(--red)'},
+    FLAG:    {bg:'rgba(255,34,68,.05)',bc:'rgba(255,34,68,.2)',lc:'rgba(255,100,100,.7)'},
+    NEW:     {bg:'rgba(0,255,136,.04)',bc:'rgba(0,255,136,.18)',lc:'var(--green)'},
+    RETURN:  {bg:'rgba(0,170,255,.05)',bc:'rgba(0,170,255,.2)',lc:'var(--blue)'},
+  }[type]||{bg:'rgba(255,255,255,.03)',bc:'var(--border)',lc:'rgba(255,255,255,.4)'};
+  var item=document.createElement('div');
+  item.className='alert-item';
+  item.style.cssText='background:'+tc.bg+';border-color:'+tc.bc;
+  item.innerHTML='<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">'+
+    '<span style="font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;background:'+tc.bg+';color:'+tc.lc+';border:1px solid '+tc.bc+'">'+type+'</span>'+
+    '<span style="font-size:9px;color:rgba(240,248,255,.65)">'+msg+'</span>'+
+    '</div><div class="ai-time">'+clockStr()+'</div>';
+  el.insertBefore(item, el.firstChild);
+}
+
+function addLog(time, msg, tier){
+  var el=document.getElementById('logItems'); if(!el) return;
+  var tc={ADM:'var(--red)',STD:'var(--green)',EXT:'var(--blue)',INV:'var(--yellow)',CLI:'var(--blue)'}[tier]||'var(--dim)';
+  var item=document.createElement('div'); item.className='log-item';
+  item.innerHTML='<div class="log-time">'+time+'</div>'+
+    '<div class="log-msg" style="color:rgba(240,248,255,.6)">'+msg+'</div>'+
+    '<div class="log-tier" style="background:'+tc+'18;color:'+tc+';border:1px solid '+tc+'30">'+tier+'</div>';
+  el.insertBefore(item, el.firstChild);
+}
+
+function clearLog(){var el=document.getElementById('logItems');if(el)el.innerHTML='';}
+
+function wipeSession(){
+  var count=Object.keys(sessions).length;
+  sessions={}; expiredCount++;
+  renderSessionTable(); updateStats();
+  var el=document.getElementById('alertsSection');
+  if(el) el.innerHTML='<div class="empty-state">Session wiped · All hash tokens destroyed from RAM.</div>';
+  addLog(clockStr(),'SESSION WIPED · '+count+' tokens destroyed · RAM cleared','ADM');
+  toast('⚡ Session wiped · '+count+' tokens destroyed from RAM','t-red');
+}
+
+function renderCompliance(){
+  var el=document.getElementById('compRows'); if(!el) return;
+  var cfg=TIER_CONFIG[currentTier];
+  el.innerHTML=Object.keys(COMPLIANCE_LABELS).map(function(k){
+    var val=cfg[k]; var isOk=val&&val.startsWith('✓');
+    var c=isOk?'var(--green)':val.includes('Required')||val.includes('Order')?'var(--yellow)':'var(--blue)';
+    return '<div class="comp-row">'+
+      '<div style="font-size:9px">'+COMPLIANCE_LABELS[k]+'</div>'+
+      '<div class="comp-status" style="background:'+c+'18;color:'+c+';border:1px solid '+c+'30">'+val+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── SCENARIOS ──
+function runScenario(type){
+  var s={
+    loitering:function(){
+      injectSignal('PH');
+      setTimeout(function(){
+        var ph=Object.values(sessions).find(function(s){return s.type==='PH';});
+        if(ph){ph.visits=2;ph.score+=0.1;renderSessionTable();updateStats();}
+        setTimeout(function(){
+          if(ph){ph.visits=3;ph.score+=0.15;ph.flagged=true;renderSessionTable();updateStats();
+            addAlert('FLAG','Loitering · '+ph.shortHash+' · 3 returns · Score '+ph.score.toFixed(2));}
+        },1200);
+      },800);
+    },
+    threat:function(){
+      injectSignal('PH');
+      setTimeout(function(){injectSignal('KF');},600);
+      setTimeout(function(){injectSignal('DR');},1200);
+      setTimeout(function(){
+        var dr=Object.values(sessions).find(function(s){return s.type==='DR';});
+        if(dr){dr.score=0.88;dr.flagged=true;renderSessionTable();updateStats();
+          addAlert('DISPATCH','⚡ AUTO-DISPATCH · Drone+Key Fob · Score 0.88');
+          dispatchedCount++;updateStats();}
+      },1800);
+    },
+    crowd:function(){
+      ['PH','EB','WC','LT','PH','EB','KF','PH'].forEach(function(t,i){
+        setTimeout(function(){injectSignal(t);},i*380);
+      });
+    },
+    le:function(){
+      injectSignal('TR');
+      setTimeout(function(){injectSignal('TR');},450);
+      setTimeout(function(){injectSignal('TR');},900);
+      setTimeout(function(){
+        addAlert('INFO','LE response · 3 tactical radios · MTA Police on scene');
+      },1400);
+    },
+  };
+  if(s[type]) s[type]();
+  addLog(clockStr(),'Scenario: '+type.toUpperCase()+' · Admin-initiated test','ADM');
+}
+
+// ═══════════════
+// CLIENT VIEW
+// ═══════════════
+function renderClientView(){
+  document.getElementById('clientView').style.display='block';
+  document.getElementById('adminView').style.display='none';
+
+  var tier=ORG_TIERS[currentOrg]||'standard';
+  var cfg=TIER_CONFIG[tier];
+  var orgName=ORG_NAMES[currentOrg]||'Organization';
+  var orgIcon=ORG_ICONS[currentOrg]||'🏢';
+
+  // Org badge
+  var ob=document.getElementById('clientOrgBadge');
+  if(ob) ob.textContent=orgIcon+' '+orgName;
+
+  // Tier card
+  var tierColors={standard:'rgba(0,255,136,.25)',extended:'rgba(0,170,255,.25)',investigative:'rgba(255,214,0,.25)'};
+  var tierBgs={standard:'rgba(0,255,136,.05)',extended:'rgba(0,170,255,.05)',investigative:'rgba(255,214,0,.05)'};
+  var tierDesc={
+    standard:'Your organization is on the Standard 72-hour session tier. This is the cleanest compliance position — no extra legal process required. Session tokens are stored in RAM only and wiped automatically after 72 hours.',
+    extended:'Your organization is on the Extended 14-day tier. Your signed DPA is on file. Session tokens are stored encrypted on disk for up to 14 days, enabling multi-day incident pattern detection.',
+    investigative:'Your organization is on the Investigative 30-day tier. An active legal order is on file. Cross-site correlation and repeat offender detection are enabled for the duration of the legal order.',
+  };
+  var tierItems={
+    standard:[
+      {icon:'✅',title:'72-hour RAM session',desc:'Tokens wiped automatically after 72h. No manual action required.'},
+      {icon:'🔒',title:'No disk writes',desc:'All session data lives in RAM only. Power cycle = complete wipe.'},
+      {icon:'✅',title:'GDPR Art.5(e) compliant',desc:'Minimum necessary data retention. No extra legal process.'},
+      {icon:'✅',title:'NYC camera rules clear',desc:'No additional notice requirements for standard tier.'},
+    ],
+    extended:[
+      {icon:'✅',title:'14-day encrypted session',desc:'Tokens stored encrypted on disk. DPA signed and on file.'},
+      {icon:'🔍',title:'Multi-day pattern detection',desc:'Repeat visit detection across a 14-day window enabled.'},
+      {icon:'📋',title:'DPA on file',desc:'Your Data Processing Agreement is signed and archived.'},
+      {icon:'⚠️',title:'Public notice required',desc:'Posted notice of extended retention must remain visible.'},
+    ],
+    investigative:[
+      {icon:'🔴',title:'30-day legal order active',desc:'Written legal authority on file. Auto-expires with order.'},
+      {icon:'🔗',title:'Cross-site correlation on',desc:'Behavioral patterns can be correlated across locations.'},
+      {icon:'🚔',title:'LE-only access',desc:'This tier is restricted to law enforcement organizations.'},
+      {icon:'⏱️',title:'Auto-reversion',desc:'Tier reverts to Standard automatically when legal order expires.'},
+    ],
+  };
+
+  var td=document.getElementById('clientTierDisplay');
+  if(td){
+    td.innerHTML='<div class="client-tier-card" style="border-color:'+tierColors[tier]+';background:'+tierBgs[tier]+'">'+
+      '<div class="ctc-row">'+
+        '<div>'+
+          '<div class="ctc-name" style="color:'+cfg.color+'">'+cfg.label+' Tier</div>'+
+          '<div class="ctc-dur" style="color:'+cfg.color+'55">'+
+            (tier==='standard'?'72-hour session · RAM only':tier==='extended'?'14-day session · Encrypted disk':'30-day session · Legal order active')+
+          '</div>'+
+        '</div>'+
+        '<div class="ctc-badge" style="background:'+tierBgs[tier]+';color:'+cfg.color+';border:1px solid '+tierColors[tier]+'">'+
+          (tier==='standard'?'✓ DEFAULT':tier==='extended'?'DPA ON FILE':'LEGAL ORDER ACTIVE')+
+        '</div>'+
+      '</div>'+
+      '<div class="ctc-desc">'+tierDesc[tier]+'</div>'+
+      '<div class="ctc-items">'+
+        tierItems[tier].map(function(i){
+          return '<div class="ctc-item">'+
+            '<div class="ctci-icon">'+i.icon+'</div>'+
+            '<div><div class="ctci-title">'+i.title+'</div><div class="ctci-desc">'+i.desc+'</div></div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  }
+
+  // Stats (anonymized — no raw session data)
+  var statsData=[
+    {n:'72h',lbl:'Session window',color:'var(--green)'},
+    {n:'RAM',lbl:'Storage type',color:'var(--blue)'},
+    {n:'0',lbl:'Raw IDs stored',color:'var(--green)'},
+    {n:'✓',lbl:'GDPR status',color:'var(--green)'},
+  ];
+  var sg=document.getElementById('clientStatsGrid');
+  if(sg){
+    sg.innerHTML=statsData.map(function(s){
+      return '<div class="csg-card">'+
+        '<div class="csg-num" style="color:'+s.color+'">'+s.n+'</div>'+
+        '<div class="csg-lbl">'+s.lbl+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Compliance
+  var cr=document.getElementById('clientCompRows');
+  if(cr){
+    cr.innerHTML=Object.keys(COMPLIANCE_LABELS).map(function(k){
+      var val=cfg[k]; var isOk=val&&val.startsWith('✓');
+      var c=isOk?'var(--green)':val.includes('Required')||val.includes('Order')?'var(--yellow)':'var(--blue)';
+      return '<div class="cc-row">'+
+        '<div class="cc-label">'+COMPLIANCE_LABELS[k]+'</div>'+
+        '<div class="cc-chip" style="background:'+c+'18;color:'+c+';border:1px solid '+c+'30">'+val+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Privacy rows
+  var pr=document.getElementById('clientPrivacyRows');
+  if(pr){
+    pr.innerHTML=PRIVACY_ROWS.map(function(r){
+      return '<div class="cp-row">'+
+        '<div class="cp-icon">'+r.icon+'</div>'+
+        '<div class="cp-text">'+r.text+'</div>'+
+        '<div class="cp-ok">Verified</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Hide upgrade card for investigative
+  var uc=document.getElementById('upgradeCard');
+  if(uc) uc.style.display=tier==='investigative'?'none':'block';
+
+  addLog(clockStr(),orgName+' portal loaded · Tier: '+cfg.label+' · Read-only view','CLI');
+}
+
+// ── UPGRADE ──
+function openUpgradeModal(){document.getElementById('upgradeModal').classList.add('open');}
+function submitUpgrade(){
+  closeModal('upgradeModal');
+  toast('✓ Upgrade request sent to DolSafe admin · Response within 24h','t-blue');
+  addLog(clockStr(),ORG_NAMES[currentOrg]+' requested tier upgrade · DolSafe admin notified','CLI');
+}
+
+// ── MODALS ──
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── HELPERS ──
+function rndHex(n){var r='',c='0123456789ABCDEF';for(var i=0;i<n*2;i++)r+=c[Math.floor(Math.random()*16)];return r;}
+
+function toast(msg,cls){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg; t.className='toast show '+(cls||'t-blue');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},3500);
+}
+
+// ── BOOT ──
+window.addEventListener('load',function(){animatePolice();});
+</script>
+</body>
+</html>
