@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · My Car</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#E8ECF2;font-family:'Inter',sans-serif;color:#111827}
+.phone{width:100%;max-width:390px;min-height:100vh;background:#F2F5FA;
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.12)}
+.status{height:44px;background:#1A56DB;display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;flex-shrink:0}
+.st-time{font-size:15px;font-weight:700;color:white}
+.st-r{font-size:11px;color:rgba(255,255,255,.85)}
+.hdr{background:#1A56DB;padding:10px 16px 16px}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back-btn{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);
+  border:none;color:white;font-size:20px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.hdr-title{font-size:17px;font-weight:800;color:white;flex:1;letter-spacing:-.3px}
+.hdr-add{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);color:white;font-size:12px;
+  font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.car-card{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+  border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center}
+.car-plate{background:white;border-radius:8px;padding:6px 13px;font-size:17px;
+  font-weight:900;color:#111827;letter-spacing:3px;font-family:'Inter',monospace;
+  flex-shrink:0;border-bottom:3px solid #1A56DB}
+.car-info{flex:1}
+.car-make{font-size:14px;font-weight:800;color:white;margin-bottom:2px}
+.car-detail{font-size:11px;color:rgba(255,255,255,.65);font-weight:500}
+.car-partner{font-size:10px;font-weight:700;color:#93C5FD;margin-top:4px}
+.car-score-num{font-size:28px;font-weight:900;font-family:'Inter',sans-serif}
+.car-score-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.55);text-align:center}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:24px}
+.scroll::-webkit-scrollbar{display:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes scanV{0%{top:-3px}100%{top:103%}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes urgentPulse{0%,100%{box-shadow:0 2px 10px rgba(0,0,0,.08)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.15)}}
+@keyframes checkPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.sec{padding:14px 14px 8px;display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-size:15px;font-weight:800;color:#111827}
+.sec-link{font-size:12px;font-weight:700;color:#1A56DB;cursor:pointer}
+/* HEALTH CARD */
+.health-card{margin:12px 14px;background:white;border-radius:18px;padding:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.09);animation:fadeUp .3s ease}
+.hc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.hc-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;position:relative;flex-shrink:0}
+.hc-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.hc-ring-num{position:relative;z-index:1;font-size:18px;font-weight:900}
+.hc-title{font-size:16px;font-weight:800;color:#111827;letter-spacing:-.3px;margin-bottom:3px}
+.hc-sub{font-size:12px;color:#6B7280;font-weight:500}
+.hc-update{font-size:11px;color:#9CA3AF;font-weight:500}
+.hc-bars{display:flex;flex-direction:column;gap:7px}
+.hc-bar-row{display:flex;align-items:center;gap:8px}
+.hc-bar-lbl{font-size:11px;font-weight:600;color:#374151;width:82px;flex-shrink:0}
+.hc-bar-track{flex:1;height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden}
+.hc-bar-fill{height:100%;border-radius:3px}
+.hc-bar-val{font-size:11px;font-weight:700;width:38px;text-align:right;flex-shrink:0}
+/* ACTION CARDS */
+.alert-cards{padding:0 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.alert-card{background:white;border-radius:14px;padding:12px 13px;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;gap:10px;
+  border-left:5px solid;cursor:pointer;transition:all .15s;animation:fadeUp .3s ease}
+.alert-card.urgent{border-left-color:#EF4444;animation:urgentPulse 2s infinite}
+.alert-card.warning{border-left-color:#F59E0B}
+.alert-card.ok{border-left-color:#10B981}
+.alert-card.info{border-left-color:#3B82F6}
+.alert-card:active{transform:scale(.98)}
+.ac-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.ac-body{flex:1;min-width:0}
+.ac-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:3px}
+.ac-detail{font-size:11px;color:#6B7280;font-weight:500;line-height:1.45}
+.ac-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.ac-due{font-size:11px;font-weight:700}
+.ac-act{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;border:none;
+  cursor:pointer;font-family:'Inter',sans-serif}
+/* SMART PARKING */
+.no-detect{margin:0 14px 10px;background:white;border-radius:16px;padding:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center}
+.lpr-detect-card{margin:0 14px 10px;background:white;border-radius:18px;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.lpr-hdr{background:linear-gradient(135deg,#065F46,#047857);padding:14px;
+  display:flex;align-items:center;gap:12px}
+.lpr-plate{background:white;border-radius:7px;padding:6px 13px;font-size:17px;
+  font-weight:900;letter-spacing:3px;font-family:'Inter',monospace;color:#111827;
+  border-bottom:3px solid #059669;flex-shrink:0}
+.lpr-hdr-info{flex:1}
+.lpr-hdr-title{font-size:13px;font-weight:800;color:white;margin-bottom:2px}
+.lpr-hdr-sub{font-size:10px;color:rgba(255,255,255,.7);font-weight:500}
+.lpr-hdr-hash{font-size:8px;color:rgba(255,255,255,.38);font-family:'Inter',monospace;margin-top:3px}
+.lpr-hdr-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;
+  background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.25);flex-shrink:0}
+.lpr-body{padding:13px 14px}
+.lpr-rec-hdr{font-size:13px;font-weight:800;color:#111827;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.lpr-priv{font-size:9px;font-weight:500;color:#9CA3AF}
+.lpr-lots{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.lpr-lot{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
+  border:1.5px solid #E5E7EB;background:#F9FAFB;cursor:pointer;transition:all .15s}
+.lpr-lot.best{border-color:#10B981;background:#F0FDF4}
+.lpr-lot:active{transform:scale(.98)}
+.lpr-lot-name{font-size:12px;font-weight:700;color:#111827;margin-bottom:2px}
+.lpr-lot-meta{font-size:10px;color:#6B7280;font-weight:500}
+.lpr-lot-spaces{font-size:15px;font-weight:900;font-family:'Inter',sans-serif}
+.lpr-lot-walk{font-size:10px;color:#6B7280;font-weight:500}
+.lpr-nav{width:100%;padding:12px;border-radius:11px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:white;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  box-shadow:0 3px 12px rgba(26,86,219,.3);transition:all .15s}
+.lpr-nav:active{transform:scale(.98)}
+/* QUICK ACTIONS */
+.actions-grid{padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.action-card{background:white;border-radius:14px;padding:13px 12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;gap:5px;border:1.5px solid #F3F4F6}
+.action-card:active{transform:scale(.97)}
+.ac2-icon{font-size:24px}
+.ac2-title{font-size:13px;font-weight:700;color:#111827;line-height:1.3}
+.ac2-sub{font-size:11px;color:#9CA3AF;font-weight:500}
+/* MAINTENANCE */
+.maint-list{padding:0 14px;display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.maint-item{background:white;border-radius:13px;padding:11px 13px;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;gap:10px;align-items:center}
+.mi-icon{font-size:18px;flex-shrink:0}
+.mi-info{flex:1}
+.mi-title{font-size:12px;font-weight:700;color:#111827;margin-bottom:2px}
+.mi-date{font-size:10px;color:#9CA3AF;font-weight:500}
+.mi-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
+/* BOTTOM NAV */
+.bottom-nav{position:sticky;bottom:0;background:white;border-top:1px solid #E5E7EB;
+  display:flex;padding:8px 4px 12px;box-shadow:0 -4px 20px rgba(0,0,0,.08);flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px;border-radius:12px;cursor:pointer}
+.nav-item.active{background:#EFF6FF}
+.ni-icon{font-size:21px;color:#9CA3AF}
+.ni-label{font-size:9px;font-weight:700;color:#9CA3AF}
+.nav-item.active .ni-icon,.nav-item.active .ni-label{color:#1A56DB}
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(17,24,39,.65);
+  z-index:500;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex;animation:fadeUp .2s ease}
+.modal-box{background:white;border-radius:22px 22px 0 0;width:100%;max-width:390px;
+  padding:20px;max-height:90vh;overflow-y:auto}
+.modal-box::-webkit-scrollbar{display:none}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:#E5E7EB;margin:0 auto 16px}
+/* STEP: CAPTURE */
+.step-wrap{animation:fadeUp .3s ease}
+.cap-zone{background:#0D1B2E;border-radius:14px;overflow:hidden;
+  height:200px;position:relative;margin-bottom:12px}
+.cap-canvas{width:100%;height:100%;display:block}
+.cap-scan-line{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,136,.85),transparent);
+  animation:scanV 1.6s ease-in-out infinite;display:none}
+.cap-rec-badge{position:absolute;top:9px;left:11px;display:none;align-items:center;gap:5px;
+  background:rgba(0,0,0,.65);padding:3px 9px;border-radius:7px}
+.cap-rec-dot{width:7px;height:7px;border-radius:50%;background:#EF4444;animation:pulse .9s infinite}
+.cap-rec-txt{font-size:10px;font-weight:700;color:white}
+.cap-timer-badge{position:absolute;top:9px;right:11px;display:none;
+  background:rgba(0,0,0,.65);padding:3px 9px;border-radius:7px;
+  font-size:11px;font-weight:700;color:white}
+.cap-hint-badge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.65);padding:5px 13px;border-radius:20px;
+  font-size:11px;color:rgba(255,255,255,.8);white-space:nowrap;display:none}
+.cap-plate-detect{position:absolute;display:none;
+  border:2px solid rgba(0,255,136,.85);border-radius:4px;background:rgba(0,255,136,.1)}
+.cap-btns{display:flex;gap:8px;margin-bottom:12px}
+.cap-btn{flex:1;padding:13px;border-radius:12px;border:none;font-family:'Inter',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;transition:all .15s}
+.cap-btn:active{transform:scale(.97)}
+.btn-record{background:#1A56DB;color:white;box-shadow:0 3px 12px rgba(26,86,219,.3)}
+.btn-stop{background:#EF4444;color:white;box-shadow:0 3px 12px rgba(239,68,68,.3)}
+.btn-manual{background:#F9FAFB;border:1.5px solid #E5E7EB;color:#374151}
+/* STEP: ANALYZING */
+.analyzing-wrap{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:16px;padding:18px;text-align:center}
+.spinner{width:42px;height:42px;border:3px solid #BFDBFE;border-top-color:#1A56DB;
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+.an-steps{display:flex;flex-direction:column;gap:6px;margin-top:12px;text-align:left}
+.an-step{font-size:12px;font-weight:600;padding:8px 11px;border-radius:9px;
+  display:flex;align-items:center;gap:8px;border:1px solid;transition:all .3s}
+.an-step.pending{background:#F9FAFB;border-color:#E5E7EB;color:#9CA3AF}
+.an-step.active{background:#EFF6FF;border-color:#BFDBFE;color:#1E40AF;animation:pulse .9s infinite}
+.an-step.done{background:#F0FDF4;border-color:#A7F3D0;color:#065F46}
+/* STEP: CONFIRM */
+.plate-confirmed{background:#0D1B2E;border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pc-plate{background:white;border-radius:7px;padding:6px 13px;font-size:18px;
+  font-weight:900;letter-spacing:3px;font-family:'Inter',monospace;color:#111827;
+  border-bottom:3px solid #1A56DB;flex-shrink:0}
+.pc-hash{font-size:8px;color:rgba(0,255,136,.55);font-family:'Inter',monospace;margin-top:3px}
+.pc-info{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;line-height:1.5}
+.dmv-card{background:white;border:1px solid #E5E7EB;border-radius:14px;
+  overflow:hidden;margin-bottom:12px}
+.dmv-card-hdr{background:#F9FAFB;padding:10px 14px;border-bottom:1px solid #E5E7EB;
+  display:flex;align-items:center;gap:8px}
+.dmv-card-hdr-title{font-size:12px;font-weight:700;color:#374151;flex:1}
+.dmv-verified{font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;
+  background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0}
+.dmv-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;border-bottom:1px solid #F3F4F6}
+.dmv-row:last-child{border:none}
+.dmv-key{font-size:12px;color:#9CA3AF;font-weight:500}
+.dmv-val{font-size:12px;font-weight:700;color:#111827;text-align:right}
+.dmv-val.red{color:#EF4444}
+.dmv-val.green{color:#10B981}
+.dmv-val.amber{color:#F59E0B}
+.priv-strip{background:#F0FDF4;border:1px solid #A7F3D0;border-radius:11px;
+  padding:10px 12px;font-size:11px;color:#065F46;font-weight:500;
+  line-height:1.6;margin-bottom:12px;display:flex;gap:8px}
+.btn-main{width:100%;padding:14px;border-radius:12px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:white;
+  cursor:pointer;margin-bottom:8px;transition:all .15s}
+.btn-main:active{transform:scale(.98)}
+.btn-sec{width:100%;padding:12px;border-radius:12px;background:#F9FAFB;
+  border:1.5px solid #E5E7EB;font-family:'Inter',sans-serif;font-size:13px;
+  font-weight:700;color:#374151;cursor:pointer;transition:all .15s}
+.btn-sec:active{transform:scale(.98)}
+/* STEP 4 — INSURANCE CARD SCAN */
+.ins-zone{background:#0D1B2E;border-radius:14px;overflow:hidden;
+  height:160px;position:relative;margin-bottom:12px;cursor:pointer}
+.ins-canvas{width:100%;height:100%;display:block}
+.ins-scan-h{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(99,179,237,.9),transparent);
+  animation:scanV 1.8s ease-in-out infinite;display:none}
+.ins-rec-badge{position:absolute;top:9px;left:11px;display:none;align-items:center;gap:5px;
+  background:rgba(0,0,0,.65);padding:3px 9px;border-radius:7px}
+.ins-rec-dot{width:7px;height:7px;border-radius:50%;background:#3B82F6;animation:pulse .9s infinite}
+.ins-rec-txt{font-size:10px;font-weight:700;color:white}
+.ins-timer{position:absolute;top:9px;right:11px;display:none;
+  background:rgba(0,0,0,.65);padding:3px 9px;border-radius:7px;
+  font-size:11px;font-weight:700;color:white}
+.ins-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.65);padding:5px 13px;border-radius:20px;
+  font-size:11px;color:rgba(255,255,255,.8);white-space:nowrap;display:none}
+.ins-detect-box{position:absolute;display:none;
+  border:2px solid rgba(99,179,237,.85);border-radius:6px;background:rgba(99,179,237,.08)}
+.ins-analyzing{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:14px;
+  padding:16px;text-align:center;margin-bottom:12px}
+.ins-result{background:white;border:1px solid #E5E7EB;border-radius:14px;
+  overflow:hidden;margin-bottom:12px}
+.ins-result-hdr{background:#F9FAFB;padding:10px 14px;border-bottom:1px solid #E5E7EB;
+  display:flex;align-items:center;gap:8px}
+.ins-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;border-bottom:1px solid #F3F4F6;font-size:13px}
+.ins-row:last-child{border:none}
+.ins-key{font-size:12px;color:#9CA3AF;font-weight:500}
+.ins-val{font-size:12px;font-weight:700;color:#111827;text-align:right}
+
+/* TOAST */
+.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.b{background:#1A56DB}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status">
+    <div class="st-time" id="stTime">9:41</div>
+    <div class="st-r">📶 WiFi 🔋</div>
+  </div>
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="back-btn" onclick="window.location.href='dolsafe-home.html'">‹</button>
+      <div class="hdr-title">My Car</div>
+      <button class="hdr-add" onclick="openAddCar()">+ Add car</button>
+    </div>
+    <div class="car-card">
+      <div class="car-plate">ABC·1234</div>
+      <div class="car-info">
+        <div class="car-make">2019 Honda Civic · Silver</div>
+        <div class="car-detail">VIN ···· 4821 · Registered NY</div>
+        <div class="car-partner">🚇 MTA New York · Partner permit active</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="car-score-num" style="color:#F59E0B">72</div>
+        <div class="car-score-lbl">Car health</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- HEALTH SCORE -->
+    <div class="health-card">
+      <div class="hc-top">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="hc-ring">
+            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="#F3F4F6" stroke-width="6"/>
+              <circle cx="32" cy="32" r="28" fill="none" stroke="#F59E0B" stroke-width="6"
+                stroke-dasharray="176" stroke-dashoffset="49" stroke-linecap="round"/></svg>
+            <div class="hc-ring-num" style="color:#F59E0B">72</div>
+          </div>
+          <div>
+            <div class="hc-title">Needs attention</div>
+            <div class="hc-sub">2 items require action soon</div>
+          </div>
+        </div>
+        <div class="hc-update">Today</div>
+      </div>
+      <div class="hc-bars">
+        <div class="hc-bar-row"><div class="hc-bar-lbl">Registration</div><div class="hc-bar-track"><div class="hc-bar-fill" style="width:15%;background:#EF4444"></div></div><div class="hc-bar-val" style="color:#EF4444">12d</div></div>
+        <div class="hc-bar-row"><div class="hc-bar-lbl">Inspection</div><div class="hc-bar-track"><div class="hc-bar-fill" style="width:32%;background:#F59E0B"></div></div><div class="hc-bar-val" style="color:#F59E0B">42d</div></div>
+        <div class="hc-bar-row"><div class="hc-bar-lbl">Oil change</div><div class="hc-bar-track"><div class="hc-bar-fill" style="width:68%;background:#10B981"></div></div><div class="hc-bar-val" style="color:#10B981">OK</div></div>
+        <div class="hc-bar-row"><div class="hc-bar-lbl">Insurance</div><div class="hc-bar-track"><div class="hc-bar-fill" style="width:80%;background:#10B981"></div></div><div class="hc-bar-val" style="color:#10B981">OK</div></div>
+        <div class="hc-bar-row"><div class="hc-bar-lbl">Tires</div><div class="hc-bar-track"><div class="hc-bar-fill" style="width:55%;background:#3B82F6"></div></div><div class="hc-bar-val" style="color:#3B82F6">Fair</div></div>
+      </div>
+    </div>
+
+    <!-- ACTION ITEMS -->
+    <div class="sec">
+      <div class="sec-title">⚠️ Action needed</div>
+      <div class="sec-link" onclick="toast('All reminders')">See all</div>
+    </div>
+    <div class="alert-cards" id="alertCards"></div>
+
+    <!-- SMART PARKING -->
+    <div class="sec">
+      <div class="sec-title">🅿️ Smart parking</div>
+      <div class="sec-link" onclick="showLPR()">Simulate arrival</div>
+    </div>
+    <div id="parkingWrap"></div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="sec"><div class="sec-title">Quick actions</div></div>
+    <div class="actions-grid">
+      <div class="action-card" onclick="toast('Finding inspection stations…','b')"><div class="ac2-icon">🔍</div><div class="ac2-title">Book inspection</div><div class="ac2-sub">Nearest · today</div></div>
+      <div class="action-card" onclick="toast('DMV online renewal','b')"><div class="ac2-icon">📋</div><div class="ac2-title">Renew registration</div><div class="ac2-sub">DMV online · 5 min</div></div>
+      <div class="action-card" onclick="toast('Oil change · Jiffy Lube 0.4 mi','b')"><div class="ac2-icon">🔧</div><div class="ac2-title">Oil change nearby</div><div class="ac2-sub">Jiffy Lube · 0.4 mi</div></div>
+      <div class="action-card" onclick="toast('Insurance comparison','b')"><div class="ac2-icon">🛡️</div><div class="ac2-title">Compare insurance</div><div class="ac2-sub">Renewal in 3 months</div></div>
+      <div class="action-card" onclick="toast('Tire pressure: FL 32 FR 31 RL 30 RR 32 psi','b')"><div class="ac2-icon">🔄</div><div class="ac2-title">Tire check</div><div class="ac2-sub">Last checked Nov 1</div></div>
+      <div class="action-card" onclick="toast('Best gas: Shell $3.42 · 0.2 mi','b')"><div class="ac2-icon">⛽</div><div class="ac2-title">Best gas price</div><div class="ac2-sub">$3.42 · Shell 0.2 mi</div></div>
+    </div>
+
+    <!-- MAINTENANCE LOG -->
+    <div class="sec">
+      <div class="sec-title">🔧 Maintenance log</div>
+      <div class="sec-link" onclick="toast('+ Add maintenance record')">+ Add</div>
+    </div>
+    <div class="maint-list" id="maintList"></div>
+  </div>
+    <div class="nav-item" onclick="window.location.href='dolsafe-briefing.html'"><div class="ni-icon">🗺️</div><div class="ni-label">Map</div></div>
+    <div class="nav-item active"><div class="ni-icon" style="color:#1A56DB">🚗</div><div class="ni-label" style="color:#1A56DB">My Car</div></div>
+    <div class="nav-item" onclick="window.location.href='dolsafe-sos.html'"><div class="ni-icon">🆘</div><div class="ni-label">Safety</div></div>
+    <div class="nav-item" onclick="window.location.href='dolsafe-settings.html'"><div class="ni-icon">👤</div><div class="ni-label">Profile</div></div>
+  </div>
+</div>
+
+<!-- ADD CAR MODAL -->
+<div class="modal-ov" id="addCarModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div id="modalInner"></div>
+  </div>
+</div>
+
+
+  <div class="bottom-nav">
+  <a class="nav-item" href="dolsafe-home.html"><div class="ni-icon">🏠</div><div class="ni-label">Home</div></a><a class="nav-item" href="dolsafe-briefing.html"><div class="ni-icon">🧠</div><div class="ni-label">Briefing</div></a><a class="nav-item" href="dolsafe-smartreport.html"><div class="ni-icon">📋</div><div class="ni-label">Report</div></a><a class="nav-item" href="dolsafe-sos.html"><div class="ni-icon">🆘</div><div class="ni-label">SOS</div></a><div class="nav-item active"><div class="ni-icon" style="color:#1A56DB">🚗</div><div class="ni-label" style="color:#1A56DB">My Car</div></div>
+  </div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DOLSAFE MY CAR + VIDEO CAPTURE ENGINE
+// ═══════════════════════════════════════════
+
+var capStep = 'capture';
+var capRecording = false;
+var capSec = 0;
+var capTimerIv = null;
+var capAnimIv = null;
+var capT = 0;
+var analyzeIdx = 0;
+var analyzeTout = null;
+var lprShown = false;
+
+var ALERTS = [
+  {cls:'urgent',icon:'📋',title:'Registration expires in 12 days',
+   detail:'NY registration due Dec 5, 2024 · Renew online at DMV · Late fee $40 after expiry',
+   due:'Dec 5',dc:'#EF4444',act:'Renew now',abg:'#FEE2E2',ac:'#991B1B',
+   fn:"toast('Opening NY DMV registration renewal','b')"},
+  {cls:'warning',icon:'🔍',title:'Inspection due in 42 days',
+   detail:'NY annual inspection · Last passed Jan 14, 2024 · Book before Jan 14, 2025',
+   due:'42 days',dc:'#F59E0B',act:'Book now',abg:'#FEF3C7',ac:'#92400E',
+   fn:"toast('Finding inspection stations','b')"},
+  {cls:'info',icon:'🛡️',title:'Insurance renewal in 3 months',
+   detail:'Current policy expires Feb 28, 2025 · Compare quotes for early-renewal discount',
+   due:'Feb 28',dc:'#3B82F6',act:'Compare',abg:'#DBEAFE',ac:'#1E40AF',
+   fn:"toast('Insurance comparison','b')"},
+  {cls:'ok',icon:'🔧',title:'Oil change · Good condition',
+   detail:'Last changed Oct 3, 2024 at 42,000 miles · Next at 47,000 miles',
+   due:'On track',dc:'#10B981',act:'Log service',abg:'#D1FAE5',ac:'#065F46',
+   fn:"toast('Add maintenance record')"},
+];
+
+var MAINT = [
+  {icon:'🔧',title:'Oil change',date:'Oct 3, 2024 · 42,000 miles',badge:'Done',bbg:'#D1FAE5',bc:'#065F46'},
+  {icon:'🔍',title:'NY State inspection · PASSED',date:'Jan 14, 2024',badge:'Passed',bbg:'#D1FAE5',bc:'#065F46'},
+  {icon:'🔄',title:'Tire rotation',date:'Aug 12, 2024 · 39,500 miles',badge:'Done',bbg:'#D1FAE5',bc:'#065F46'},
+  {icon:'🛑',title:'Brake pads replaced',date:'Mar 22, 2024',badge:'Done',bbg:'#D1FAE5',bc:'#065F46'},
+  {icon:'🔋',title:'Battery replaced',date:'Dec 10, 2023',badge:'Done',bbg:'#D1FAE5',bc:'#065F46'},
+];
+
+var LOTS = [
+  {name:'Employee Lot A · Times Sq',spaces:14,walk:'2 min',zone:'MTA Staff',best:true},
+  {name:'Employee Lot B · DeKalb Ave',spaces:6,walk:'5 min',zone:'MTA Staff',best:false},
+  {name:'Public Garage · 43rd St',spaces:82,walk:'8 min',zone:'Public',best:false},
+];
+
+var DMV = {
+  plate:'ABC·1234',make:'Honda',model:'Civic',year:'2019',color:'Silver',
+  vin:'1HGBH41JXMN109186',reg:'Dec 5, 2024',regStatus:'EXPIRING SOON',
+  insp:'Jan 14, 2025',inspStatus:'Due in 42 days',ins:'State Farm · Feb 28, 2025',
+};
+
+var ANALYZE_STEPS = [
+  'Reading license plate from video',
+  'Hashing plate · raw number discarded in 48ms',
+  'Querying NY DMV database',
+  'Building your car profile',
+];
+
+// ── CLOCK ──
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  var el=document.getElementById('stTime');if(el)el.textContent=h+':'+m;
+}
+setInterval(tick,1000);tick();
+
+// ── RENDER ALERTS ──
+function renderAlerts(){
+  var el=document.getElementById('alertCards');if(!el)return;
+  el.innerHTML=ALERTS.map(function(a){
+    return '<div class="alert-card '+a.cls+'" onclick="'+a.fn+'">' +
+      '<div class="ac-icon">'+a.icon+'</div>' +
+      '<div class="ac-body"><div class="ac-title">'+a.title+'</div>' +
+      '<div class="ac-detail">'+a.detail+'</div></div>' +
+      '<div class="ac-right">' +
+      '<div class="ac-due" style="color:'+a.dc+'">'+a.due+'</div>' +
+      '<button class="ac-act" style="background:'+a.abg+';color:'+a.ac+'" ' +
+        'onclick="event.stopPropagation();'+a.fn+'">'+a.act+'</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ── RENDER MAINT ──
+function renderMaint(){
+  var el=document.getElementById('maintList');if(!el)return;
+  el.innerHTML=MAINT.map(function(m){
+    return '<div class="maint-item"><div class="mi-icon">'+m.icon+'</div>' +
+      '<div class="mi-info"><div class="mi-title">'+m.title+'</div>' +
+      '<div class="mi-date">'+m.date+'</div></div>' +
+      '<div class="mi-badge" style="background:'+m.bbg+';color:'+m.bc+'">'+m.badge+'</div></div>';
+  }).join('');
+}
+
+// ── PARKING ──
+function renderParkingDefault(){
+  var el=document.getElementById('parkingWrap');if(!el)return;
+  el.innerHTML='<div class="no-detect" style="text-align:center">' +
+    '<div style="font-size:36px;margin-bottom:8px">📡</div>' +
+    '<div style="font-size:14px;font-weight:700;color:#374151;margin-bottom:5px">Not near a partner location</div>' +
+    '<div style="font-size:12px;color:#9CA3AF;font-weight:500;line-height:1.65;margin-bottom:12px">' +
+      'When you drive near LIU, MTA, or any DolSafe partner, the LPR camera reads your plate ' +
+      'and shows you the best available lot automatically.' +
+    '</div>' +
+    '<div style="display:flex;gap:7px;justify-content:center">' +
+      '<span style="padding:5px 12px;background:#EFF6FF;border-radius:20px;font-size:11px;font-weight:600;color:#1E40AF">🚇 MTA</span>' +
+      '<span style="padding:5px 12px;background:#F5F3FF;border-radius:20px;font-size:11px;font-weight:600;color:#5B21B6">🎓 LIU</span>' +
+      '<span style="padding:5px 12px;background:#F0FDF4;border-radius:20px;font-size:11px;font-weight:600;color:#065F46">🚂 Amtrak</span>' +
+    '</div></div>';
+}
+
+function showLPR(){
+  var el=document.getElementById('parkingWrap');if(!el)return;
+  var lots=LOTS.map(function(l,i){
+    var full=l.spaces===0;
+    return '<div class="lpr-lot'+(l.best?' best':'')+'" onclick="toast(\'🗺️ Navigating to '+l.name+'\',\'b\')">' +
+      '<div style="font-size:18px;flex-shrink:0">'+(i===0?'⭐':'🅿️')+'</div>' +
+      '<div style="flex:1"><div class="lpr-lot-name">'+l.name+'</div>' +
+      '<div class="lpr-lot-meta">'+l.zone+(l.best?' · Recommended':'')+'</div></div>' +
+      '<div style="text-align:right">' +
+      '<div class="lpr-lot-spaces" style="color:'+(full?'#EF4444':l.best?'#10B981':'#F59E0B')+'">' +
+        (full?'Full':l.spaces+' free')+'</div>' +
+      '<div class="lpr-lot-walk">'+l.walk+'</div></div></div>';
+  }).join('');
+
+  el.innerHTML='<div class="lpr-detect-card">' +
+    '<div class="lpr-hdr">' +
+      '<div class="lpr-plate">ABC·1234</div>' +
+      '<div class="lpr-hdr-info">' +
+        '<div class="lpr-hdr-title">🚇 MTA New York · Plate recognized</div>' +
+        '<div class="lpr-hdr-sub">Times Sq–42nd St · Staff permit confirmed</div>' +
+        '<div class="lpr-hdr-hash">LPR·SHA3·F2A1:B891 · Raw plate discarded 48ms</div>' +
+      '</div>' +
+      '<div class="lpr-hdr-badge">✓ AUTH</div>' +
+    '</div>' +
+    '<div class="lpr-body">' +
+      '<div class="lpr-rec-hdr">🅿️ Best lots for you now' +
+        '<span class="lpr-priv">Lot-level only · No individual tracking</span>' +
+      '</div>' +
+      '<div class="lpr-lots">'+lots+'</div>' +
+      '<button class="lpr-nav" onclick="toast(\'🗺️ Navigation to Employee Lot A started\',\'b\')">🗺️ Navigate to best lot</button>' +
+    '</div></div>';
+  toast('📡 LPR detected · MTA New York · Best lots shown','g');
+}
+
+// ════════════════════════════════
+// ADD CAR — VIDEO CAPTURE FLOW
+// ════════════════════════════════
+function openAddCar(){
+  capStep='capture';
+  capRecording=false;
+  capSec=0;capT=0;analyzeIdx=0;
+  document.getElementById('addCarModal').classList.add('open');
+  renderModalStep();
+}
+
+function closeAddCar(){
+  document.getElementById('addCarModal').classList.remove('open');
+  clearInterval(capTimerIv);
+  clearInterval(capAnimIv);
+  clearTimeout(analyzeTout);
+  capRecording=false;
+}
+
+function renderModalStep(){
+  var el=document.getElementById('modalInner');if(!el)return;
+  if(capStep==='capture') renderCapture();
+  else if(capStep==='analyzing') renderAnalyzing();
+  else renderConfirm();
+}
+
+// ── STEP 1: CAPTURE ──
+function renderCapture(){
+  var el=document.getElementById('modalInner');
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Add your car</div>' +
+      '<button onclick="closeAddCar()" style="font-size:22px;color:#9CA3AF;background:none;border:none;cursor:pointer;line-height:1">×</button>' +
+    '</div>' +
+    '<div style="font-size:12px;color:#6B7280;font-weight:500;line-height:1.65;margin-bottom:12px">' +
+      'Film your car and license plate — DolSafe reads your plate and looks up everything from the DMV automatically. No typing needed.' +
+    '</div>' +
+    '<div class="cap-zone">' +
+      '<canvas id="capCanvas" class="cap-canvas"></canvas>' +
+      '<div id="capScanLine" class="cap-scan-line"></div>' +
+      '<div id="capRecBadge" class="cap-rec-badge"><div class="cap-rec-dot"></div><div class="cap-rec-txt">REC</div></div>' +
+      '<div id="capTimerBadge" class="cap-timer-badge">0:00</div>' +
+      '<div id="capHint" class="cap-hint-badge">Point at license plate · stay steady</div>' +
+      '<div id="capPlateDetect" class="cap-plate-detect"></div>' +
+    '</div>' +
+    '<div class="cap-btns">' +
+      '<button id="capBtn" class="cap-btn btn-record" onclick="toggleCapture()">▶ Record</button>' +
+      '<button class="cap-btn btn-manual" onclick="closeAddCar();toast(\'Manual entry form\')">⌨️ Type plate</button>' +
+    '</div>' +
+    '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:9px 12px;font-size:11px;color:#92400E;font-weight:500;line-height:1.55">' +
+      '💡 <strong>Tip:</strong> Film the front plate first, then pan slowly to show the full car. Good light helps — avoid glare.' +
+    '</div>';
+
+  setTimeout(function(){
+    var c=document.getElementById('capCanvas');if(!c)return;
+    c.width=c.offsetWidth||350;c.height=200;
+    drawIdleCanvas(c);
+  },50);
+}
+
+function drawIdleCanvas(c){
+  clearInterval(capAnimIv);capT=0;
+  capAnimIv=setInterval(function(){
+    if(!c.isConnected){clearInterval(capAnimIv);return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#0D1B2E';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#162032';ctx.fillRect(0,H*.62,W,H*.38);
+    ctx.fillStyle='#1A2840';
+    [[.05,.1,.2,.5],[.28,.08,.23,.52],[.55,.1,.2,.5],[.78,.09,.18,.5]].forEach(function(b){
+      ctx.fillRect(b[0]*W,b[1]*H,b[2]*W,b[3]*H);
+    });
+    ctx.fillStyle='#7A90A8';ctx.fillRect(W*.14,H*.63,W*.18,H*.13);
+    ctx.fillStyle='#9AB0C0';ctx.fillRect(W*.39,H*.63,W*.21,H*.13);
+    ctx.fillStyle='#7A90A8';ctx.fillRect(W*.64,H*.63,W*.18,H*.13);
+    ctx.fillStyle='rgba(255,255,255,.18)';
+    ctx.font='11px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('Tap Record to start',W/2,H/2);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  },120);
+}
+
+function toggleCapture(){
+  if(!capRecording) startCapture(); else stopCapture();
+}
+
+function startCapture(){
+  capRecording=true;capSec=0;capT=0;
+  var btn=document.getElementById('capBtn');
+  if(btn){btn.className='cap-btn btn-stop';btn.textContent='⬛ Stop';}
+  show('capScanLine');show('capRecBadge');show('capTimerBadge');show('capHint');
+  clearInterval(capAnimIv);capT=0;
+  var c=document.getElementById('capCanvas');if(!c)return;
+  c.width=c.offsetWidth||350;c.height=200;
+  capAnimIv=setInterval(function(){
+    capT+=0.025;if(!c.isConnected){clearInterval(capAnimIv);return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#0D1B2E';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#162032';ctx.fillRect(0,H*.62,W,H*.38);
+    ctx.fillStyle='#1A2840';
+    [[.05,.1,.2,.5],[.28,.08,.23,.52],[.55,.1,.2,.5],[.78,.09,.18,.5]].forEach(function(b){
+      ctx.fillRect(b[0]*W,b[1]*H,b[2]*W,b[3]*H);
+    });
+    // Parked cars background
+    ctx.fillStyle='#7A90A8';ctx.fillRect(W*.64,H*.63,W*.18,H*.13);
+    // User's car in focus — center
+    var cx=W*.42,cy=H*.56;
+    ctx.fillStyle='#C8D8E8';ctx.fillRect(cx-38,cy-13,76,26);
+    ctx.fillStyle='#A0B4C8';ctx.fillRect(cx-28,cy-22,56,13);
+    ctx.fillStyle='rgba(255,240,180,.5)';
+    ctx.beginPath();ctx.ellipse(cx-32,cy,5,3,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+32,cy,5,3,0,0,Math.PI*2);ctx.fill();
+    // Plate
+    ctx.fillStyle='white';ctx.fillRect(cx-24,cy+9,48,13);
+    ctx.strokeStyle='#E5E7EB';ctx.lineWidth=1;ctx.strokeRect(cx-24,cy+9,48,13);
+    ctx.fillStyle='#111827';ctx.font='bold 8px monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('ABC 1234',cx,cy+15.5);
+    // After 4s: green detection box
+    if(capSec>=4){
+      var blink=(Math.sin(capT*6)+1)*.5;
+      ctx.strokeStyle='rgba(0,255,136,'+(0.55+blink*.4)+')';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.roundRect(cx-27,cy+7,54,17,3);ctx.stroke();
+      ctx.fillStyle='rgba(0,255,136,'+(0.08+blink*.07)+')';
+      ctx.beginPath();ctx.roundRect(cx-27,cy+7,54,17,3);ctx.fill();
+    }
+    ctx.strokeStyle='rgba(0,255,136,.04)';ctx.lineWidth=.5;
+    for(var gx=0;gx<W;gx+=20){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+    ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='8px monospace';
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    ctx.fillText(new Date().toISOString().slice(11,19),5,H-5);
+  },55);
+
+  capTimerIv=setInterval(function(){
+    capSec++;
+    var m=Math.floor(capSec/60),s=String(capSec%60).padStart(2,'0');
+    var tb=document.getElementById('capTimerBadge');if(tb)tb.textContent=m+':'+s;
+    if(capSec>=12)stopCapture();
+  },1000);
+}
+
+function stopCapture(){
+  clearInterval(capTimerIv);clearInterval(capAnimIv);
+  capRecording=false;
+  capStep='analyzing';analyzeIdx=0;
+  renderModalStep();
+}
+
+// ── STEP 2: ANALYZING ──
+function renderAnalyzing(){
+  var el=document.getElementById('modalInner');
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Reading your plate…</div>' +
+      '<button onclick="closeAddCar()" style="font-size:22px;color:#9CA3AF;background:none;border:none;cursor:pointer;line-height:1">×</button>' +
+    '</div>' +
+    '<div class="analyzing-wrap">' +
+      '<div class="spinner"></div>' +
+      '<div style="font-size:14px;font-weight:700;color:#1E40AF;margin-bottom:4px">DolSafe is reading your plate</div>' +
+      '<div style="font-size:12px;color:#3B82F6;font-weight:500;line-height:1.55">Analyzing your video · Checking NY DMV · About 5 seconds</div>' +
+      '<div class="an-steps" id="anSteps">' +
+        ANALYZE_STEPS.map(function(s,i){
+          return '<div class="an-step pending" id="anStep'+i+'">⏳ '+s+'</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  runAnalysis();
+}
+
+function runAnalysis(){
+  analyzeIdx=0;
+  var labels=[
+    '✅ License plate read: ABC·1234',
+    '✅ Plate hashed · raw number discarded',
+    '✅ NY DMV: 2019 Honda Civic · Silver',
+    '✅ Car profile ready · review below',
+  ];
+  function next(){
+    if(analyzeIdx>0){
+      var prev=document.getElementById('anStep'+(analyzeIdx-1));
+      if(prev){prev.className='an-step done';prev.textContent=labels[analyzeIdx-1];}
+    }
+    if(analyzeIdx<ANALYZE_STEPS.length){
+      var cur=document.getElementById('anStep'+analyzeIdx);
+      if(cur){cur.className='an-step active';}
+      analyzeIdx++;
+      analyzeTout=setTimeout(next,950);
+    } else {
+      var last=document.getElementById('anStep'+(ANALYZE_STEPS.length-1));
+      if(last){last.className='an-step done';last.textContent=labels[labels.length-1];}
+      analyzeTout=setTimeout(function(){
+        capStep='confirm';renderModalStep();
+      },600);
+    }
+  }
+  analyzeTout=setTimeout(next,400);
+}
+
+// ── STEP 3: CONFIRM ──
+function renderConfirm(){
+  var el=document.getElementById('modalInner');
+  var d=DMV;
+  var rows=[
+    ['Make & model',d.year+' '+d.make+' '+d.model,'green'],
+    ['Color',d.color,''],
+    ['VIN','···· '+d.vin.slice(-6),''],
+    ['Registration',d.reg,'red'],
+    ['Reg. status',d.regStatus,'red'],
+    ['Inspection due',d.insp,'amber'],
+    ['Inspection status',d.inspStatus,'amber'],
+    ['Insurance',d.ins,'green'],
+  ];
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Confirm your car</div>' +
+      '<button onclick="closeAddCar()" style="font-size:22px;color:#9CA3AF;background:none;border:none;cursor:pointer;line-height:1">×</button>' +
+    '</div>' +
+    '<div class="plate-confirmed">' +
+      '<div>' +
+        '<div class="pc-plate">'+d.plate+'</div>' +
+        '<div class="pc-hash">LPR·SHA3·F2A1:B891 · Raw plate discarded</div>' +
+      '</div>' +
+      '<div class="pc-info">Plate read from your video<br>NY · Silver Honda Civic 2019</div>' +
+    '</div>' +
+    '<div class="dmv-card">' +
+      '<div class="dmv-card-hdr">' +
+        '<div style="font-size:16px">🏛️</div>' +
+        '<div class="dmv-card-hdr-title">NY DMV · Auto-filled from your plate</div>' +
+        '<div class="dmv-verified">✓ Verified</div>' +
+      '</div>' +
+      rows.map(function(r){
+        return '<div class="dmv-row"><div class="dmv-key">'+r[0]+'</div>' +
+          '<div class="dmv-val '+(r[2]||'')+'">'+r[1]+'</div></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="priv-strip">' +
+      '<span style="font-size:16px;flex-shrink:0">🔒</span>' +
+      '<span>Your plate is hashed at the camera and the raw number is discarded immediately. DolSafe stores only a privacy token — never your actual plate. DMV data is fetched once to build your profile and the request is not logged.</span>' +
+    '</div>' +
+    '<button class="btn-main" onclick="confirmCar()">✅ Confirm · Add this car</button>' +
+    '<button class="btn-sec" onclick="capStep=\'capture\';renderModalStep()">← Re-film plate</button>';
+}
+
+function confirmCar(){
+  // After DMV confirm → go to insurance scan (step 4)
+  capStep='insurance';
+  renderInsuranceScan();
+}
+
+function show(id){var e=document.getElementById(id);if(e)e.style.display='flex';}
+
+function showLPR(){showLPR_inner();}
+function showLPR_inner(){showLPR=null;
+  var el=document.getElementById('parkingWrap');if(!el)return;
+  var lots=LOTS.map(function(l,i){
+    return '<div class="lpr-lot'+(l.best?' best':'')+'" onclick="toast(\'🗺️ Navigating to '+l.name+'\',\'b\')">' +
+      '<div style="font-size:18px;flex-shrink:0">'+(i===0?'⭐':'🅿️')+'</div>' +
+      '<div style="flex:1"><div class="lpr-lot-name">'+l.name+'</div>' +
+      '<div class="lpr-lot-meta">'+l.zone+(l.best?' · Recommended':'')+'</div></div>' +
+      '<div style="text-align:right">' +
+      '<div class="lpr-lot-spaces" style="color:'+(l.spaces===0?'#EF4444':l.best?'#10B981':'#F59E0B')+'">'+
+        (l.spaces===0?'Full':l.spaces+' free')+'</div>' +
+      '<div class="lpr-lot-walk">'+l.walk+'</div></div></div>';
+  }).join('');
+  el.innerHTML='<div class="lpr-detect-card">' +
+    '<div class="lpr-hdr"><div class="lpr-plate">ABC·1234</div>' +
+    '<div class="lpr-hdr-info">' +
+      '<div class="lpr-hdr-title">🚇 MTA New York · Plate recognized</div>' +
+      '<div class="lpr-hdr-sub">Times Sq–42nd St · Staff permit confirmed</div>' +
+      '<div class="lpr-hdr-hash">LPR·SHA3·F2A1:B891 · Raw plate discarded 48ms</div>' +
+    '</div><div class="lpr-hdr-badge">✓ AUTH</div></div>' +
+    '<div class="lpr-body">' +
+      '<div class="lpr-rec-hdr">🅿️ Best lots for you now<span class="lpr-priv">Lot-level only · No individual tracking</span></div>' +
+      '<div class="lpr-lots">'+lots+'</div>' +
+      '<button class="lpr-nav" onclick="toast(\'🗺️ Navigation to Employee Lot A started\',\'b\')">🗺️ Navigate to best lot</button>' +
+    '</div></div>';
+  toast('📡 LPR detected · MTA New York · Best lots shown','g');
+}
+
+// ── STEP 4: INSURANCE CARD SCAN ──
+var insRecording = false;
+var insSec = 0;
+var insTimerIv = null;
+var insAnimIv = null;
+var insT = 0;
+var insPhase = 'scan'; // scan | analyzing | done
+
+var INS_DATA = {
+  company:  'State Farm',
+  policy:   'SF-2841-NY-9922',
+  coverage: 'Comprehensive + Collision',
+  renewal:  'Feb 28, 2025',
+  agent:    'Michael Torres · (718) 555-0183',
+};
+
+function renderInsuranceScan(){
+  insPhase='scan'; insRecording=false; insSec=0; insT=0;
+  var el=document.getElementById('modalInner'); if(!el)return;
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Scan insurance card</div>' +
+      '<button onclick="skipInsurance()" style="font-size:12px;font-weight:700;color:#9CA3AF;' +
+        'background:none;border:none;cursor:pointer">Skip →</button>' +
+    '</div>' +
+    '<div style="font-size:12px;color:#6B7280;font-weight:500;line-height:1.65;margin-bottom:12px">' +
+      'Point your camera at your insurance card — front or back. ' +
+      'DolSafe reads the details automatically using AI. ' +
+      'Your policy data stays on your device only.' +
+    '</div>' +
+    '<div class="ins-zone" id="insZone">' +
+      '<canvas id="insCanvas" class="ins-canvas"></canvas>' +
+      '<div id="insScanLine" class="ins-scan-h"></div>' +
+      '<div id="insRecBadge" class="ins-rec-badge"><div class="ins-rec-dot"></div><div class="ins-rec-txt">SCANNING</div></div>' +
+      '<div id="insTimerBadge" class="ins-timer">0:00</div>' +
+      '<div id="insHint" class="ins-hint">Hold card steady · fill the frame</div>' +
+      '<div id="insDetectBox" class="ins-detect-box"></div>' +
+    '</div>' +
+    '<div class="cap-btns">' +
+      '<button id="insCaptureBtn" class="cap-btn btn-record" style="background:#3B82F6;' +
+        'box-shadow:0 3px 12px rgba(59,130,246,.3)" onclick="startInsCapture()">📸 Scan card</button>' +
+      '<button class="cap-btn btn-manual" onclick="showInsManual()">⌨️ Enter manually</button>' +
+    '</div>' +
+    '<div style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:10px;' +
+      'padding:9px 12px;font-size:11px;color:#065F46;font-weight:500;line-height:1.55">' +
+      '🔒 Your insurance details are stored only on your device — never shared with ' +
+      'TrustLens, your employer, or any third party.' +
+    '</div>';
+  setTimeout(function(){
+    var c=document.getElementById('insCanvas'); if(!c)return;
+    c.width=c.offsetWidth||350; c.height=160;
+    drawInsIdle(c);
+  }, 50);
+}
+
+function drawInsIdle(c){
+  clearInterval(insAnimIv); insT=0;
+  insAnimIv=setInterval(function(){
+    insT+=0.02; if(!c.isConnected){clearInterval(insAnimIv);return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#0D1B2E'; ctx.fillRect(0,0,W,H);
+    // Card outline
+    ctx.strokeStyle='rgba(99,179,237,.3)'; ctx.lineWidth=2; ctx.setLineDash([8,5]);
+    ctx.beginPath(); ctx.roundRect(W*.08,H*.12,W*.84,H*.76,10); ctx.stroke();
+    ctx.setLineDash([]);
+    // Card interior hint
+    ctx.fillStyle='rgba(99,179,237,.06)';
+    ctx.beginPath(); ctx.roundRect(W*.08,H*.12,W*.84,H*.76,10); ctx.fill();
+    // Corner markers
+    [[W*.08,H*.12],[W*.92,H*.12],[W*.08,H*.88],[W*.92,H*.88]].forEach(function(p){
+      ctx.strokeStyle='rgba(99,179,237,.6)'; ctx.lineWidth=2.5; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(p[0],p[1]+10); ctx.lineTo(p[0],p[1]); ctx.lineTo(p[0]+10,p[1]); ctx.stroke();
+    });
+    ctx.fillStyle='rgba(255,255,255,.2)'; ctx.font='11px Inter,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Place insurance card here',W/2,H/2);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }, 120);
+}
+
+function startInsCapture(){
+  insRecording=true; insSec=0; insT=0;
+  var btn=document.getElementById('insCaptureBtn');
+  if(btn){btn.style.background='#EF4444';btn.textContent='⬛ Stop';}
+  var sl=document.getElementById('insScanLine'); if(sl)sl.style.display='block';
+  var rb=document.getElementById('insRecBadge'); if(rb)rb.style.display='flex';
+  var tb=document.getElementById('insTimerBadge'); if(tb)tb.style.display='block';
+  var hint=document.getElementById('insHint'); if(hint)hint.style.display='block';
+  clearInterval(insAnimIv); insT=0;
+  var c=document.getElementById('insCanvas'); if(!c)return;
+  c.width=c.offsetWidth||350; c.height=160;
+
+  insAnimIv=setInterval(function(){
+    insT+=0.025; if(!c.isConnected){clearInterval(insAnimIv);return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#0D1B2E'; ctx.fillRect(0,0,W,H);
+    // Insurance card visual
+    var cx=W/2, cy=H/2;
+    ctx.fillStyle='#E8F4FD'; ctx.beginPath(); ctx.roundRect(cx-100,cy-42,200,84,8); ctx.fill();
+    ctx.strokeStyle='#BFDBFE'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.roundRect(cx-100,cy-42,200,84,8); ctx.stroke();
+    // Insurance company logo area
+    ctx.fillStyle='#1A56DB'; ctx.beginPath(); ctx.roundRect(cx-95,cy-37,60,22,4); ctx.fill();
+    ctx.fillStyle='white'; ctx.font='bold 8px Inter,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('STATE FARM',cx-65,cy-26);
+    // Card text lines
+    ctx.fillStyle='#374151'; ctx.font='bold 9px monospace';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('INSURANCE CARD',cx-95,cy-10);
+    ctx.fillStyle='#6B7280'; ctx.font='8px monospace';
+    ctx.fillText('Policy: SF-2841-NY-9922',cx-95,cy+4);
+    ctx.fillText('Coverage: Comprehensive',cx-95,cy+15);
+    ctx.fillText('Renewal: Feb 28, 2025',cx-95,cy+26);
+    ctx.fillText('2019 Honda Civic · ABC 1234',cx-95,cy+37);
+    // AI detection overlay
+    if(insSec>=3){
+      var blink=(Math.sin(insT*5)+1)*.5;
+      // Highlight text regions
+      [[cx-95,cy-10,130,10],[cx-95,cy+4,140,9],[cx-95,cy+15,130,9],
+       [cx-95,cy+26,120,9]].forEach(function(r){
+        ctx.strokeStyle='rgba(99,179,237,'+(0.4+blink*.3)+')'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.rect(r[0]-2,r[1]-1,r[2],r[3]+2); ctx.stroke();
+      });
+      ctx.strokeStyle='rgba(99,179,237,'+(0.5+blink*.4)+')'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect(cx-102,cy-44,204,88,9); ctx.stroke();
+      ctx.fillStyle='rgba(99,179,237,'+(0.06+blink*.04)+')';
+      ctx.beginPath(); ctx.roundRect(cx-102,cy-44,204,88,9); ctx.fill();
+    }
+    ctx.strokeStyle='rgba(99,179,237,.04)'; ctx.lineWidth=.5;
+    for(var gx=0;gx<W;gx+=20){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(255,255,255,.18)'; ctx.font='8px monospace';
+    ctx.fillText(new Date().toISOString().slice(11,19),5,H-5);
+  }, 55);
+
+  insTimerIv=setInterval(function(){
+    insSec++;
+    var m=Math.floor(insSec/60),s=String(insSec%60).padStart(2,'0');
+    var tb=document.getElementById('insTimerBadge'); if(tb)tb.textContent=m+':'+s;
+    if(insSec>=8) stopInsCapture();
+  }, 1000);
+}
+
+function stopInsCapture(){
+  clearInterval(insTimerIv); clearInterval(insAnimIv);
+  insRecording=false;
+  insPhase='analyzing';
+  renderInsAnalyzing();
+}
+
+function renderInsAnalyzing(){
+  var el=document.getElementById('modalInner'); if(!el)return;
+  var insSteps=[
+    'Reading insurance card with AI',
+    'Extracting policy number',
+    'Reading coverage details',
+    'Reading renewal date',
+  ];
+  var insLabels=[
+    '✅ Insurance card recognized · State Farm',
+    '✅ Policy: SF-2841-NY-9922',
+    '✅ Coverage: Comprehensive + Collision',
+    '✅ Renewal: Feb 28, 2025',
+  ];
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Reading insurance card…</div>' +
+      '<button onclick="skipInsurance()" style="font-size:12px;font-weight:700;color:#9CA3AF;' +
+        'background:none;border:none;cursor:pointer">Skip →</button>' +
+    '</div>' +
+    '<div class="ins-analyzing">' +
+      '<div class="spinner" style="border-top-color:#3B82F6;border-color:#BFDBFE"></div>' +
+      '<div style="font-size:14px;font-weight:700;color:#1E40AF;margin-bottom:4px">DolSafe AI is reading your card</div>' +
+      '<div style="font-size:12px;color:#3B82F6;font-weight:500;line-height:1.55">Extracting policy details · Stays on your device only</div>' +
+      '<div class="an-steps" id="insAnSteps">' +
+        insSteps.map(function(s,i){
+          return '<div class="an-step pending" id="insStep'+i+'">⏳ '+s+'</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+  var idx=0;
+  function nextInsStep(){
+    if(idx>0){
+      var prev=document.getElementById('insStep'+(idx-1));
+      if(prev){prev.className='an-step done';prev.textContent=insLabels[idx-1];}
+    }
+    if(idx<insSteps.length){
+      var cur=document.getElementById('insStep'+idx);
+      if(cur)cur.className='an-step active';
+      idx++;
+      setTimeout(nextInsStep, 850);
+    } else {
+      var last=document.getElementById('insStep'+(insSteps.length-1));
+      if(last){last.className='an-step done';last.textContent=insLabels[insLabels.length-1];}
+      setTimeout(renderInsResult, 600);
+    }
+  }
+  setTimeout(nextInsStep, 400);
+}
+
+function renderInsResult(){
+  var el=document.getElementById('modalInner'); if(!el)return;
+  var d=INS_DATA;
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Insurance confirmed</div>' +
+      '<div style="font-size:22px;animation:checkPop .5s ease">✅</div>' +
+    '</div>' +
+    '<div class="ins-result">' +
+      '<div class="ins-result-hdr">' +
+        '<div style="font-size:16px">🛡️</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#374151;flex:1">Insurance card · AI extracted</div>' +
+        '<div style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;' +
+          'background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0">✓ Read</div>' +
+      '</div>' +
+      [['Company',d.company,'green'],
+       ['Policy number',d.policy,''],
+       ['Coverage',d.coverage,'green'],
+       ['Renewal date',d.renewal,'amber'],
+       ['Agent',d.agent,''],
+      ].map(function(r){
+        return '<div class="ins-row"><div class="ins-key">'+r[0]+'</div>' +
+          '<div class="ins-val'+(r[2]?' '+r[2]:'')+'">'+r[1]+'</div></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="priv-strip">' +
+      '<span style="font-size:16px;flex-shrink:0">🔒</span>' +
+      '<span>Your policy details are stored only on your device. DolSafe never shares insurance ' +
+      'data with TrustLens, your employer, or any third party. We will remind you 30 days before renewal.</span>' +
+    '</div>' +
+    '<button class="btn-main" style="background:linear-gradient(135deg,#059669,#047857)" ' +
+      'onclick="finishAddCar()">✅ Done · Car profile complete</button>' +
+    '<button class="btn-sec" onclick="renderInsuranceScan()">← Re-scan card</button>';
+}
+
+function showInsManual(){
+  var el=document.getElementById('modalInner'); if(!el)return;
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div style="font-size:17px;font-weight:800;color:#111827">Insurance details</div>' +
+      '<button onclick="skipInsurance()" style="font-size:12px;font-weight:700;color:#9CA3AF;' +
+        'background:none;border:none;cursor:pointer">Skip →</button>' +
+    '</div>' +
+    '<div style="font-size:12px;color:#6B7280;font-weight:500;margin-bottom:12px">' +
+      'Enter your insurance details manually. Check your insurance card or app.' +
+    '</div>' +
+    '<label style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block">Insurance company</label>' +
+    '<input class="m-inp" placeholder="e.g. State Farm, Geico, Allstate" style="margin-bottom:10px">' +
+    '<label style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block">Policy number</label>' +
+    '<input class="m-inp" placeholder="e.g. SF-2841-NY-9922" style="margin-bottom:10px;font-family:monospace">' +
+    '<label style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block">Renewal date</label>' +
+    '<input class="m-inp" type="month" value="2025-02" style="margin-bottom:10px">' +
+    '<label style="font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block">Coverage type</label>' +
+    '<input class="m-inp" placeholder="e.g. Comprehensive + Collision" style="margin-bottom:14px">' +
+    '<button class="btn-main" onclick="finishAddCar()">Save insurance details</button>' +
+    '<button class="btn-sec" style="margin-top:8px" onclick="skipInsurance()">Skip for now</button>';
+}
+
+function skipInsurance(){
+  closeAddCar();
+  toast('✅ Car added · Add insurance details anytime in Settings','g');
+}
+
+function finishAddCar(){
+  closeAddCar();
+  toast('✅ Car profile complete · ABC 1234 · All alerts active','g');
+}
+
+// ── TOAST ──
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+window.addEventListener('load',function(){
+  renderAlerts();
+  renderMaint();
+  renderParkingDefault();
+  // Auto show LPR after 2s (simulate arriving at MTA)
+  setTimeout(function(){showLPR_inner();},2000);
+});
+</script>
+</body>
+</html>
