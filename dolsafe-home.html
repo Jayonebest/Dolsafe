@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1A56DB;--blue-dark:#1E40AF;--blue-light:#EFF6FF;--blue-border:#BFDBFE;
+  --green:#059669;--green-light:#ECFDF5;--green-border:#A7F3D0;
+  --red:#DC2626;--red-light:#FEF2F2;--amber:#D97706;--amber-light:#FFFBEB;
+  --bg:#F0F4FA;--white:#fff;--border:#E5E7EB;--text:#111827;--muted:#6B7280;--dim:#9CA3AF;
+  --shadow:0 4px 24px rgba(0,0,0,.10);--shadow-sm:0 2px 12px rgba(0,0,0,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#D1DBF0;font-family:'Inter',sans-serif;color:var(--text)}
+.phone{width:100%;max-width:390px;min-height:100vh;background:var(--bg);
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.2)}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.scroll::-webkit-scrollbar{display:none}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.4);opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* STATUS */
+.statusbar{height:48px;background:var(--blue-dark);display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;flex-shrink:0}
+.sb-time{font-size:15px;font-weight:700;color:white}
+.sb-r{font-size:12px;color:rgba(255,255,255,.75)}
+
+/* HERO */
+.hero{background:linear-gradient(155deg,#1E3A8A 0%,#1A56DB 55%,#2563EB 100%);
+  padding:18px 20px 32px;position:relative;overflow:hidden;flex-shrink:0}
+.hero::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,.06);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;
+  border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+
+/* TOP ROW */
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;position:relative;z-index:1}
+.avatar-wrap{display:flex;align-items:center;gap:11px}
+.avatar{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.2);
+  border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:900;color:white;letter-spacing:-.5px;flex-shrink:0}
+.greet-lbl{font-size:12px;color:rgba(255,255,255,.68);font-weight:500}
+.greet-name{font-size:18px;font-weight:900;color:white;letter-spacing:-.4px}
+.icon-btn{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;
+  justify-content:center;font-size:19px;cursor:pointer;text-decoration:none;transition:all .15s}
+.icon-btn:active{background:rgba(255,255,255,.25)}
+
+/* SCORE RING */
+.score-section{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+.score-ring-wrap{position:relative;width:84px;height:84px;flex-shrink:0}
+.score-ring-ping{position:absolute;inset:-8px;border-radius:50%;
+  background:rgba(16,185,129,.18);animation:ping 2.2s ease-out infinite}
+.score-ring-inner{position:absolute;inset:0;border-radius:50%;
+  background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-size:26px;font-weight:900;color:white;line-height:1}
+.score-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.65);letter-spacing:.5px;text-transform:uppercase}
+.score-info{flex:1}
+.score-title{font-size:19px;font-weight:900;color:white;letter-spacing:-.4px;margin-bottom:5px}
+.score-desc{font-size:12px;color:rgba(255,255,255,.72);font-weight:500;line-height:1.55;margin-bottom:9px}
+.score-tags{display:flex;gap:6px;flex-wrap:wrap}
+.score-tag{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;
+  background:rgba(255,255,255,.14);color:white;border:1px solid rgba(255,255,255,.18)}
+.score-tag.warn{background:rgba(220,38,38,.22);border-color:rgba(220,38,38,.35)}
+
+/* COMMUTE STATUS STRIP */
+.commute-strip{margin:0 16px;margin-top:-18px;background:white;border-radius:18px;
+  box-shadow:var(--shadow);overflow:hidden;position:relative;z-index:2;animation:fadeUp .35s ease}
+.cs-hdr{background:var(--blue-dark);padding:11px 15px;display:flex;align-items:center;gap:8px}
+.cs-hdr-title{font-size:13px;font-weight:700;color:white;flex:1}
+.cs-live{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;
+  background:rgba(255,255,255,.18);font-size:9px;font-weight:700;color:white}
+.cs-live-dot{width:5px;height:5px;border-radius:50%;background:#4ADE80;animation:pulse .9s infinite}
+.cs-legs{padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.cs-leg{display:flex;align-items:center;gap:9px;padding:0}
+.cs-leg-icon{font-size:16px;flex-shrink:0;width:24px;text-align:center}
+.cs-leg-body{flex:1;min-width:0}
+.cs-leg-title{font-size:12px;font-weight:700;color:var(--text)}
+.cs-leg-sub{font-size:10px;color:var(--muted);font-weight:500}
+.cs-leg-score{font-size:14px;font-weight:900;flex-shrink:0}
+.cs-leg-sep{margin-left:11px;padding-left:20px;border-left:2px dashed var(--border);height:8px}
+.cs-footer{padding:10px 14px 12px;display:flex;gap:7px;border-top:1px solid var(--border)}
+.cs-btn{flex:1;padding:10px;border-radius:10px;border:none;font-family:'Inter',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:5px;transition:all .15s;text-decoration:none}
+.cs-btn:active{transform:scale(.97)}
+.cs-btn-pri{background:var(--blue);color:white;box-shadow:0 3px 10px rgba(26,86,219,.28)}
+.cs-btn-sec{background:var(--bg);border:1.5px solid var(--border);color:var(--text)}
+
+/* SECTION */
+.section{padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.section-link{font-size:12px;font-weight:700;color:var(--blue);cursor:pointer;text-decoration:none}
+
+/* FEATURE CARDS */
+.feature-grid{padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.fc{background:white;border-radius:18px;padding:16px 14px;box-shadow:var(--shadow-sm);
+  cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:7px;
+  border:1.5px solid var(--border);text-decoration:none;position:relative;overflow:hidden}
+.fc:active{transform:scale(.97)}
+.fc-bg{position:absolute;top:-16px;right:-16px;width:56px;height:56px;
+  border-radius:50%;opacity:.1;filter:blur(12px)}
+.fc-icon{font-size:30px}
+.fc-title{font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.fc-sub{font-size:11px;color:var(--muted);font-weight:500;line-height:1.4}
+.fc-badge{position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;
+  padding:3px 8px;border-radius:20px}
+.fc-sos{border-color:#FECACA;background:linear-gradient(135deg,#FEF2F2,white)}
+.fc-sos .fc-title{color:var(--red)}
+
+/* WIDE CARD */
+.wcard{margin:0 16px 8px;background:white;border-radius:16px;padding:14px 15px;
+  box-shadow:var(--shadow-sm);display:flex;gap:13px;align-items:center;
+  cursor:pointer;transition:all .15s;border:1.5px solid var(--border);text-decoration:none}
+.wcard:active{transform:scale(.99)}
+.wcard-icon{font-size:26px;flex-shrink:0}
+.wcard-body{flex:1;min-width:0}
+.wcard-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:3px;letter-spacing:-.2px}
+.wcard-sub{font-size:11px;color:var(--muted);font-weight:500;line-height:1.45}
+.wcard-arr{font-size:20px;color:var(--border);flex-shrink:0}
+
+/* FEED */
+.feed{margin:0 16px 10px;background:white;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.feed-hdr{padding:11px 14px;background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px}
+.feed-live{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;
+  background:var(--green-light);border:1px solid var(--green-border);
+  font-size:9px;font-weight:700;color:var(--green)}
+.feed-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .9s infinite}
+.feed-row{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid #F9FAFB;
+  cursor:pointer;transition:background .15s}
+.feed-row:last-child{border:none}
+.feed-row:active{background:var(--bg)}
+.fr-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.fr-body{flex:1;min-width:0}
+.fr-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.fr-sub{font-size:11px;color:var(--muted);font-weight:500;line-height:1.4}
+.fr-time{font-size:10px;color:var(--dim);flex-shrink:0;margin-top:2px}
+
+/* BOTTOM NAV */
+.bnav{position:sticky;bottom:0;background:white;border-top:1px solid var(--border);
+  display:flex;padding:8px 6px 18px;box-shadow:0 -4px 24px rgba(0,0,0,.09);
+  flex-shrink:0;z-index:90}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;border-radius:14px;cursor:pointer;text-decoration:none;transition:all .15s}
+.ni.on{background:var(--blue-light)}
+.ni-ico{font-size:22px;color:var(--dim)}
+.ni-lbl{font-size:9px;font-weight:700;color:var(--dim);font-family:'Inter',sans-serif}
+.ni.on .ni-ico,.ni.on .ni-lbl{color:var(--blue)}
+
+/* TOAST */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:var(--green)}.toast.b{background:var(--blue)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.b{background:#1A56DB}.toast.r{background:#DC2626}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="statusbar">
+    <div class="sb-time" id="stTime">9:41</div>
+    <div class="sb-r">📶 LTE &nbsp;🔋 87%</div>
+  </div>
+
+  <div class="scroll">
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-top">
+        <div class="avatar-wrap">
+          <div class="avatar">JJ</div>
+          <div>
+            <div class="greet-lbl" id="greetLbl">Good morning 👋</div>
+            <div class="greet-name">Johnny Joseph</div>
+          </div>
+        </div>
+        <a class="icon-btn" href="dolsafe-settings.html">⚙️</a>
+      </div>
+
+      <div class="score-section">
+        <div class="score-ring-wrap">
+          <div class="score-ring-ping"></div>
+          <div class="score-ring-inner">
+            <div class="score-num">84</div>
+            <div class="score-lbl">Safety</div>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="score-title">Farmingville is calm</div>
+          <div class="score-desc">Your area is quiet. One alert near Penn Station on your commute today.</div>
+          <div class="score-tags">
+            <div class="score-tag">🚆 LIRR on time</div>
+            <div class="score-tag warn">⚠️ 1 alert</div>
+            <div class="score-tag">🌤️ Clear</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMUTE STATUS — today only, not a planning tool -->
+    <div class="commute-strip">
+      <div class="cs-hdr">
+        <div style="font-size:16px">🚆</div>
+        <div class="cs-hdr-title">Your commute today</div>
+        <div class="cs-live"><div class="cs-live-dot"></div>Live</div>
+      </div>
+      <div class="cs-legs">
+        <div class="cs-leg">
+          <div class="cs-leg-icon">🚗</div>
+          <div class="cs-leg-body">
+            <div class="cs-leg-title">Drive · Home → Ronkonkoma</div>
+            <div class="cs-leg-sub">~12 min · Clear roads</div>
+          </div>
+          <div class="cs-leg-score" style="color:var(--green)">91</div>
+        </div>
+        <div class="cs-leg-sep"></div>
+        <div class="cs-leg">
+          <div class="cs-leg-icon">🚆</div>
+          <div class="cs-leg-body">
+            <div class="cs-leg-title">LIRR · Ronkonkoma → Penn</div>
+            <div class="cs-leg-sub">7:42 AM · On time · Platform 2</div>
+          </div>
+          <div class="cs-leg-score" style="color:var(--green)">88</div>
+        </div>
+        <div class="cs-leg-sep"></div>
+        <div class="cs-leg">
+          <div class="cs-leg-icon">🚶</div>
+          <div class="cs-leg-body">
+            <div class="cs-leg-title">Walk · Penn → 129 W 27th St</div>
+            <div class="cs-leg-sub">~8 min · 1 alert near 7th Ave</div>
+          </div>
+          <div class="cs-leg-score" style="color:var(--amber)">74</div>
+        </div>
+      </div>
+      <div class="cs-footer">
+        <a class="cs-btn cs-btn-pri" href="dolsafe-briefing.html">🧠 Full briefing</a>
+        <a class="cs-btn cs-btn-sec" href="dolsafe-commute.html">🗺️ Plan new route</a>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="section">
+      <div class="section-title">Quick actions</div>
+    </div>
+    <div class="feature-grid">
+      <a class="fc fc-sos" href="dolsafe-sos.html">
+        <div class="fc-bg" style="background:var(--red)"></div>
+        <div class="fc-icon">🆘</div>
+        <div class="fc-title">SOS</div>
+        <div class="fc-sub">Hold 3 sec · Silent + 911</div>
+        <div class="fc-badge" style="background:var(--red-light);color:var(--red)">Active</div>
+      </a>
+      <a class="fc" href="dolsafe-smartreport.html">
+        <div class="fc-bg" style="background:var(--blue)"></div>
+        <div class="fc-icon">📋</div>
+        <div class="fc-title">SmartReport</div>
+        <div class="fc-sub">Report anything · AI writes it · Anonymous</div>
+      </a>
+      <a class="fc" href="dolsafe-commute.html">
+        <div class="fc-bg" style="background:var(--green)"></div>
+        <div class="fc-icon">🛡️</div>
+        <div class="fc-title">Safe Commute</div>
+        <div class="fc-sub">Plan any route · Score it · See alerts</div>
+      </a>
+      <a class="fc" href="dolsafe-car.html">
+        <div class="fc-bg" style="background:var(--amber)"></div>
+        <div class="fc-icon">🚗</div>
+        <div class="fc-title">My Car</div>
+        <div class="fc-sub">Registration · Inspection · Smart parking</div>
+        <div class="fc-badge" style="background:#FEE2E2;color:var(--red)">12d</div>
+      </a>
+    </div>
+
+    <!-- MORE FEATURES -->
+    <a class="wcard" href="dolsafe-briefing.html">
+      <div class="wcard-icon">🧠</div>
+      <div class="wcard-body">
+        <div class="wcard-title">Morning briefing</div>
+        <div class="wcard-sub">DolSafe Intelligence · Your daily safety summary · Farmingville + Midtown</div>
+      </div>
+      <div class="wcard-arr">›</div>
+    </a>
+    <a class="wcard" href="dolsafe-settings.html">
+      <div class="wcard-icon">⚙️</div>
+      <div class="wcard-body">
+        <div class="wcard-title">Settings &amp; privacy</div>
+        <div class="wcard-sub">Two email channels · Trusted contacts · TrustWall · Privacy 82/100</div>
+      </div>
+      <div class="wcard-arr">›</div>
+    </a>
+
+    <!-- LIVE FEED -->
+    <div class="section">
+      <div class="section-title">Near you now</div>
+      <a class="section-link" href="dolsafe-smartreport.html">Report</a>
+    </div>
+    <div class="feed">
+      <div class="feed-hdr">
+        <div style="font-size:13px">📡</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);flex:1">Farmingville · Suffolk County</div>
+        <div class="feed-live"><div class="feed-dot"></div>Live</div>
+      </div>
+      <div class="feed-row">
+        <div class="fr-icon">✅</div>
+        <div class="fr-body">
+          <div class="fr-title">Area calm · No incidents overnight</div>
+          <div class="fr-sub">Farmingville and surrounding area quiet. Normal activity.</div>
+        </div>
+        <div class="fr-time">Now</div>
+      </div>
+      <div class="feed-row">
+        <div class="fr-icon">🚆</div>
+        <div class="fr-body">
+          <div class="fr-title">LIRR Ronkonkoma Line · On time</div>
+          <div class="fr-sub">7:42 AM departure confirmed. Platform 2. No delays reported.</div>
+        </div>
+        <div class="fr-time">4m ago</div>
+      </div>
+      <div class="feed-row">
+        <div class="fr-icon">⚠️</div>
+        <div class="fr-body">
+          <div class="fr-title">Elevated activity · Penn Station 7th Ave</div>
+          <div class="fr-sub">NYPD presence and foot traffic near exit. Routine but stay alert.</div>
+        </div>
+        <div class="fr-time">18m ago</div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+<div class="ni-lbl" style="color:var(--blue)">Home</div></a>
+    <a class="ni" href="dolsafe-commute.html"><div class="ni-ico">🛡️</div><div class="ni-lbl">Commute</div></a>
+    <a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a>
+    <a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a>
+    <a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+  </div>
+</div>
+<script>
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('stTime').textContent=h+':'+m;
+  var hr=d.getHours();
+  var greet=hr<12?'Good morning 👋':hr<17?'Good afternoon 👋':'Good evening 👋';
+  document.getElementById('greetLbl').textContent=greet;
+}
+setInterval(tick,1000);tick();
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+</script>
+
+<div class="ni-lbl" style="color:#1A56DB">Home</div></a><a class="ni" href="dolsafe-commute.html"><div class="ni-ico">🛡️</div><div class="ni-lbl">Commute</div></a><a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a><a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a><a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+</div>
+<div class="bnav">
+    <a class="ni on" href="dolsafe-home.html"><div class="ni-ico" style="color:#1A56DB">🏠</div><div class="ni-lbl" style="color:#1A56DB">Home</div></a>
+    <a class="ni" href="dolsafe-commute.html"><div class="ni-ico">🛡️</div><div class="ni-lbl">Commute</div></a>
+    <a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a>
+    <a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a>
+    <a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+  </div>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>

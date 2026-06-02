@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · Safe Commute</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1A56DB;--blue-dark:#1E40AF;--blue-light:#EFF6FF;--blue-border:#BFDBFE;
+  --green:#059669;--green-light:#ECFDF5;--green-border:#A7F3D0;
+  --red:#DC2626;--red-light:#FEF2F2;--amber:#D97706;--amber-light:#FFFBEB;
+  --bg:#F0F4FA;--white:#fff;--border:#E5E7EB;--text:#111827;--muted:#6B7280;--dim:#9CA3AF;
+  --shadow:0 4px 24px rgba(0,0,0,.10);--shadow-sm:0 2px 12px rgba(0,0,0,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#D1DBF0;font-family:'Inter',sans-serif;color:var(--text)}
+.phone{width:100%;max-width:390px;min-height:100vh;background:var(--bg);
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.2)}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:24px}
+.scroll::-webkit-scrollbar{display:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STATUSBAR */
+.statusbar{height:48px;background:var(--blue-dark);display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;flex-shrink:0}
+.sb-time{font-size:15px;font-weight:700;color:white}
+.sb-r{font-size:12px;color:rgba(255,255,255,.75)}
+
+/* HEADER */
+.hdr{background:linear-gradient(155deg,#1E3A8A,var(--blue));padding:14px 18px 22px}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.back{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.18);
+  border:none;color:white;font-size:20px;display:flex;align-items:center;
+  justify-content:center;text-decoration:none;font-weight:700;flex-shrink:0;transition:all .15s}
+.back:active{background:rgba(255,255,255,.28)}
+.hdr-title{font-size:18px;font-weight:900;color:white;flex:1;letter-spacing:-.4px}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;text-align:right}
+
+/* ROUTE PLANNER */
+.planner{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);
+  border-radius:18px;overflow:hidden}
+.planner-row{display:flex;align-items:center;gap:12px;padding:14px 15px;
+  cursor:pointer;transition:background .15s;position:relative}
+.planner-row:active{background:rgba(255,255,255,.08)}
+.pr-line{position:absolute;left:26px;top:100%;width:2px;height:10px;
+  background:rgba(255,255,255,.2);z-index:0}
+.pr-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.6);position:relative;z-index:1}
+.pr-dot.filled{background:white}
+.pr-body{flex:1;min-width:0}
+.pr-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.55);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.pr-value{font-size:14px;font-weight:700;color:white;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-value.empty{color:rgba(255,255,255,.5);font-weight:500}
+.pr-action{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);flex-shrink:0}
+.planner-sep{display:flex;align-items:center;padding:0 15px;gap:10px}
+.ps-line{flex:1;height:1px;background:rgba(255,255,255,.15)}
+.ps-swap{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;
+  justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0;transition:all .15s}
+.ps-swap:active{background:rgba(255,255,255,.3)}
+.analyze-btn{margin:12px 15px 14px;width:calc(100% - 30px);padding:14px;border-radius:13px;
+  background:white;border:none;font-family:'Inter',sans-serif;font-size:15px;
+  font-weight:800;color:var(--blue);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;transition:all .15s}
+.analyze-btn:active{background:#F0F4FF;transform:scale(.98)}
+.analyze-btn:disabled{opacity:.6;cursor:default;transform:none}
+
+/* SECTION HEADER */
+.sec{padding:18px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+.sec-t{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.sec-l{font-size:12px;font-weight:700;color:var(--blue);cursor:pointer}
+
+/* QUICK PLACES */
+.places-scroll{display:flex;gap:8px;padding:0 16px;overflow-x:auto;margin-bottom:6px}
+.places-scroll::-webkit-scrollbar{display:none}
+.place-pill{display:flex;align-items:center;gap:7px;padding:10px 13px;
+  background:white;border-radius:14px;border:1.5px solid var(--border);
+  cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:var(--shadow-sm)}
+.place-pill:active{transform:scale(.97)}
+.place-pill.dest{border-color:var(--blue-border);background:var(--blue-light)}
+.pp-icon{font-size:18px}
+.pp-body{white-space:nowrap}
+.pp-name{font-size:12px;font-weight:700;color:var(--text)}
+.pp-sub{font-size:10px;color:var(--muted);font-weight:500}
+.pp-action{font-size:10px;font-weight:700;color:var(--blue);margin-top:2px}
+
+/* EMPTY STATE */
+.empty-state{margin:16px;background:white;border-radius:18px;padding:32px 20px;
+  text-align:center;box-shadow:var(--shadow-sm)}
+.es-icon{font-size:52px;margin-bottom:14px;display:block;animation:fadeUp .4s ease}
+.es-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px;margin-bottom:6px}
+.es-sub{font-size:13px;color:var(--muted);font-weight:500;line-height:1.65;margin-bottom:18px}
+.es-steps{display:flex;flex-direction:column;gap:10px;text-align:left}
+.es-step{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;
+  background:var(--bg);border-radius:11px;border:1px solid var(--border)}
+.es-step-num{width:24px;height:24px;border-radius:50%;background:var(--blue);
+  color:white;font-size:11px;font-weight:800;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:1px}
+.es-step-body{font-size:12px;font-weight:600;color:var(--text);line-height:1.45}
+.es-step-sub{font-size:11px;color:var(--muted);font-weight:500}
+
+/* RESULTS */
+/* Score card */
+.score-card{margin:0 16px 10px;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.sc-top{padding:16px;display:flex;gap:14px;align-items:center}
+.sc-ring{width:76px;height:76px;position:relative;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center}
+.sc-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.sc-num{font-size:24px;font-weight:900;color:white;position:relative;z-index:1}
+.sc-info{flex:1}
+.sc-title{font-size:18px;font-weight:900;color:white;letter-spacing:-.4px;margin-bottom:4px}
+.sc-desc{font-size:12px;color:rgba(255,255,255,.72);font-weight:500;line-height:1.5;margin-bottom:8px}
+.sc-tags{display:flex;gap:5px;flex-wrap:wrap}
+.sc-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;
+  background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.2)}
+.sc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid rgba(255,255,255,.15)}
+.sc-stat{padding:10px;text-align:center;border-right:1px solid rgba(255,255,255,.12)}
+.sc-stat:last-child{border:none}
+.sc-sv{font-size:14px;font-weight:800;color:white;margin-bottom:1px}
+.sc-sl{font-size:9px;color:rgba(255,255,255,.58);font-weight:600;text-transform:uppercase}
+
+/* Leg cards */
+.legs{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.leg{background:white;border-radius:14px;padding:13px 14px;box-shadow:var(--shadow-sm);
+  border-left:5px solid;display:flex;gap:11px;align-items:flex-start;
+  cursor:pointer;transition:all .15s;animation:fadeUp .3s ease}
+.leg:active{transform:scale(.98)}
+.leg.safe{border-left-color:var(--green)}
+.leg.moderate{border-left-color:var(--amber)}
+.leg.caution{border-left-color:var(--red)}
+.leg-icon{font-size:22px;flex-shrink:0}
+.leg-body{flex:1}
+.leg-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.leg-detail{font-size:11px;color:var(--muted);font-weight:500;line-height:1.45}
+.leg-time{font-size:11px;font-weight:700;margin-top:5px}
+.leg-score{font-size:22px;font-weight:900;flex-shrink:0}
+
+/* Alert items */
+.alerts{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.alert-item{background:white;border-radius:13px;padding:12px 13px;
+  box-shadow:var(--shadow-sm);display:flex;gap:10px;align-items:flex-start}
+.ai-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.ai-body{flex:1}
+.ai-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ai-detail{font-size:11px;color:var(--muted);font-weight:500;line-height:1.45}
+.ai-time{font-size:10px;color:var(--dim);margin-top:3px}
+.ai-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+
+/* Map */
+.map-wrap{margin:0 16px 10px;background:white;border-radius:16px;
+  overflow:hidden;box-shadow:var(--shadow-sm)}
+.map-hdr{padding:11px 14px;background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px}
+.map-canvas{width:100%;height:200px;display:block}
+.map-legend{padding:8px 14px;display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid #F9FAFB}
+.ml{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text);font-weight:600}
+.ml-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+
+/* Alternatives */
+.alts{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.alt{background:white;border-radius:14px;padding:13px 14px;box-shadow:var(--shadow-sm);
+  display:flex;gap:11px;align-items:center;cursor:pointer;transition:all .15s;
+  border:1.5px solid var(--border)}
+.alt.best{border-color:var(--blue-border);background:var(--blue-light)}
+.alt:active{transform:scale(.98)}
+
+/* Privacy strip */
+.priv-strip{margin:0 16px 16px;background:var(--green-light);border:1px solid var(--green-border);
+  border-radius:13px;padding:11px 13px;display:flex;gap:9px}
+
+/* BOTTOM NAV */
+.bnav{position:sticky;bottom:0;background:white;border-top:1px solid var(--border);
+  display:flex;padding:8px 6px 18px;box-shadow:0 -4px 24px rgba(0,0,0,.09);
+  flex-shrink:0;z-index:90}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;border-radius:14px;cursor:pointer;text-decoration:none;transition:all .15s}
+.ni.on{background:var(--blue-light)}
+.ni-ico{font-size:22px;color:var(--dim)}
+.ni-lbl{font-size:9px;font-weight:700;color:var(--dim);font-family:'Inter',sans-serif}
+.ni.on .ni-ico,.ni.on .ni-lbl{color:var(--blue)}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(17,24,39,.65);
+  z-index:600;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex;animation:fadeUp .2s ease}
+.mbox{background:white;border-radius:24px 24px 0 0;width:100%;max-width:390px;
+  padding:20px;max-height:88vh;overflow-y:auto}
+.mbox::-webkit-scrollbar{display:none}
+.m-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 14px}
+.m-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:14px;letter-spacing:-.3px}
+.m-inp{width:100%;border:2px solid var(--border);border-radius:13px;padding:14px 15px;
+  font-family:'Inter',sans-serif;font-size:15px;color:var(--text);outline:none;
+  transition:border-color .2s;margin-bottom:10px}
+.m-inp:focus{border-color:var(--blue)}
+.m-inp::placeholder{color:var(--dim)}
+.m-loc-btn{width:100%;padding:13px;border-radius:12px;background:var(--blue-light);
+  border:1.5px solid var(--blue-border);font-family:'Inter',sans-serif;font-size:13px;
+  font-weight:700;color:var(--blue-dark);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;margin-bottom:10px;transition:all .15s}
+.m-loc-btn:active{background:var(--blue-border)}
+.sugg-item{display:flex;align-items:center;gap:10px;padding:12px 4px;
+  border-bottom:1px solid #F9FAFB;cursor:pointer;transition:background .15s}
+.sugg-item:last-child{border:none}
+.sugg-item:active{background:var(--bg)}
+.si-ico{width:38px;height:38px;border-radius:11px;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.si-info{flex:1}
+.si-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.si-addr{font-size:11px;color:var(--muted);font-weight:500}
+.si-d{font-size:11px;color:var(--dim);flex-shrink:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:var(--green)}.toast.b{background:var(--blue)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.b{background:#1A56DB}.toast.r{background:#DC2626}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar">
+    <div class="sb-time" id="stTime">9:41</div>
+    <div class="sb-r">📶 LTE &nbsp;🔋 87%</div>
+  </div>
+
+  <div class="hdr">
+    <div class="hdr-row">
+      <a class="back" href="dolsafe-home.html">‹</a>
+      <div style="flex:1">
+        <div class="hdr-title">Safe Commute</div>
+        <div class="hdr-sub">🐬 DolSafe Intelligence · Real-time route scoring</div>
+      </div>
+    </div>
+
+    <!-- ROUTE PLANNER — blank by default -->
+    <div class="planner">
+      <div class="planner-row" onclick="openModal('from')">
+        <div class="pr-dot" id="fromDot"></div>
+        <div class="pr-body">
+          <div class="pr-label">Starting from</div>
+          <div class="pr-value empty" id="fromVal">Tap to set your starting point</div>
+        </div>
+        <div class="pr-action">Set</div>
+      </div>
+      <div class="planner-sep">
+        <div class="ps-line"></div>
+        <div class="ps-swap" onclick="swapRoute()">⇅</div>
+        <div class="ps-line"></div>
+      </div>
+      <div class="planner-row" onclick="openModal('to')">
+        <div class="pr-dot" id="toDot"></div>
+        <div class="pr-body">
+          <div class="pr-label">Going to</div>
+          <div class="pr-value empty" id="toVal">Tap to set your destination</div>
+        </div>
+        <div class="pr-action">Set</div>
+      </div>
+      <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()" disabled>
+        🛡️ Analyze route safety
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- SAVED PLACES — quick fill -->
+    <div class="sec">
+      <div class="sec-t">📌 Your saved places</div>
+      <div class="sec-l" onclick="openModal('from')">+ New</div>
+    </div>
+    <div class="places-scroll" id="placesScroll"></div>
+
+    <!-- EMPTY STATE shown until user runs analysis -->
+    <div id="emptyState">
+      <div class="empty-state">
+        <span class="es-icon">🛡️</span>
+        <div class="es-title">Score any route before you go</div>
+        <div class="es-sub">
+          Type where you are going — DolSafe analyzes every segment,
+          shows live alerts along the way, and recommends the safest option.
+        </div>
+        <div class="es-steps">
+          <div class="es-step">
+            <div class="es-step-num">1</div>
+            <div class="es-step-body">
+              Set your starting point
+              <div class="es-step-sub">Tap a saved place above or type any address</div>
+            </div>
+          </div>
+          <div class="es-step">
+            <div class="es-step-num">2</div>
+            <div class="es-step-body">
+              Set your destination
+              <div class="es-step-sub">Home, work, or anywhere new</div>
+            </div>
+          </div>
+          <div class="es-step">
+            <div class="es-step-num">3</div>
+            <div class="es-step-body">
+              Get your safety score
+              <div class="es-step-sub">Each segment scored · Live alerts · Safest alternative</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS — shown after analysis -->
+    <div id="resultsWrap" style="display:none">
+
+      <div class="sec"><div class="sec-t">🛡️ Safety score</div></div>
+      <div id="scoreCard" class="score-card"></div>
+
+      <div class="sec"><div class="sec-t">🚉 Each leg of your journey</div></div>
+      <div class="legs" id="legsWrap"></div>
+
+      <div class="sec">
+        <div class="sec-t">⚠️ Alerts along route</div>
+        <div class="sec-l" onclick="toast('Alert map view','b')">Map</div>
+      </div>
+      <div class="alerts" id="alertsWrap"></div>
+
+      <div class="sec"><div class="sec-t">🗺️ Route map</div></div>
+      <div class="map-wrap">
+        <div class="map-hdr">
+          <div style="font-size:13px">🗺️</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);flex:1" id="mapLabel">Your route</div>
+          <div style="font-size:10px;font-weight:600;color:var(--green);display:flex;align-items:center;gap:4px">
+            <div style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse .9s infinite"></div>Live
+          </div>
+        </div>
+        <canvas id="mapCanvas" class="map-canvas"></canvas>
+        <div class="map-legend">
+          <div class="ml"><div class="ml-dot" style="background:var(--green)"></div>Safe</div>
+          <div class="ml"><div class="ml-dot" style="background:var(--amber)"></div>Moderate</div>
+          <div class="ml"><div class="ml-dot" style="background:var(--red)"></div>Caution</div>
+          <div class="ml"><div class="ml-dot" style="background:var(--blue)"></div>You</div>
+        </div>
+      </div>
+
+      <div class="sec"><div class="sec-t">🔀 Safer alternatives</div></div>
+      <div class="alts" id="altsWrap"></div>
+
+      <div class="priv-strip">
+        <div style="font-size:16px;flex-shrink:0">🔒</div>
+        <div style="font-size:11px;color:var(--green);font-weight:500;line-height:1.6">
+          <strong>Your route is never stored.</strong> Location is processed on-device only — never sent to TrustLens, your employer, or any third party.
+        </div>
+      </div>
+    </div>
+
+  </div>
+<div class="ni-lbl">Home</div></a>
+    <a class="ni on"><div class="ni-ico" style="color:var(--blue)">🛡️</div><div class="ni-lbl" style="color:var(--blue)">Commute</div></a>
+    <a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a>
+    <a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a>
+    <a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+  </div>
+</div>
+
+<!-- LOCATION MODAL -->
+<div class="modal-ov" id="locModal">
+  <div class="mbox">
+    <div class="m-handle"></div>
+    <div class="m-title" id="mTitle">Where to?</div>
+    <button class="m-loc-btn" onclick="useCurrentLoc()">📍 Use my current location</button>
+    <input class="m-inp" id="searchInp" placeholder="Type an address or place…" oninput="filterSugg(this.value)">
+    <div id="suggList"></div>
+  </div>
+</div>
+<script>
+// ══════════════════════════════════
+// DOLSAFE SAFE COMMUTE — PLANNER
+// ══════════════════════════════════
+var fromVal='', toVal='', modalTarget='from';
+var mapT=0, mapIv=null;
+
+var SAVED=[
+  {icon:'🏠',name:'Home',addr:'14 Farmingville, NY 11738',key:'home'},
+  {icon:'🏢',name:'Work · Monsieur Touton',addr:'129 W 27th St, New York NY 10001',key:'work'},
+  {icon:'🚆',name:'Ronkonkoma Station',addr:'Station Rd, Ronkonkoma NY 11779',key:'ronk'},
+  {icon:'🚉',name:'Penn Station',addr:'4 Pennsylvania Plaza, Manhattan NY',key:'penn'},
+];
+
+var ALL_SUGG=[
+  {icon:'🏠',name:'Home',addr:'14 Farmingville, NY 11738',dist:'Saved'},
+  {icon:'🏢',name:'Monsieur Touton',addr:'129 W 27th St, New York NY 10001',dist:'Saved'},
+  {icon:'🚆',name:'Ronkonkoma Station',addr:'Station Rd, Ronkonkoma NY 11779',dist:'Saved'},
+  {icon:'🚉',name:'Penn Station',addr:'4 Pennsylvania Plaza, Manhattan NY',dist:'51 mi'},
+  {icon:'🎓',name:'LIU Brooklyn',addr:'1 University Plaza, Brooklyn NY 11201',dist:'34 mi'},
+  {icon:'🏛️',name:'Grand Central Terminal',addr:'89 E 42nd St, Manhattan NY',dist:'52 mi'},
+  {icon:'✈️',name:'JFK Airport',addr:'Queens NY 11430',dist:'38 mi'},
+  {icon:'🏥',name:'Stony Brook Hospital',addr:'101 Nicolls Rd, Stony Brook NY',dist:'10 mi'},
+  {icon:'🛒',name:'Costco Islandia',addr:'1250 Veterans Memorial Hwy, Islandia NY',dist:'3 mi'},
+];
+
+// Route data keyed by from+to combination
+var ROUTES={
+  'home+work':{
+    score:85,label:'Mostly safe',color:'#059669',gradient:'linear-gradient(135deg,#059669,#047857)',
+    legs:[
+      {icon:'🚗',cls:'safe',title:'Drive · Home → Ronkonkoma Station',
+       detail:'14 Farmingville → Station Rd · Portion Rd · Express Dr N',
+       time:'~12 min · 6.4 mi',score:91,sc:'var(--green)'},
+      {icon:'🚆',cls:'safe',title:'LIRR · Ronkonkoma → Penn Station',
+       detail:'Ronkonkoma Line · 7:42 AM · Platform 2 · No transfer · Arrives 8:54 AM',
+       time:'~72 min · 55 mi',score:88,sc:'var(--green)'},
+      {icon:'🚶',cls:'moderate',title:'Walk · Penn Station → 129 W 27th St',
+       detail:'Exit 7th Ave · Head north 1 block · Left on W 27th · Destination right side',
+       time:'~8 min · 0.4 mi',score:74,sc:'var(--amber)'},
+    ],
+    alerts:[
+      {icon:'⚠️',title:'Elevated activity · Penn Station 7th Ave exit',
+       detail:'Increased foot traffic and NYPD presence. Routine patrol. Stay aware.',
+       badge:'Active',bbg:'var(--amber-light)',bc:'var(--amber)',time:'14m ago'},
+      {icon:'🚆',title:'LIRR Ronkonkoma Line · 2 min delay',
+       detail:'7:42 AM train running approximately 2 minutes late. Platform 2 confirmed.',
+       badge:'Info',bbg:'var(--blue-light)',bc:'var(--blue)',time:'6m ago'},
+      {icon:'🐬',title:'DolSafe coverage · W 27th St corridor',
+       detail:'2 DolSafe users providing live CrowdLens coverage near your destination.',
+       badge:'Live',bbg:'var(--green-light)',bc:'var(--green)',time:'Now'},
+    ],
+    stats:{time:'~92 min',dist:'55.8 mi',alerts:2},
+    alts:[
+      {icon:'🚆',name:'LIRR Express to Jamaica then transfer',best:false,
+       detail:'Express + transfer at Jamaica. Saves ~8 min but requires platform change.',
+       score:90,time:'~64 min',badge:'Faster',bbg:'var(--blue-light)',bc:'var(--blue)'},
+      {icon:'🚌',name:'Bus + E Train via Jamaica',best:false,
+       detail:'S70 bus to Jamaica station → E train to 23rd St. More coverage points.',
+       score:80,time:'~95 min',badge:'More stops',bbg:'var(--amber-light)',bc:'var(--amber)'},
+    ],
+    mapType:'farmingville-midtown',
+  },
+  'default':{
+    score:82,label:'Mostly safe',color:'#059669',gradient:'linear-gradient(135deg,#059669,#047857)',
+    legs:[
+      {icon:'🛣️',cls:'safe',title:'First segment of your route',
+       detail:'Analyzing from your starting point. Roads clear.',
+       time:'Calculating…',score:88,sc:'var(--green)'},
+      {icon:'🚶',cls:'moderate',title:'Destination approach',
+       detail:'Check for any active alerts near your destination.',
+       time:'Calculating…',score:76,sc:'var(--amber)'},
+    ],
+    alerts:[
+      {icon:'🐬',title:'DolSafe Intelligence analyzing your route',
+       detail:'Live data from community signals and sensor network along your path.',
+       badge:'Live',bbg:'var(--green-light)',bc:'var(--green)',time:'Now'},
+    ],
+    stats:{time:'Calculated',dist:'Your route',alerts:1},
+    alts:[],
+    mapType:'generic',
+  }
+};
+
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('stTime').textContent=h+':'+m;
+}
+setInterval(tick,1000);tick();
+
+// ── SAVED PLACES PILLS ──
+function renderPlaces(){
+  var el=document.getElementById('placesScroll');if(!el)return;
+  el.innerHTML=SAVED.map(function(p){
+    return '<div class="place-pill" onclick="fillPlace(\''+p.key+'\')">' +
+      '<div class="pp-icon">'+p.icon+'</div>' +
+      '<div class="pp-body">' +
+        '<div class="pp-name">'+p.name+'</div>' +
+        '<div class="pp-sub">'+p.addr.split(',')[0]+'</div>' +
+        '<div class="pp-action">Tap to use</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function fillPlace(key){
+  var p=SAVED.find(function(s){return s.key===key;});if(!p)return;
+  var val=p.name+' · '+p.addr;
+  if(!fromVal){
+    setFrom(val);
+    toast('Start: '+p.name,'g');
+  } else if(!toVal){
+    setTo(val);
+    toast('Destination: '+p.name,'g');
+  } else {
+    // Both set — open modal to decide
+    openModal('to');
+  }
+}
+
+// ── SET LOCATIONS ──
+function setFrom(v){
+  fromVal=v;
+  var el=document.getElementById('fromVal');
+  if(el){el.textContent=v;el.classList.remove('empty');}
+  var dot=document.getElementById('fromDot');
+  if(dot){dot.style.background='var(--blue)';dot.classList.add('filled');}
+  checkReady();
+}
+function setTo(v){
+  toVal=v;
+  var el=document.getElementById('toVal');
+  if(el){el.textContent=v;el.classList.remove('empty');}
+  var dot=document.getElementById('toDot');
+  if(dot){dot.style.background='var(--green)';dot.classList.add('filled');}
+  checkReady();
+}
+function checkReady(){
+  var btn=document.getElementById('analyzeBtn');
+  if(btn)btn.disabled=!(fromVal&&toVal);
+}
+function swapRoute(){
+  var tmp=fromVal;fromVal=toVal;toVal=tmp;
+  var fEl=document.getElementById('fromVal'),tEl=document.getElementById('toVal');
+  if(fEl){fEl.textContent=fromVal||'Tap to set your starting point';
+    fromVal?fEl.classList.remove('empty'):fEl.classList.add('empty');}
+  if(tEl){tEl.textContent=toVal||'Tap to set your destination';
+    toVal?tEl.classList.remove('empty'):tEl.classList.add('empty');}
+  checkReady();
+}
+
+// ── ANALYSIS ──
+function runAnalysis(){
+  if(!fromVal||!toVal)return;
+  // Pick route data
+  var isHomeWork=(fromVal.toLowerCase().includes('farmingville')||fromVal.toLowerCase().includes('home'))&&
+                 (toVal.toLowerCase().includes('27th')||toVal.toLowerCase().includes('touton')||toVal.toLowerCase().includes('work'));
+  var route=isHomeWork?ROUTES['home+work']:ROUTES['default'];
+
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsWrap').style.display='block';
+  document.getElementById('mapLabel').textContent=
+    (fromVal.split('·')[0]||'Start').trim()+' → '+(toVal.split('·')[0]||'Destination').trim();
+
+  renderScore(route);
+  renderLegs(route);
+  renderAlerts(route);
+  renderAlts(route);
+  setTimeout(function(){initMap(route.mapType);},100);
+
+  setTimeout(function(){
+    document.getElementById('resultsWrap').scrollIntoView({behavior:'smooth',block:'start'});
+  },200);
+  toast('🛡️ Route scored · '+route.score+'/100 · '+route.label,'g');
+}
+
+function renderScore(r){
+  var el=document.getElementById('scoreCard');if(!el)return;
+  var circ=Math.PI*2*28,off=circ-(r.score/100*circ);
+  el.innerHTML='<div style="'+r.gradient+'">' +
+    '<div class="sc-top">' +
+      '<div class="sc-ring">' +
+        '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="6"/>'+
+        '<circle cx="32" cy="32" r="28" fill="none" stroke="white" stroke-width="6" '+
+          'stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'" stroke-linecap="round"/></svg>'+
+        '<div class="sc-num">'+r.score+'</div></div>'+
+      '<div class="sc-info">'+
+        '<div class="sc-title">'+r.label+' · '+r.score+'/100</div>'+
+        '<div class="sc-desc">'+fromVal.split('·')[0].trim()+' → '+toVal.split('·')[0].trim()+'</div>'+
+        '<div class="sc-tags">'+
+          '<div class="sc-tag">⏱ '+r.stats.time+'</div>'+
+          '<div class="sc-tag">📍 '+r.stats.dist+'</div>'+
+          '<div class="sc-tag">⚠️ '+r.stats.alerts+' alert'+(r.stats.alerts!==1?'s':'')+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="sc-stats">'+
+      '<div class="sc-stat"><div class="sc-sv">'+r.stats.time+'</div><div class="sc-sl">Time</div></div>'+
+      '<div class="sc-stat"><div class="sc-sv">'+r.stats.dist+'</div><div class="sc-sl">Distance</div></div>'+
+      '<div class="sc-stat"><div class="sc-sv">'+r.stats.alerts+'</div><div class="sc-sl">Alerts</div></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderLegs(r){
+  var el=document.getElementById('legsWrap');if(!el)return;
+  el.innerHTML=r.legs.map(function(l){
+    return '<div class="leg '+l.cls+'">'+
+      '<div class="leg-icon">'+l.icon+'</div>'+
+      '<div class="leg-body">'+
+        '<div class="leg-title">'+l.title+'</div>'+
+        '<div class="leg-detail">'+l.detail+'</div>'+
+        '<div class="leg-time" style="color:'+l.sc+'">⏱ '+l.time+'</div>'+
+      '</div>'+
+      '<div class="leg-score" style="color:'+l.sc+'">'+l.score+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderAlerts(r){
+  var el=document.getElementById('alertsWrap');if(!el)return;
+  el.innerHTML=r.alerts.map(function(a){
+    return '<div class="alert-item">'+
+      '<div class="ai-icon">'+a.icon+'</div>'+
+      '<div class="ai-body">'+
+        '<div class="ai-title">'+a.title+'</div>'+
+        '<div class="ai-detail">'+a.detail+'</div>'+
+        '<div class="ai-time">'+a.time+'</div>'+
+      '</div>'+
+      '<div class="ai-badge" style="background:'+a.bbg+';color:'+a.bc+'">'+a.badge+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderAlts(r){
+  var el=document.getElementById('altsWrap');if(!el)return;
+  if(!r.alts.length){
+    el.innerHTML='<div style="padding:12px 0;font-size:12px;color:var(--muted);font-weight:500;text-align:center">No safer alternatives found for this route.</div>';
+    return;
+  }
+  el.innerHTML=r.alts.map(function(a){
+    var sc=a.score>=85?'var(--green)':a.score>=70?'var(--amber)':'var(--red)';
+    return '<div class="alt'+(a.best?' best':'')+'" onclick="toast(\''+a.name+' selected\',\'b\')">' +
+      '<div style="font-size:24px;flex-shrink:0">'+a.icon+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;'+
+          'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.name+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);font-weight:500">'+a.detail+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;margin-left:10px">'+
+        '<div style="font-size:22px;font-weight:900;color:'+sc+'">'+a.score+'</div>'+
+        '<div style="font-size:10px;color:var(--dim)">'+a.time+'</div>'+
+        '<div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;'+
+          'background:'+a.bbg+';color:'+a.bc+';margin-top:3px;display:inline-block">'+a.badge+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── MAP ──
+function initMap(type){
+  var c=document.getElementById('mapCanvas');if(!c)return;
+  c.width=c.offsetWidth||360;c.height=200;
+  clearInterval(mapIv);mapT=0;
+  mapIv=setInterval(function(){
+    mapT+=0.012;if(!c.isConnected){clearInterval(mapIv);return;}
+    var ctx=c.getContext('2d'),W=c.width,H=c.height;
+    ctx.fillStyle='#E8F0FE';ctx.fillRect(0,0,W,H);
+    // Background zones
+    ctx.fillStyle='#D4E6C3';ctx.fillRect(0,0,W*.38,H);
+    // Roads
+    ctx.strokeStyle='#C5D3F0';ctx.lineWidth=9;ctx.lineCap='round';
+    [[0,H*.3,W,H*.3],[0,H*.6,W,H*.6],[W*.18,0,W*.18,H],[W*.45,0,W*.45,H],[W*.78,0,W*.78,H]].forEach(function(r){
+      ctx.beginPath();ctx.moveTo(r[0],r[1]);ctx.lineTo(r[2],r[3]);ctx.stroke();
+    });
+    // Buildings
+    ctx.fillStyle='#CBD5E1';
+    [[.02,.06,.13,.22],[.2,.06,.22,.22],[.48,.06,.27,.22],[.8,.06,.16,.22],
+     [.02,.38,.13,.18],[.2,.38,.22,.18],[.48,.38,.27,.18],
+     [.02,.66,.13,.28],[.48,.66,.44,.28]].forEach(function(b){
+      ctx.fillRect(b[0]*W,b[1]*H,b[2]*W,b[3]*H);
+      ctx.strokeStyle='#94A3B8';ctx.lineWidth=1;ctx.strokeRect(b[0]*W,b[1]*H,b[2]*W,b[3]*H);
+    });
+    // Route path — color coded
+    var pts,colors;
+    if(type==='farmingville-midtown'){
+      pts=[{x:.07,y:.9},{x:.07,y:.64},{x:.07,y:.42},{x:.18,y:.3},{x:.45,y:.3},{x:.65,y:.18},{x:.88,y:.1}];
+      colors=['#10B981','#10B981','#10B981','#10B981','#10B981','#F59E0B','#F59E0B'];
+    } else {
+      pts=[{x:.1,y:.88},{x:.2,y:.62},{x:.45,y:.5},{x:.75,y:.25},{x:.9,y:.12}];
+      colors=['#10B981','#10B981','#F59E0B','#F59E0B','#F59E0B'];
+    }
+    for(var i=0;i<pts.length-1;i++){
+      ctx.strokeStyle=colors[i];ctx.lineWidth=5;ctx.setLineDash([]);
+      ctx.beginPath();ctx.moveTo(pts[i].x*W,pts[i].y*H);ctx.lineTo(pts[i+1].x*W,pts[i+1].y*H);ctx.stroke();
+    }
+    // Waypoint labels
+    var wps=type==='farmingville-midtown'?
+      [{x:.07,y:.9,e:'🏠',l:'Home'},{x:.07,y:.42,e:'🚆',l:'Ronkonkoma'},
+       {x:.65,y:.18,e:'🚉',l:'Penn Sta'},{x:.9,y:.1,e:'🏢',l:'Work'}]:
+      [{x:.1,y:.88,e:'📍',l:'Start'},{x:.9,y:.12,e:'🏁',l:'End'}];
+    wps.forEach(function(w){
+      ctx.fillStyle='white';ctx.strokeStyle='#CBD5E1';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(w.x*W,w.y*H,12,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.font='10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(w.e,w.x*W,w.y*H);
+      ctx.fillStyle='#374151';ctx.font='bold 7px Inter,sans-serif';
+      ctx.fillText(w.l,w.x*W,w.y*H+17);
+    });
+    // Alert zone
+    ctx.fillStyle='rgba(245,158,11,.12)';
+    ctx.beginPath();ctx.ellipse(W*.75,H*.22,32,14,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(245,158,11,.4)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.ellipse(W*.75,H*.22,32,14,0,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font='10px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('⚠️',W*.75,H*.22);
+    // Animated user dot
+    var prog=(Math.sin(mapT)+1)*.5;
+    var si=Math.floor(prog*(pts.length-1));
+    var sp=prog*(pts.length-1)-si;
+    if(si<pts.length-1){
+      var ux=(pts[si].x+(pts[si+1].x-pts[si].x)*sp)*W;
+      var uy=(pts[si].y+(pts[si+1].y-pts[si].y)*sp)*H;
+      var pulse2=(Math.sin(mapT*5)+1)*.5;
+      ctx.strokeStyle='rgba(26,86,219,.28)';ctx.lineWidth=1.5;ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ux,uy,9+pulse2*4,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#1A56DB';ctx.beginPath();ctx.arc(ux,uy,7,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='white';ctx.font='bold 7px Inter,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('JJ',ux,uy);
+    }
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  },60);
+}
+
+// ── MODAL ──
+function openModal(target){
+  modalTarget=target;
+  var titles={from:'Where are you starting?',to:'Where are you going?'};
+  document.getElementById('mTitle').textContent=titles[target]||'Set location';
+  document.getElementById('searchInp').value='';
+  renderSugg(ALL_SUGG);
+  document.getElementById('locModal').classList.add('open');
+  setTimeout(function(){document.getElementById('searchInp').focus();},200);
+}
+function closeModal(){document.getElementById('locModal').classList.remove('open');}
+document.getElementById('locModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function renderSugg(list){
+  var el=document.getElementById('suggList');if(!el)return;
+  el.innerHTML=list.map(function(s){
+    return '<div class="sugg-item" onclick="pickSugg(\''+s.name+' · '+s.addr.replace(/'/g,"\\'")+'\')">' +
+      '<div class="si-ico">'+s.icon+'</div>'+
+      '<div class="si-info"><div class="si-name">'+s.name+'</div><div class="si-addr">'+s.addr+'</div></div>'+
+      '<div class="si-d">'+s.dist+'</div>'+
+    '</div>';
+  }).join('');
+}
+function filterSugg(v){
+  if(!v){renderSugg(ALL_SUGG);return;}
+  var f=ALL_SUGG.filter(function(s){
+    return s.name.toLowerCase().includes(v.toLowerCase())||s.addr.toLowerCase().includes(v.toLowerCase());
+  });
+  if(!f.length)f=[{icon:'📍',name:v,addr:'Custom address',dist:''}];
+  renderSugg(f);
+}
+function pickSugg(val){
+  if(modalTarget==='from')setFrom(val); else setTo(val);
+  closeModal();
+  toast((modalTarget==='from'?'Start':'Destination')+' set','g');
+}
+function useCurrentLoc(){
+  if(modalTarget==='from')setFrom('📍 My current location');
+  closeModal();toast('📍 Using your current location','g');
+}
+
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3200);
+}
+
+window.addEventListener('load',function(){renderPlaces();});
+</script>
+
+<div class="ni-lbl">Home</div></a><a class="ni on" href="dolsafe-commute.html"><div class="ni-ico" style="color:#1A56DB">🛡️</div><div class="ni-lbl" style="color:#1A56DB">Commute</div></a><a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a><a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a><a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+</div>
+<div class="bnav">
+    <a class="ni" href="dolsafe-home.html"><div class="ni-ico">🏠</div><div class="ni-lbl">Home</div></a>
+    <a class="ni on" href="dolsafe-commute.html"><div class="ni-ico" style="color:#1A56DB">🛡️</div><div class="ni-lbl" style="color:#1A56DB">Commute</div></a>
+    <a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a>
+    <a class="ni" href="dolsafe-sos.html"><div class="ni-ico">🆘</div><div class="ni-lbl">SOS</div></a>
+    <a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+  </div>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>

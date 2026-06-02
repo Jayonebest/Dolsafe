@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · Welcome</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#E8ECF2;font-family:'Inter',sans-serif;color:#111827}
+.phone{width:100%;max-width:390px;min-height:100vh;background:#F2F5FA;
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.12)}
+
+/* STATUS */
+.status{height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;flex-shrink:0;transition:background .4s}
+.st-time{font-size:15px;font-weight:700;color:white}
+.st-r{font-size:11px;color:rgba(255,255,255,.85)}
+
+/* PROGRESS DOTS */
+.dots-wrap{display:flex;justify-content:center;gap:6px;padding:10px 0;
+  flex-shrink:0;transition:background .4s}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .3s}
+.dot.on{background:white;width:20px;border-radius:4px}
+.dot.done{background:rgba(255,255,255,.65)}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.scroll::-webkit-scrollbar{display:none}
+
+/* BOTTOM ACTION */
+.bottom-bar{padding:12px 16px 28px;background:white;border-top:1px solid #E5E7EB;
+  flex-shrink:0;transition:background .4s}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(.85);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes swim{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes ripple{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.5);opacity:0}}
+@keyframes checkDraw{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+
+/* STEP WRAPPER */
+.step{padding:0;animation:fadeUp .35s ease;display:flex;flex-direction:column}
+
+/* ── STEP 0: WELCOME ── */
+.welcome-screen{background:linear-gradient(160deg,#1A56DB 0%,#1E40AF 60%,#1D4ED8 100%);
+  min-height:calc(100vh - 44px);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;text-align:center;position:relative;overflow:hidden}
+.welcome-screen::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(255,255,255,.08),transparent)}
+.dolphin-wrap{position:relative;margin-bottom:24px}
+.dolphin{font-size:72px;animation:swim 3s ease-in-out infinite;display:block}
+.dolphin-ring{position:absolute;inset:-16px;border-radius:50%;
+  background:rgba(255,255,255,.08);animation:pulse 2s infinite}
+.dolphin-ring2{position:absolute;inset:-32px;border-radius:50%;
+  background:rgba(255,255,255,.04);animation:pulse 2s infinite .5s}
+.w-title{font-size:34px;font-weight:900;color:white;letter-spacing:-.6px;margin-bottom:8px}
+.w-title span{color:#93C5FD}
+.w-sub{font-size:15px;color:rgba(255,255,255,.8);font-weight:500;line-height:1.65;margin-bottom:28px;max-width:300px}
+.w-features{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;margin-bottom:32px}
+.wf-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;text-align:left}
+.wf-icon{font-size:20px;flex-shrink:0}
+.wf-text{font-size:13px;font-weight:600;color:white;line-height:1.4}
+.wf-sub{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;margin-top:1px}
+.w-invite{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  border-radius:10px;padding:10px 14px;font-size:11px;color:rgba(255,255,255,.8);
+  font-family:'Inter',monospace;margin-bottom:0;text-align:center}
+.w-invite span{color:white;font-weight:800}
+
+/* ── STEP 1: EMAILS ── */
+.email-screen{padding:24px 18px}
+.es-icon{font-size:48px;margin-bottom:16px;display:block;text-align:center;animation:pop .4s ease}
+.es-title{font-size:24px;font-weight:900;color:#111827;letter-spacing:-.4px;margin-bottom:6px;text-align:center}
+.es-sub{font-size:13px;color:#6B7280;font-weight:500;line-height:1.6;margin-bottom:22px;text-align:center}
+.channel-card{border-radius:16px;padding:14px 16px;margin-bottom:12px;border:2px solid}
+.channel-card.work{background:#EFF6FF;border-color:#BFDBFE}
+.channel-card.personal{background:#F0FDF4;border-color:#BBF7D0}
+.ch-hdr{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ch-icon{font-size:18px;flex-shrink:0}
+.ch-label{font-size:13px;font-weight:700;flex:1}
+.ch-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px}
+.ch-desc{font-size:12px;color:#374151;font-weight:500;line-height:1.55;margin-bottom:10px}
+.ch-input{width:100%;border:2px solid #E5E7EB;border-radius:10px;padding:11px 13px;
+  font-family:'Inter',sans-serif;font-size:14px;color:#111827;outline:none;
+  background:white;transition:border-color .2s}
+.ch-input:focus{border-color:#1A56DB}
+.ch-input.work:focus{border-color:#1A56DB}
+.ch-input.personal:focus{border-color:#10B981}
+.ch-input::placeholder{color:#9CA3AF}
+.ch-filled.work{border-color:#1A56DB;background:#EFF6FF}
+.ch-filled.personal{border-color:#10B981;background:#F0FDF4}
+.two-channel-note{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;
+  padding:11px 13px;font-size:12px;color:#92400E;font-weight:500;line-height:1.55}
+
+/* ── STEP 2: LOCATION ── */
+.perm-screen{padding:24px 18px}
+.perm-card{background:white;border-radius:18px;padding:20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:14px;text-align:center}
+.perm-icon{font-size:52px;margin-bottom:14px;display:block;animation:pop .5s ease}
+.perm-title{font-size:20px;font-weight:800;color:#111827;margin-bottom:6px;letter-spacing:-.3px}
+.perm-desc{font-size:13px;color:#6B7280;font-weight:500;line-height:1.6;margin-bottom:16px}
+.perm-list{display:flex;flex-direction:column;gap:8px;text-align:left}
+.perm-item{display:flex;gap:10px;padding:9px 11px;background:#F9FAFB;
+  border-radius:10px;border:1px solid #E5E7EB}
+.pi-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.pi-text{font-size:12px;color:#374151;font-weight:500;line-height:1.4}
+.perm-btn{width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#1A56DB,#1E40AF);
+  border:none;font-family:'Inter',sans-serif;font-size:15px;font-weight:800;
+  color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 16px rgba(26,86,219,.3)}
+.perm-skip{text-align:center;margin-top:10px;font-size:12px;color:#9CA3AF;font-weight:600;cursor:pointer;padding:6px}
+
+/* ── STEP 3: NOTIFICATIONS ── */
+.notif-screen{padding:24px 18px}
+.notif-types{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.notif-type{background:white;border-radius:14px;padding:13px 14px;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;
+  border:1.5px solid #F3F4F6;transition:border-color .2s}
+.nt-icon{font-size:22px;flex-shrink:0}
+.nt-info{flex:1}
+.nt-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:2px}
+.nt-desc{font-size:11px;color:#6B7280;font-weight:500}
+.toggle{width:46px;height:26px;border-radius:13px;position:relative;cursor:pointer;
+  transition:background .25s;flex-shrink:0}
+.toggle.on{background:#1A56DB}
+.toggle.off{background:#D1D5DB}
+.toggle-knob{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;
+  background:white;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on .toggle-knob{left:23px}
+.toggle.off .toggle-knob{left:3px}
+
+/* ── STEP 4: TRUSTED CONTACT ── */
+.contact-screen{padding:24px 18px}
+.contact-preview{background:white;border-radius:16px;padding:14px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;border:2px solid #DBEAFE;animation:slideIn .3s ease}
+.cp-avatar{width:50px;height:50px;border-radius:14px;background:#DBEAFE;
+  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;position:relative}
+.cp-added{position:absolute;bottom:-3px;right:-3px;width:16px;height:16px;
+  border-radius:50%;background:#10B981;border:2px solid white;
+  display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+.cp-info{flex:1}
+.cp-name{font-size:14px;font-weight:700;color:#111827;margin-bottom:2px}
+.cp-rel{font-size:11px;color:#6B7280;font-weight:500}
+.cp-status{font-size:10px;font-weight:600;color:#10B981;display:flex;align-items:center;gap:4px;margin-top:3px}
+.add-contact-form{background:white;border-radius:16px;padding:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:12px}
+.ac-field{margin-bottom:10px}
+.ac-label{font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block}
+.ac-inp{width:100%;border:2px solid #E5E7EB;border-radius:10px;padding:11px 13px;
+  font-family:'Inter',sans-serif;font-size:14px;color:#111827;outline:none;
+  background:white;transition:border-color .2s}
+.ac-inp:focus{border-color:#1A56DB}
+.ac-inp::placeholder{color:#9CA3AF}
+.rel-chips{display:flex;gap:6px;flex-wrap:wrap}
+.rc{padding:7px 13px;border-radius:20px;border:2px solid #E5E7EB;background:white;
+  font-size:12px;font-weight:600;color:#374151;cursor:pointer;transition:all .15s}
+.rc.on{border-color:#1A56DB;background:#EFF6FF;color:#1E40AF}
+
+/* ── STEP 5: SOS ── */
+.sos-screen{padding:24px 18px}
+.sos-demo{background:linear-gradient(135deg,#FEE2E2,#FEF2F2);border:2px solid #FECACA;
+  border-radius:18px;padding:20px;text-align:center;margin-bottom:14px}
+.sos-btn-demo{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#EF4444,#B91C1C);
+  margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+  font-size:32px;box-shadow:0 6px 24px rgba(239,68,68,.4);position:relative}
+.sos-btn-demo::after{content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:2px solid rgba(239,68,68,.3);animation:ripple 1.5s ease-out infinite}
+.sos-demo-title{font-size:16px;font-weight:800;color:#991B1B;margin-bottom:4px}
+.sos-demo-sub{font-size:12px;color:#B91C1C;font-weight:500;line-height:1.5}
+.sos-features{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.sf-item{display:flex;gap:10px;background:white;border-radius:12px;padding:11px 13px;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid #E5E7EB}
+.sf-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.sf-title{font-size:12px;font-weight:700;color:#111827;margin-bottom:1px}
+.sf-desc{font-size:11px;color:#6B7280;font-weight:500;line-height:1.4}
+
+/* ── STEP 6: ALL SET ── */
+.allset-screen{background:linear-gradient(160deg,#059669 0%,#047857 60%,#065F46 100%);
+  min-height:100%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;text-align:center;position:relative;overflow:hidden}
+.allset-screen::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(255,255,255,.08),transparent)}
+.check-circle{width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;position:relative}
+.check-circle svg{position:relative;z-index:1}
+.check-ring{position:absolute;inset:-10px;border-radius:50%;
+  background:rgba(255,255,255,.1);animation:pulse 2s infinite}
+.as-title{font-size:30px;font-weight:900;color:white;letter-spacing:-.5px;margin-bottom:8px}
+.as-sub{font-size:14px;color:rgba(255,255,255,.8);font-weight:500;line-height:1.65;margin-bottom:24px;max-width:300px}
+.as-cards{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
+.as-card{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+  border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;text-align:left}
+.as-card-icon{font-size:18px;flex-shrink:0}
+.as-card-text{font-size:12px;font-weight:600;color:white;line-height:1.4}
+.as-card-sub{font-size:10px;color:rgba(255,255,255,.65);font-weight:500;margin-top:1px}
+
+/* BUTTONS */
+.btn-main{width:100%;padding:16px;border-radius:14px;background:linear-gradient(135deg,#1A56DB,#1E40AF);
+  border:none;font-family:'Inter',sans-serif;font-size:16px;font-weight:800;
+  color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .15s;box-shadow:0 4px 16px rgba(26,86,219,.3)}
+.btn-main:active{transform:scale(.98)}
+.btn-main.green{background:linear-gradient(135deg,#059669,#047857);box-shadow:0 4px 16px rgba(5,150,105,.3)}
+.btn-main.white{background:white;color:#111827;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.btn-skip{width:100%;padding:12px;border-radius:12px;background:transparent;border:none;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#9CA3AF;cursor:pointer;margin-top:6px}
+.btn-skip:hover{color:#6B7280}
+
+/* TOAST */
+.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:sticky;bottom:0;background:#fff;border-top:1.5px solid #E5E7EB;
+  display:flex;padding:8px 6px 18px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.09);flex-shrink:0;z-index:90}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;border-radius:14px;cursor:pointer;text-decoration:none;
+  transition:background .15s;-webkit-tap-highlight-color:transparent}
+.ni.on{background:#EFF6FF}
+.ni-ico{font-size:22px;color:#9CA3AF}
+.ni-lbl{font-size:9px;font-weight:700;color:#9CA3AF;font-family:'Inter',sans-serif}
+.ni.on .ni-ico,.ni.on .ni-lbl{color:#1A56DB}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.b{background:#1A56DB}.toast.r{background:#DC2626}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+
+  <div class="status" id="statusBar">
+    <div class="st-time" id="stTime">9:41</div>
+    <div class="st-r">📶 WiFi 🔋</div>
+  </div>
+
+  <div class="dots-wrap" id="dotsWrap"></div>
+  <div id="orgBar" style="display:none;background:rgba(0,0,0,.12);padding:5px 16px;text-align:center;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);font-family:'Inter',sans-serif" id="orgBadge"></div>
+
+  <div class="scroll" id="scrollEl">
+    <div id="stepContent"></div>
+  </div>
+
+  <div id="bottomBar"></div>
+
+</div>
+<script>
+// ═══════════════════════════════════════════
+// DOLSAFE ONBOARDING ENGINE
+// ═══════════════════════════════════════════
+
+var step = 0;
+var TOTAL = 7; // 0-6
+
+var data = {
+  workEmail:   '',
+  personalEmail: '',
+  locationEnabled: false,
+  notifications: {sos:true, crowdlens:true, briefing:true, employer:true, community:false},
+  contactName: '', contactPhone: '', contactRel: 'Partner',
+  sosEnabled: false,
+  inviteToken: 'DS-MTA-EMP-4421', // overridden by URL param on load
+  inviteOrg: '', // set dynamically from invite token on load
+};
+
+var STEPS_COLORS = [
+  '#1A56DB','#1A56DB','#1E3A8A','#0F766E','#7C3AED','#B91C1C','#059669'
+];
+
+// ── CLOCK ──
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  var el=document.getElementById('stTime');if(el)el.textContent=h+':'+m;
+}
+setInterval(tick,1000);tick();
+
+// ── PROGRESS DOTS ──
+function renderDots(){
+  var steps_with_dots=[1,2,3,4,5,6]; // skip welcome and allset
+  var el=document.getElementById('dotsWrap');
+  var bg=STEPS_COLORS[step]||'#1A56DB';
+  el.style.background=bg;
+
+  if(step===0||step===6){el.style.display='none';
+    document.getElementById('orgBar').style.display='none';return;}
+  el.style.display='flex';
+  // Show org name bar
+  var ob=document.getElementById('orgBar');
+  if(ob && data.inviteOrg){
+    ob.style.display='block';
+    ob.textContent=data.inviteOrgLogo+' '+data.inviteOrg+' · Setting up your DolSafe account';
+    ob.style.background=data.inviteOrgColor+'33';
+    ob.style.color='white';
+  }
+
+  el.innerHTML=steps_with_dots.map(function(i){
+    var cls=i===step?'dot on':i<step?'dot done':'dot';
+    return '<div class="'+cls+'"></div>';
+  }).join('');
+}
+
+// ── RENDER ──
+function render(){
+  renderDots();
+  var color=STEPS_COLORS[step]||'#1A56DB';
+  document.getElementById('statusBar').style.background=color;
+
+  var fns=[s0,s1,s2,s3,s4,s5,s6];
+  var el=document.getElementById('stepContent');
+  el.innerHTML='';
+  fns[step]();
+  afterRender();
+  document.getElementById('scrollEl').scrollTop=0;
+}
+
+// ═══════════════════
+// STEP 0 — WELCOME
+// ═══════════════════
+function s0(){
+  document.getElementById('statusBar').style.background='#1A56DB';
+  document.getElementById('scrollEl').style.background='#1A56DB';
+
+  document.getElementById('stepContent').innerHTML=
+    '<div class="welcome-screen">'+
+      '<div class="dolphin-wrap">'+
+        '<div class="dolphin-ring2"></div>'+
+        '<div class="dolphin-ring"></div>'+
+        '<span class="dolphin">🐬</span>'+
+      '</div>'+
+      '<div class="w-title">Welcome to<br><span>DolSafe</span></div>'+
+      '<div class="w-sub">Your personal safety companion. Guided by the dolphin — nature\'s first responder.</div>'+
+      '<div class="w-features">'+
+        [['🆘','SOS + Trusted contacts','One tap sends your location to your people + 911'],
+         ['🧠','Morning safety briefing','DolSafe intelligence for your daily commute'],
+         ['📋','SmartReport','Report incidents safely and anonymously'],
+         ['📱','CrowdLens','Help cover blind spots when your community needs you'],
+        ].map(function(f){
+          return '<div class="wf-item">'+
+            '<div class="wf-icon">'+f[0]+'</div>'+
+            '<div><div class="wf-text">'+f[1]+'</div><div class="wf-sub">'+f[2]+'</div></div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+      '<div class="w-invite">Invited by <span>'+data.inviteOrg+'</span> · Token: <span>'+data.inviteToken+'</span></div>'+
+    '</div>';
+
+  document.getElementById('scrollEl').style.background='linear-gradient(160deg,#1A56DB 0%,#1E40AF 100%)';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:16px 16px 28px;background:transparent">'+
+      '<button class="btn-main white" onclick="next()">Get started →</button>'+
+    '</div>';
+}
+
+// ═══════════════════
+// STEP 1 — EMAILS
+// ═══════════════════
+function s1(){
+  document.getElementById('scrollEl').style.background='#F2F5FA';
+
+  document.getElementById('stepContent').innerHTML=
+    '<div class="email-screen">'+
+      '<span class="es-icon">📧</span>'+
+      '<div class="es-title">Set up your channels</div>'+
+      '<div class="es-sub">DolSafe uses two separate email channels to protect your privacy and keep employer and personal data completely separate.</div>'+
+
+      '<div class="channel-card work">'+
+        '<div class="ch-hdr">'+
+          '<div class="ch-icon">🏢</div>'+
+          '<div class="ch-label" style="color:#1E40AF">Work email</div>'+
+          '<div class="ch-badge" style="background:#DBEAFE;color:#1E40AF">Pre-filled · '+data.inviteOrg+'</div>'+
+        '</div>'+
+        '<div class="ch-desc">Receives duty alerts, CrowdLens requests, and employer notifications from <strong style="color:#1E40AF">'+data.inviteOrg+'</strong>. Revoked instantly if you leave.</div>'+
+        '<input class="ch-input work" id="workEmailInput" type="email" value="'+data.workEmail+'" placeholder="your.name@'+data.inviteOrgDomain+'" oninput="data.workEmail=this.value">'+
+      '</div>'+
+
+      '<div class="channel-card personal">'+
+        '<div class="ch-hdr">'+
+          '<div class="ch-icon">📱</div>'+
+          '<div class="ch-label" style="color:#065F46">Personal email</div>'+
+          '<div class="ch-badge" style="background:#D1FAE5;color:#065F46">Yours forever</div>'+
+        '</div>'+
+        '<div class="ch-desc">Your permanent DolSafe access — SOS, morning briefing, trusted contacts. You keep this even after leaving <strong style="color:#065F46">'+data.inviteOrg+'</strong>.</div>'+
+        '<input class="ch-input personal" id="personalEmail" type="email" placeholder="your@personal-email.com" oninput="data.personalEmail=this.value">'+
+      '</div>'+
+
+      '<div class="two-channel-note">'+
+        '💡 <strong>Why two channels?</strong> Your employer can see duty notifications but never your personal SOS contacts, location history, or private safety data. The two planes are architecturally separated.'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:white;border-top:1px solid #E5E7EB">'+
+      '<div style="padding-top:12px"><button class="btn-main" onclick="submitEmails()">Continue →</button></div>'+
+      '<button class="btn-skip" onclick="next()">Skip for now</button>'+
+    '</div>';
+}
+
+function submitEmails(){
+  var w=document.getElementById('workEmail');
+  var p=document.getElementById('personalEmail');
+  if(w) data.workEmail=w.value;
+  if(p) data.personalEmail=p.value;
+  if(!data.workEmail){toast('Enter your work email to continue');return;}
+  next();
+}
+
+// ═══════════════════
+// STEP 2 — LOCATION
+// ═══════════════════
+function s2(){
+  document.getElementById('stepContent').innerHTML=
+    '<div class="perm-screen">'+
+      '<div class="perm-card">'+
+        '<span class="perm-icon">📍</span>'+
+        '<div class="perm-title">Enable location</div>'+
+        '<div class="perm-desc">DolSafe needs your location to show you nearby alerts, calculate your route safety score, and send your GPS to 911 if you trigger SOS.</div>'+
+        '<div class="perm-list">'+
+          [['🚨','SOS emergency — your exact location sent to 911 and trusted contacts instantly'],
+           ['🗺️','Live threat map — see incidents near you in real time'],
+           ['🧠','Morning briefing — personalized route safety score for your commute'],
+           ['📱','CrowdLens — only receive requests for incidents near you'],
+          ].map(function(p){
+            return '<div class="perm-item"><div class="pi-icon">'+p[0]+'</div><div class="pi-text">'+p[1]+'</div></div>';
+          }).join('')+
+        '</div>'+
+      '</div>'+
+      '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:11px 13px;font-size:12px;color:#065F46;font-weight:500;line-height:1.55">'+
+        '🔒 DolSafe only accesses your location <strong>when you have the app open</strong>. Your location is never stored on our servers. GPS data for SOS is sent directly to 911 — we never see it.'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:white;border-top:1px solid #E5E7EB;padding-top:12px">'+
+      '<button class="btn-main" onclick="enableLocation()" style="margin-bottom:0">📍 Allow location access</button>'+
+      '<button class="btn-skip" onclick="next()">Not now — I\'ll enable this later</button>'+
+    '</div>';
+}
+
+function enableLocation(){
+  data.locationEnabled=true;
+  toast('📍 Location enabled','g');
+  setTimeout(next,800);
+}
+
+// ═══════════════════
+// STEP 3 — NOTIFICATIONS
+// ═══════════════════
+function s3(){
+  var types=[
+    {id:'sos',icon:'🚨',title:'SOS & safety alerts',desc:'Critical nearby incidents, active threats. Always on — cannot be disabled.',locked:true},
+    {id:'crowdlens',icon:'📱',title:'CrowdLens requests',desc:'When someone nearby needs video coverage. Voluntary — you can always decline.'},
+    {id:'briefing',icon:'🐬',title:'Morning briefing',desc:'Daily safety summary at 7:30 AM for your commute route.'},
+    {id:'employer',icon:'🏢',title:'Employer notifications',desc:'Duty alerts, shift briefings, and incident notifications from your employer.'},
+    {id:'community',icon:'🌐',title:'Community updates',desc:'Non-urgent area safety tips and DolSafe feature updates.'},
+  ];
+
+  document.getElementById('stepContent').innerHTML=
+    '<div class="notif-screen">'+
+      '<span style="font-size:44px;display:block;text-align:center;margin-bottom:14px;animation:pop .4s ease">🔔</span>'+
+      '<div style="font-size:22px;font-weight:900;color:#111827;text-align:center;margin-bottom:6px;letter-spacing:-.3px">Notifications</div>'+
+      '<div style="font-size:13px;color:#6B7280;font-weight:500;text-align:center;margin-bottom:20px;line-height:1.6">Choose what you want to hear about. You can change these anytime in Settings.</div>'+
+      '<div class="notif-types">'+
+      types.map(function(t){
+        var isOn=data.notifications[t.id];
+        return '<div class="notif-type">'+
+          '<div class="nt-icon">'+t.icon+'</div>'+
+          '<div class="nt-info">'+
+            '<div class="nt-title">'+t.title+'</div>'+
+            '<div class="nt-desc">'+t.desc+'</div>'+
+          '</div>'+
+          (t.locked
+            ? '<div style="font-size:10px;font-weight:700;color:#10B981;background:#D1FAE5;padding:3px 8px;border-radius:20px">Always on</div>'
+            : '<div class="toggle '+(isOn?'on':'off')+'" onclick="toggleNotif(\''+t.id+'\',this)">'+
+                '<div class="toggle-knob"></div>'+
+              '</div>'
+          )+
+        '</div>';
+      }).join('')+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:white;border-top:1px solid #E5E7EB;padding-top:12px">'+
+      '<button class="btn-main" onclick="next()">Save preferences →</button>'+
+    '</div>';
+}
+
+function toggleNotif(id,el){
+  data.notifications[id]=!data.notifications[id];
+  el.className='toggle '+(data.notifications[id]?'on':'off');
+}
+
+// ═══════════════════
+// STEP 4 — TRUSTED CONTACT
+// ═══════════════════
+var selectedRel='Partner';
+
+function s4(){
+  document.getElementById('stepContent').innerHTML=
+    '<div class="contact-screen">'+
+      '<span style="font-size:44px;display:block;text-align:center;margin-bottom:14px;animation:pop .4s ease">👥</span>'+
+      '<div style="font-size:22px;font-weight:900;color:#111827;text-align:center;margin-bottom:6px;letter-spacing:-.3px">Add your first trusted contact</div>'+
+      '<div style="font-size:13px;color:#6B7280;font-weight:500;text-align:center;margin-bottom:18px;line-height:1.6">This person is alerted instantly when you trigger SOS — with your live location. You can add up to 5 contacts.</div>'+
+
+      '<div class="add-contact-form">'+
+        '<div class="ac-field">'+
+          '<label class="ac-label">Their name</label>'+
+          '<input class="ac-inp" id="contactName" placeholder="e.g. Maria Rivera" oninput="data.contactName=this.value">'+
+        '</div>'+
+        '<div class="ac-field">'+
+          '<label class="ac-label">Phone number</label>'+
+          '<input class="ac-inp" id="contactPhone" type="tel" placeholder="+1 (718) 555-0100" oninput="data.contactPhone=this.value">'+
+        '</div>'+
+        '<div class="ac-field" style="margin:0">'+
+          '<label class="ac-label">Relationship</label>'+
+          '<div class="rel-chips" id="relChips">'+
+            ['Partner','Spouse','Parent','Sibling','Friend','Colleague'].map(function(r){
+              return '<div class="rc'+(r===selectedRel?' on':'')+'" onclick="pickRel(\''+r+'\',this)">'+r+'</div>';
+            }).join('')+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+
+      '<div id="contactPreview" style="display:none"></div>'+
+
+      '<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:12px;padding:11px 13px;font-size:12px;color:#92400E;font-weight:500;line-height:1.55">'+
+        '📱 DolSafe will send them a text invite. When they install DolSafe, they\'ll see your SOS alerts in-app. Until then, they receive SMS with your location link.'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:white;border-top:1px solid #E5E7EB;padding-top:12px">'+
+      '<button class="btn-main" onclick="saveContact()">Add contact &amp; continue →</button>'+
+      '<button class="btn-skip" onclick="next()">Skip — I\'ll add contacts later</button>'+
+    '</div>';
+}
+
+function pickRel(rel,el){
+  selectedRel=rel;data.contactRel=rel;
+  document.querySelectorAll('.rc').forEach(function(e){e.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function saveContact(){
+  var n=document.getElementById('contactName');
+  var p=document.getElementById('contactPhone');
+  if(n) data.contactName=n.value.trim();
+  if(p) data.contactPhone=p.value.trim();
+  if(!data.contactName){toast('Enter a name for your contact');return;}
+  if(!data.contactPhone){toast('Enter a phone number');return;}
+
+  var prev=document.getElementById('contactPreview');
+  if(prev){
+    prev.style.display='block';
+    prev.innerHTML='<div class="contact-preview" style="margin-bottom:12px">'+
+      '<div class="cp-avatar">👩<div class="cp-added">✓</div></div>'+
+      '<div class="cp-info">'+
+        '<div class="cp-name">'+data.contactName+'</div>'+
+        '<div class="cp-rel">'+data.contactRel+' · '+data.contactPhone+'</div>'+
+        '<div class="cp-status"><div style="width:6px;height:6px;border-radius:50%;background:#10B981"></div>DolSafe invite sent</div>'+
+      '</div>'+
+      '<div style="font-size:20px">✅</div>'+
+    '</div>';
+  }
+  toast('✅ '+data.contactName+' added · invite sent','g');
+  setTimeout(next,1200);
+}
+
+// ═══════════════════
+// STEP 5 — SOS SETUP
+// ═══════════════════
+function s5(){
+  document.getElementById('stepContent').innerHTML=
+    '<div class="sos-screen">'+
+      '<span style="font-size:44px;display:block;text-align:center;margin-bottom:14px;animation:pop .4s ease">🆘</span>'+
+      '<div style="font-size:22px;font-weight:900;color:#111827;text-align:center;margin-bottom:6px;letter-spacing:-.3px">Enable SOS</div>'+
+      '<div style="font-size:13px;color:#6B7280;font-weight:500;text-align:center;margin-bottom:18px;line-height:1.6">Your most important safety feature. Hold the SOS button for 3 seconds in an emergency.</div>'+
+
+      '<div class="sos-demo">'+
+        '<div class="sos-btn-demo">🆘</div>'+
+        '<div class="sos-demo-title">Hold 3 seconds to activate</div>'+
+        '<div class="sos-demo-sub">Silent recording starts immediately · 911 receives your location · All trusted contacts are pinged</div>'+
+      '</div>'+
+
+      '<div class="sos-features">'+
+        [['🔴','Silent video recording','Invisible to those around you. Records until you tap I\'m Safe.'],
+         ['📍','Live GPS to 911','Exact location + movement path sent as a structured data packet. 911 can track you.'],
+         ['📱','Trusted contacts alerted','Everyone on your list gets an immediate ping with your live location link.'],
+         ['🎤','Audio evidence','All audio captured and C2PA-certified. Preserved automatically if you can\'t respond.'],
+        ].map(function(f){
+          return '<div class="sf-item">'+
+            '<div class="sf-icon">'+f[0]+'</div>'+
+            '<div><div class="sf-title">'+f[1]+'</div><div class="sf-desc">'+f[2]+'</div></div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:white;border-top:1px solid #E5E7EB;padding-top:12px">'+
+      '<button class="btn-main" style="background:linear-gradient(135deg,#EF4444,#B91C1C);box-shadow:0 4px 16px rgba(239,68,68,.3)" onclick="enableSOS()">🆘 Enable SOS</button>'+
+      '<button class="btn-skip" onclick="next()">Skip — enable later in settings</button>'+
+    '</div>';
+}
+
+function enableSOS(){
+  data.sosEnabled=true;
+  toast('🆘 SOS enabled · hold 3 seconds in an emergency','g');
+  setTimeout(next,900);
+}
+
+// ═══════════════════
+// STEP 6 — ALL SET
+// ═══════════════════
+function s6(){
+  document.getElementById('statusBar').style.background='#059669';
+  document.getElementById('scrollEl').style.background='linear-gradient(160deg,#059669,#047857)';
+
+  document.getElementById('stepContent').innerHTML=
+    '<div class="allset-screen">'+
+      '<div class="check-circle">'+
+        '<div class="check-ring"></div>'+
+        '<svg width="40" height="40" viewBox="0 0 40 40" fill="none">'+
+          '<polyline points="8,20 17,29 32,12" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" style="animation:checkDraw .5s ease forwards"/>'+
+        '</svg>'+
+      '</div>'+
+      '<div class="as-title">You\'re all set, James!</div>'+
+      '<div class="as-sub">DolSafe is configured and ready. Your community is a little safer today.</div>'+
+      '<div class="as-cards">'+
+        (data.workEmail?(data.hasEmployer?'<div class="as-card"><div class="as-card-icon">'+data.inviteOrgLogo+'</div><div><div class="as-card-text">'+data.inviteOrg+' channel active</div><div class="as-card-sub">'+data.workEmail+'</div></div></div>':''):'')+
+        (data.personalEmail?'<div class="as-card"><div class="as-card-icon">📱</div><div><div class="as-card-text">Personal channel active</div><div class="as-card-sub">'+data.personalEmail+'</div></div></div>':'')+
+        (data.locationEnabled?'<div class="as-card"><div class="as-card-icon">📍</div><div><div class="as-card-text">Location enabled</div><div class="as-card-sub">Route safety · SOS GPS · Nearby alerts</div></div></div>':'')+
+        (data.contactName?'<div class="as-card"><div class="as-card-icon">👥</div><div><div class="as-card-text">'+data.contactName+' added</div><div class="as-card-sub">DolSafe invite sent · SOS contact active</div></div></div>':'')+
+        (data.sosEnabled?'<div class="as-card"><div class="as-card-icon">🆘</div><div><div class="as-card-text">SOS enabled</div><div class="as-card-sub">Hold 3 seconds · Silent recording + 911</div></div></div>':'')+
+        '<div class="as-card"><div class="as-card-icon">🐬</div><div><div class="as-card-text">DolSafe Intelligence active</div><div class="as-card-sub">Morning briefing ready for tomorrow</div></div></div>'+
+      '</div>'+
+    '</div>';
+
+  document.getElementById('bottomBar').innerHTML=
+    '<div style="padding:0 16px 28px;background:transparent">'+
+      '<button class="btn-main white" onclick="goHome()">Open DolSafe home →</button>'+
+    '</div>';
+}
+
+// ── NAVIGATION ──
+function afterRender(){
+  // Patch step 1 dynamically
+  var wi = document.getElementById('workEmailInput');
+  if(wi){
+    if(data.workEmail) wi.value = data.workEmail;
+    wi.placeholder = 'your.name@' + (data.inviteOrgDomain || 'employer.com');
+  }
+  // Hide work channel if no employer
+  if(!data.hasEmployer){
+    var wc = document.querySelector('.channel-card.work');
+    if(wc) wc.style.display = 'none';
+  }
+  // Show org logo in header if on step 1+
+  var orgBadge = document.getElementById('orgBadge');
+  if(orgBadge) orgBadge.textContent = data.inviteOrgLogo + ' ' + data.inviteOrg;
+}
+
+function next(){
+  if(step<TOTAL-1){step++;render();}
+}
+function goHome(){
+  window.location.href='dolsafe-home.html';
+}
+
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ── BOOT ──
+window.addEventListener('load',function(){
+  // ── PARSE INVITE TOKEN ──
+  // Token format: DS-{ORG}-{DEPT}-{ID}
+  // e.g. DS-MTA-EMP-4421  →  org = MTA
+  //      DS-LIU-SEC-0012  →  org = LIU Brooklyn
+  //      DS-AMTRAK-OPS-88 →  org = Amtrak
+  //      DS-NYPD-TRN-0043 →  org = NYPD Transit
+  //      DS-PUBLIC-CIV-00 →  org = DolSafe Community (no employer)
+  var ORG_MAP = {
+    'MTA':    {name:'MTA New York',       logo:'🚇', domain:'mta.nyc.gov',    color:'#1A56DB'},
+    'LIU':    {name:'LIU Brooklyn',       logo:'🎓', domain:'liu.edu',         color:'#7C3AED'},
+    'AMTRAK': {name:'Amtrak',             logo:'🚂', domain:'amtrak.com',      color:'#EF4444'},
+    'NYPD':   {name:'NYPD',               logo:'🚔', domain:'nypd.org',        color:'#1E40AF'},
+    'JFK':    {name:'JFK Airport',        logo:'✈️', domain:'jfkairport.com',  color:'#0284C7'},
+    'COLUMBIA':{name:'Columbia University',logo:'🏛️',domain:'columbia.edu',   color:'#003087'},
+    'PUBLIC': {name:null,                 logo:'🌐', domain:'',               color:'#059669'},
+  };
+
+  // Read token from URL: ?token=DS-LIU-SEC-0012
+  // or from path: /invite/DS-LIU-SEC-0012
+  var urlParams = new URLSearchParams(window.location.search);
+  var pathToken = window.location.pathname.split('/').pop();
+  var token = urlParams.get('token') || 
+              (pathToken && pathToken.startsWith('DS-') ? pathToken : null) ||
+              data.inviteToken; // fallback default
+  data.inviteToken = token; // update state with resolved token
+  var parts = token.split('-');
+  var orgKey = parts.length >= 2 ? parts[1].toUpperCase() : 'PUBLIC';
+  var orgInfo = ORG_MAP[orgKey] || {name: orgKey, logo:'🏢', domain: orgKey.toLowerCase()+'.com', color:'#1A56DB'};
+
+  // Set dynamic org data
+  data.inviteOrg   = orgInfo.name || 'DolSafe Community';
+  data.inviteOrgKey= orgKey;
+  data.inviteOrgDomain = orgInfo.domain;
+  data.inviteOrgLogo   = orgInfo.logo;
+  data.inviteOrgColor  = orgInfo.color;
+  data.hasEmployer     = !!orgInfo.name;
+
+  // Pre-fill work email if domain is known
+  if(orgInfo.domain){
+    data.workEmail = 'james.rivera@' + orgInfo.domain;
+  }
+
+  render();
+});
+</script>
+
+
+<div class="toast" id="toastEl"></div>
+</body>
+</html>

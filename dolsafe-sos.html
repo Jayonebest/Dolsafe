@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>DolSafe · SOS + Trusted Contacts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#E8ECF2;font-family:'Inter',sans-serif;color:#111827}
+.phone{width:100%;max-width:390px;min-height:100vh;background:#F2F5FA;
+  display:flex;flex-direction:column;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.12)}
+
+/* STATUS */
+.status{height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;flex-shrink:0;transition:background .4s}
+.status.normal{background:#1A56DB}
+.status.active{background:#991B1B}
+.st-time{font-size:15px;font-weight:700;color:white}
+.st-r{font-size:11px;color:rgba(255,255,255,.85)}
+
+/* HEADER */
+.hdr{padding:10px 16px 14px;transition:background .4s}
+.hdr.normal{background:#1A56DB}
+.hdr.active{background:#991B1B}
+.hdr-row{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.back-btn{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);
+  border:none;color:white;font-size:20px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.hdr-title{font-size:17px;font-weight:800;color:white;flex:1}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.68);font-weight:500;margin-left:44px}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:30px}
+.scroll::-webkit-scrollbar{display:none}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+@keyframes recblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes waveform{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+@keyframes countDown{from{stroke-dashoffset:0}to{stroke-dashoffset:283}}
+
+/* ── NORMAL STATE: CONTACTS SCREEN ── */
+.contacts-screen{padding:16px;animation:fadeUp .3s ease}
+
+.sos-trigger-card{background:white;border-radius:20px;padding:20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.1);margin-bottom:16px;text-align:center}
+.sos-ring-wrap{position:relative;width:130px;height:130px;margin:0 auto 14px;cursor:pointer}
+.sos-ring-svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.sos-btn{position:absolute;inset:12px;border-radius:50%;background:linear-gradient(135deg,#EF4444,#B91C1C);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 6px 24px rgba(239,68,68,.5);cursor:pointer;border:none;transition:transform .15s}
+.sos-btn:active{transform:scale(.95)}
+.sos-btn-label{font-size:20px;font-weight:900;color:white;letter-spacing:1px}
+.sos-btn-sub{font-size:10px;color:rgba(255,255,255,.8);font-weight:600;margin-top:2px}
+.sos-hold-hint{font-size:12px;color:#6B7280;font-weight:500;margin-bottom:6px}
+.sos-features{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.sos-feat{font-size:10px;font-weight:600;color:#374151;background:#F9FAFB;
+  border:1px solid #E5E7EB;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:4px}
+
+/* CONTACTS LIST */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:0 0 10px;margin-bottom:0}
+.sec-title{font-size:15px;font-weight:800;color:#111827}
+.sec-link{font-size:12px;font-weight:700;color:#1A56DB;cursor:pointer}
+
+.contact-card{background:white;border-radius:16px;padding:14px;
+  box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;
+  border:1.5px solid #F3F4F6}
+.contact-card:active{transform:scale(.98)}
+.contact-card.primary{border-color:#BFDBFE;background:#F8FBFF}
+.cc-avatar{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;position:relative}
+.cc-badge{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;
+  border-radius:50%;background:#10B981;border:2px solid white;font-size:7px;
+  display:flex;align-items:center;justify-content:center}
+.cc-info{flex:1;min-width:0}
+.cc-name{font-size:14px;font-weight:700;color:#111827;margin-bottom:2px}
+.cc-rel{font-size:11px;color:#6B7280;font-weight:500}
+.cc-status{font-size:10px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:4px}
+.cc-actions{display:flex;gap:6px;flex-shrink:0}
+.cc-action-btn{width:34px;height:34px;border-radius:10px;border:none;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  cursor:pointer;transition:all .15s;background:#F3F4F6}
+.cc-action-btn:active{transform:scale(.93)}
+.cc-action-btn.call{background:#DBEAFE}
+.cc-action-btn.ping{background:#FEE2E2}
+
+.add-contact-btn{background:white;border-radius:16px;padding:14px;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  border:2px dashed #D1D5DB;transition:all .15s}
+.add-contact-btn:active{transform:scale(.98)}
+.acb-icon{width:46px;height:46px;border-radius:14px;background:#F9FAFB;
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.acb-text{font-size:13px;font-weight:700;color:#374151}
+.acb-sub{font-size:11px;color:#9CA3AF;font-weight:500;margin-top:2px}
+.slots-left{font-size:11px;color:#9CA3AF;font-weight:500;margin-left:auto}
+
+/* CHECKIN CARD */
+.checkin-card{background:white;border-radius:16px;padding:14px;
+  box-shadow:0 1px 6px rgba(0,0,0,.07);margin-bottom:8px;
+  display:flex;align-items:center;gap:12px;border:1.5px solid #D1FAE5}
+.chk-icon{font-size:28px;flex-shrink:0}
+.chk-info{flex:1}
+.chk-title{font-size:13px;font-weight:700;color:#065F46}
+.chk-sub{font-size:11px;color:#6B7280;font-weight:500;margin-top:2px;line-height:1.4}
+.chk-btn{padding:9px 14px;border-radius:10px;background:#10B981;border:none;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:white;
+  cursor:pointer;white-space:nowrap}
+.chk-btn.done{background:#D1FAE5;color:#065F46}
+
+/* ── SOS ACTIVE STATE ── */
+.sos-active-screen{background:#7F1D1D;min-height:100vh;
+  display:flex;flex-direction:column;padding:16px;animation:fadeUp .25s ease}
+
+.sos-status-bar{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;margin-bottom:16px}
+.sos-live-badge{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 12px}
+.sos-live-dot{width:8px;height:8px;border-radius:50%;background:#FCA5A5;animation:pulse .8s infinite}
+.sos-live-label{font-size:11px;font-weight:700;color:white}
+.sos-elapsed{font-size:12px;font-weight:700;color:rgba(255,255,255,.7);font-family:'Inter',monospace}
+
+/* SILENT RECORD PANEL */
+.rec-panel{background:rgba(0,0,0,.35);border-radius:16px;padding:14px;margin-bottom:12px}
+.rec-panel-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rec-red-dot{width:9px;height:9px;border-radius:50%;background:#FCA5A5;animation:recblink .9s infinite;flex-shrink:0}
+.rec-title{font-size:13px;font-weight:700;color:white;flex:1}
+.rec-dur{font-size:12px;font-weight:700;color:#FCA5A5;font-family:'Inter',monospace}
+.rec-canvas{width:100%;height:48px;border-radius:10px;background:rgba(0,0,0,.3);display:block}
+.rec-note{font-size:10px;color:rgba(255,255,255,.5);font-weight:500;margin-top:6px;line-height:1.5}
+
+/* 911 PACKET */
+.packet-panel{background:rgba(0,0,0,.3);border-radius:16px;padding:13px;margin-bottom:12px}
+.packet-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.packet-icon{font-size:18px;flex-shrink:0}
+.packet-title{font-size:13px;font-weight:700;color:white;flex:1}
+.packet-sending{font-size:10px;font-weight:700;color:#FCA5A5;display:flex;align-items:center;gap:4px}
+.packet-spinner{width:10px;height:10px;border:1.5px solid rgba(252,165,165,.3);border-top-color:#FCA5A5;
+  border-radius:50%;animation:spin .6s linear infinite}
+.packet-row{display:flex;gap:8px;font-size:11px;color:rgba(255,255,255,.75);
+  font-weight:500;margin-bottom:5px;line-height:1.4}
+.packet-row:last-child{margin:0}
+.packet-key{color:rgba(255,255,255,.45);min-width:90px;flex-shrink:0}
+.packet-val{color:white;font-weight:600}
+
+/* CONTACTS NOTIFIED */
+.notif-panel{background:rgba(0,0,0,.3);border-radius:16px;padding:13px;margin-bottom:12px}
+.notif-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.notif-title{font-size:13px;font-weight:700;color:white;flex:1}
+.notif-count{font-size:11px;font-weight:700;color:#86EFAC;background:rgba(134,239,172,.15);
+  padding:2px 8px;border-radius:10px}
+.notif-item{display:flex;align-items:center;gap:9px;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.08)}
+.notif-item:last-child{border:none}
+.ni-avatar{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ni-name{font-size:12px;font-weight:700;color:white;flex:1}
+.ni-status{font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
+.ni-status.sent{color:#86EFAC}
+.ni-status.seen{color:#60A5FA}
+.ni-status.calling{color:#FCD34D}
+
+/* SAFE BUTTON */
+.safe-section{margin-top:auto;padding-top:8px}
+.safe-btn{width:100%;padding:18px;border-radius:16px;background:#065F46;border:none;
+  font-family:'Inter',sans-serif;font-size:16px;font-weight:800;color:white;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 4px 20px rgba(6,95,70,.5);transition:all .15s}
+.safe-btn:active{transform:scale(.98)}
+.cancel-link{text-align:center;margin-top:10px;font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.45);cursor:pointer;padding:6px}
+
+/* ADD CONTACT MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:500;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex;animation:fadeUp .2s ease}
+.modal-box{background:white;border-radius:22px 22px 0 0;width:100%;max-width:390px;
+  padding:20px;max-height:88vh;overflow-y:auto}
+.modal-box::-webkit-scrollbar{display:none}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:#E5E7EB;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:800;color:#111827;margin-bottom:14px;
+  display:flex;justify-content:space-between;align-items:center}
+.mclose{font-size:22px;color:#9CA3AF;cursor:pointer;background:none;border:none;line-height:1}
+.field-lbl{font-size:12px;font-weight:700;color:#374151;margin-bottom:5px;display:block}
+.m-inp{width:100%;border:2px solid #E5E7EB;border-radius:10px;padding:11px 13px;
+  font-family:'Inter',sans-serif;font-size:14px;color:#111827;outline:none;
+  background:white;transition:border-color .2s;margin-bottom:12px}
+.m-inp:focus{border-color:#1A56DB}
+.avatar-pick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.av-opt{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;cursor:pointer;border:2px solid #E5E7EB;
+  transition:all .15s}
+.av-opt.sel{border-color:#1A56DB;background:#EFF6FF}
+.rel-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px}
+.rel-opt{padding:8px 4px;border-radius:9px;border:2px solid #E5E7EB;background:white;
+  font-size:11px;font-weight:600;color:#374151;cursor:pointer;text-align:center;transition:all .15s}
+.rel-opt.sel{border-color:#1A56DB;background:#EFF6FF;color:#1E40AF}
+.m-btn{width:100%;padding:13px;border-radius:12px;background:#1A56DB;border:none;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer}
+
+/* SAFE CONFIRMED */
+.safe-confirmed{text-align:center;padding:28px 16px;animation:fadeUp .4s ease}
+.sc-icon{font-size:56px;margin-bottom:14px}
+.sc-title{font-size:22px;font-weight:900;color:#065F46;margin-bottom:8px;letter-spacing:-.3px}
+.sc-sub{font-size:13px;color:#374151;font-weight:500;line-height:1.65;margin-bottom:18px}
+.sc-summary{background:white;border-radius:14px;padding:14px;text-align:left;
+  border:1px solid #E5E7EB;margin-bottom:14px}
+.sc-row{display:flex;gap:9px;font-size:12px;color:#374151;font-weight:500;margin-bottom:6px}
+.sc-row:last-child{margin:0}
+.sc-key{color:#9CA3AF;min-width:110px;flex-shrink:0}
+.sc-val{font-weight:700;color:#111827}
+.evidence-note{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;
+  padding:12px 14px;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start}
+.ev-icon{font-size:18px;flex-shrink:0}
+.ev-text{font-size:12px;color:#065F46;font-weight:600;line-height:1.55}
+
+/* TOAST */
+.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.r{background:#EF4444}
+
+/* BOTTOM NAV */
+.bottom-nav{position:sticky;bottom:0;background:white;border-top:1px solid #E5E7EB;
+  display:flex;padding:8px 4px 12px;box-shadow:0 -4px 20px rgba(0,0,0,.08);flex-shrink:0;z-index:90}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px;border-radius:12px;cursor:pointer;transition:background .15s}
+.nav-item.active{background:#EFF6FF}
+.ni-icon{font-size:21px;color:#9CA3AF}
+.ni-label{font-size:9px;font-weight:700;color:#9CA3AF;font-family:'Inter',sans-serif}
+.nav-item.active .ni-icon,.nav-item.active .ni-label{color:#1A56DB}
+
+/* ── BOTTOM NAV ── */
+.bnav{position:sticky;bottom:0;background:#fff;border-top:1.5px solid #E5E7EB;
+  display:flex;padding:8px 6px 18px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.09);flex-shrink:0;z-index:90}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 4px;border-radius:14px;cursor:pointer;text-decoration:none;
+  transition:background .15s;-webkit-tap-highlight-color:transparent}
+.ni.on{background:#EFF6FF}
+.ni-ico{font-size:22px;color:#9CA3AF}
+.ni-lbl{font-size:9px;font-weight:700;color:#9CA3AF;font-family:'Inter',sans-serif}
+.ni.on .ni-ico,.ni.on .ni-lbl{color:#1A56DB}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%) translateY(8px);
+  padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+  background:#111827;color:white;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.g{background:#059669}.toast.b{background:#1A56DB}.toast.r{background:#DC2626}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+
+  <div class="status normal" id="statusBar">
+    <div class="st-time" id="stTime">9:41</div>
+    <div class="st-r" id="stRight">📶 WiFi 🔋</div>
+  </div>
+
+  <div class="hdr normal" id="hdr">
+    <div class="hdr-row">
+      <button class="back-btn" href="dolsafe-home.html">‹</button>
+      <div class="hdr-title" id="hdrTitle">SOS & Trusted Contacts</div>
+    </div>
+    <div class="hdr-sub" id="hdrSub">Hold SOS 3 seconds to activate · Silent recording starts immediately</div>
+  </div>
+
+  <div class="scroll" id="scrollEl">
+    <div id="mainContent"></div>
+  </div>
+
+</div>
+
+<!-- ADD CONTACT MODAL -->
+<div class="modal-ov" id="addModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">
+      Add trusted contact
+      <button class="mclose" onclick="closeModal()">×</button>
+    </div>
+
+    <label class="field-lbl">Their name</label>
+    <input class="m-inp" id="m_name" placeholder="e.g. Sarah Johnson">
+
+    <label class="field-lbl">Phone number</label>
+    <input class="m-inp" id="m_phone" type="tel" placeholder="+1 (212) 555-0100">
+
+    <label class="field-lbl">Avatar</label>
+    <div class="avatar-pick" id="avatarPick">
+      <div class="av-opt sel" onclick="pickAv(this,'👩')">👩</div>
+      <div class="av-opt" onclick="pickAv(this,'👨')">👨</div>
+      <div class="av-opt" onclick="pickAv(this,'👧')">👧</div>
+      <div class="av-opt" onclick="pickAv(this,'👦')">👦</div>
+      <div class="av-opt" onclick="pickAv(this,'👴')">👴</div>
+      <div class="av-opt" onclick="pickAv(this,'👵')">👵</div>
+      <div class="av-opt" onclick="pickAv(this,'🧑')">🧑</div>
+      <div class="av-opt" onclick="pickAv(this,'🐶')">🐶</div>
+    </div>
+
+    <label class="field-lbl">Relationship</label>
+    <div class="rel-grid" id="relGrid">
+      <div class="rel-opt sel" onclick="pickRel(this,'Spouse')">Spouse</div>
+      <div class="rel-opt" onclick="pickRel(this,'Partner')">Partner</div>
+      <div class="rel-opt" onclick="pickRel(this,'Parent')">Parent</div>
+      <div class="rel-opt" onclick="pickRel(this,'Sibling')">Sibling</div>
+      <div class="rel-opt" onclick="pickRel(this,'Friend')">Friend</div>
+      <div class="rel-opt" onclick="pickRel(this,'Colleague')">Colleague</div>
+    </div>
+
+    <label class="field-lbl">DolSafe app installed?</label>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div id="hasApp_yes" onclick="pickApp(true)" style="flex:1;padding:9px;border-radius:9px;border:2px solid #1A56DB;background:#EFF6FF;text-align:center;font-size:12px;font-weight:700;color:#1E40AF;cursor:pointer">✅ Yes — DolSafe</div>
+      <div id="hasApp_no" onclick="pickApp(false)" style="flex:1;padding:9px;border-radius:9px;border:2px solid #E5E7EB;background:white;text-align:center;font-size:12px;font-weight:700;color:#374151;cursor:pointer">📱 No — SMS only</div>
+    </div>
+
+    <button class="m-btn" onclick="saveContact()">+ Add contact</button>
+  </div>
+  </div>
+
+</div>
+<div class="ni-label">Home</div></a><a class="nav-item" href="dolsafe-briefing.html"><div class="ni-icon">🧠</div><div class="ni-label">Briefing</div></a><a class="nav-item" href="dolsafe-smartreport.html"><div class="ni-icon">📋</div><div class="ni-label">Report</div></a><div class="nav-item active"><div class="ni-icon" style="color:#1A56DB">🆘</div><div class="ni-label" style="color:#1A56DB">SOS</div></div><a class="nav-item" href="dolsafe-car.html"><div class="ni-icon">🚗</div><div class="ni-label">My Car</div></a>
+  </div>
+<script>
+// ═══════════════════════════════════════════
+// DOLSAFE SOS + TRUSTED CONTACTS ENGINE
+// ═══════════════════════════════════════════
+
+var STATE = 'normal'; // normal | countdown | active | safe
+var contacts = [
+  {id:1, name:'Maria James',   phone:'+1 (718) 555-0182', rel:'Spouse',   avatar:'👩', color:'#DBEAFE', hasApp:true,  status:'online'},
+  {id:2, name:'Robert James',  phone:'+1 (212) 555-0933', rel:'Parent',   avatar:'👴', color:'#FEF3C7', hasApp:true,  status:'online'},
+  {id:3, name:'Kezia Williams',phone:'+1 (917) 555-0247', rel:'Friend',   avatar:'👧', color:'#F3E8FF', hasApp:false, status:'offline'},
+];
+var MAX_CONTACTS = 5;
+var selectedAvatar = '👩';
+var selectedRel    = 'Spouse';
+var selectedHasApp = true;
+var sosStartTime   = null;
+var sosElapsed     = 0;
+var sosIv          = null;
+var recSec         = 0;
+var recIv          = null;
+var countdownVal   = 3;
+var countdownIv    = null;
+var wfCanvasIv     = null;
+
+// ── CLOCK ──
+function tick(){
+  var d=new Date(),h=d.getHours()%12||12,m=String(d.getMinutes()).padStart(2,'0');
+  var e=document.getElementById('stTime'); if(e) e.textContent=h+':'+m;
+}
+setInterval(tick,1000); tick();
+
+// ── MDolSafeN RENDER ──
+function render(){
+  if(STATE==='normal')   renderNormal();
+  else if(STATE==='active') renderActive();
+  else if(STATE==='safe')   renderSafeConfirmed();
+}
+
+// ════════════════════════════════════════
+// NORMAL STATE
+// ════════════════════════════════════════
+function renderNormal(){
+  document.getElementById('statusBar').className='status normal';
+  document.getElementById('hdr').className='hdr normal';
+  document.getElementById('hdrTitle').textContent='SOS & Trusted Contacts';
+  document.getElementById('hdrSub').textContent='Hold SOS 3 sec to activate · Silent recording starts immediately';
+  document.getElementById('phone').style.background='#F2F5FA';
+
+  var slotsLeft = MAX_CONTACTS - contacts.length;
+
+  var html='<div class="contacts-screen">'+
+
+    // SOS BUTTON
+    '<div class="sos-trigger-card">'+
+      '<div class="sos-ring-wrap" id="sosRingWrap" onmousedown="startHold()" onmouseup="cancelHold()" onmouseleave="cancelHold()" ontouchstart="startHold()" ontouchend="cancelHold()">'+
+        '<svg class="sos-ring-svg" viewBox="0 0 100 100" width="130" height="130">'+
+          '<circle cx="50" cy="50" r="45" fill="none" stroke="#FEE2E2" stroke-width="6"/>'+
+          '<circle id="countCircle" cx="50" cy="50" r="45" fill="none" stroke="#EF4444" stroke-width="6"'+
+            ' stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round"'+
+            ' style="transition:stroke-dashoffset .1s linear"/>'+
+        '</svg>'+
+        '<button class="sos-btn" id="sosBtn">'+
+          '<div class="sos-btn-label">SOS</div>'+
+          '<div class="sos-btn-sub">Hold 3 sec</div>'+
+        '</button>'+
+      '</div>'+
+      '<div class="sos-hold-hint">Hold the button for 3 seconds to activate emergency mode</div>'+
+      '<div class="sos-features">'+
+        '<div class="sos-feat">🔴 Silent video recording</div>'+
+        '<div class="sos-feat">📍 Live GPS to 911</div>'+
+        '<div class="sos-feat">📱 Ping all contacts</div>'+
+        '<div class="sos-feat">🎤 Audio stream</div>'+
+      '</div>'+
+    '</div>'+
+
+    // CHECK-IN
+    '<div class="checkin-card">'+
+      '<div class="chk-icon">✅</div>'+
+      '<div class="chk-info">'+
+        '<div class="chk-title">Daily safe check-in · 7-day streak 🔥</div>'+
+        '<div class="chk-sub">Let your contacts know you are safe. Tap to confirm.</div>'+
+      '</div>'+
+      '<button class="chk-btn" id="chkBtn" onclick="doCheckin()">Check in</button>'+
+    '</div>'+
+
+    // CONTACTS
+    '<div class="section-hdr">'+
+      '<div class="sec-title">👥 Trusted contacts ('+contacts.length+'/'+MAX_CONTACTS+')</div>'+
+      (slotsLeft>0?'<div class="sec-link" onclick="openAddModal()">+ Add</div>':'')+
+    '</div>'+
+
+    contacts.map(function(c,i){
+      return '<div class="contact-card'+(i===0?' primary':'')+'" onclick="pingContact('+c.id+')">'+
+        '<div class="cc-avatar" style="background:'+c.color+'">'+c.avatar+
+          '<div class="cc-badge">'+(c.hasApp?'🐬':'💬')+'</div>'+
+        '</div>'+
+        '<div class="cc-info">'+
+          '<div class="cc-name">'+c.name+'</div>'+
+          '<div class="cc-rel">'+c.rel+(i===0?' · Primary contact':'')+'</div>'+
+          '<div class="cc-status" style="color:'+(c.status==='online'?'#10B981':'#9CA3AF')+'">'+
+            '<div style="width:6px;height:6px;border-radius:50%;background:'+(c.status==='online'?'#10B981':'#D1D5DB')+'"></div>'+
+            (c.hasApp?'DolSafe · '+(c.status==='online'?'Online':'Offline'):'SMS only')+
+          '</div>'+
+        '</div>'+
+        '<div class="cc-actions">'+
+          '<div class="cc-action-btn call" onclick="event.stopPropagation();callContact('+c.id+')">📞</div>'+
+          '<div class="cc-action-btn" onclick="event.stopPropagation();removeContact('+c.id+')">×</div>'+
+        '</div>'+
+      '</div>';
+    }).join('')+
+
+    (slotsLeft>0
+      ? '<div class="add-contact-btn" onclick="openAddModal()">'+
+          '<div class="acb-icon">+</div>'+
+          '<div><div class="acb-text">Add trusted contact</div><div class="acb-sub">SOS alerts this person immediately</div></div>'+
+          '<div class="slots-left">'+slotsLeft+' slot'+(slotsLeft!==1?'s':'')+' left</div>'+
+        '</div>'
+      : '')+
+
+    // HOW SOS WORKS
+    '<div style="background:white;border-radius:16px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);margin-top:4px">'+
+      '<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:10px">How SOS works</div>'+
+      [['🔴','Silent recording starts','Video + audio begins recording silently the moment SOS activates. It continues until you tap I\'m Safe.'],
+       ['📍','Live GPS sent to 911','Your exact location, movement path, and DolSafe ID are transmitted to 911 dispatch as a structured data packet.'],
+       ['📱','Contacts pinged instantly','Every trusted contact receives an alert with your live location link. DolSafe users see it in-app. Others get a text message.'],
+       ['🎤','Evidence preserved','All footage is C2PA-certified and uploaded encrypted. If you are safe, you choose whether to share it. If not, it is automatically preserved.'],
+      ].map(function(r){
+        return '<div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">'+
+          '<div style="font-size:18px;flex-shrink:0">'+r[0]+'</div>'+
+          '<div><div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:2px">'+r[1]+'</div>'+
+          '<div style="font-size:11px;color:#6B7280;font-weight:500;line-height:1.45">'+r[2]+'</div></div>'+
+        '</div>';
+      }).join('')+
+    '</div>'+
+
+  '</div>';
+
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ── SOS HOLD ──
+var holdTimeout = null;
+var holdStart   = null;
+
+function startHold(){
+  holdStart = Date.now();
+  countdownVal = 3;
+  updateCountRing(0);
+  holdTimeout = setInterval(function(){
+    var elapsed = (Date.now()-holdStart)/1000;
+    var progress = Math.min(elapsed/3, 1);
+    updateCountRing(progress);
+    var remaining = Math.max(0, 3-Math.floor(elapsed));
+    var btn = document.getElementById('sosBtn');
+    if(btn){
+      btn.querySelector('.sos-btn-sub').textContent = remaining>0?remaining+'…':'Activating!';
+    }
+    if(elapsed >= 3){
+      clearInterval(holdTimeout); holdTimeout=null;
+      activateSOS();
+    }
+  },50);
+}
+
+function cancelHold(){
+  if(holdTimeout){ clearInterval(holdTimeout); holdTimeout=null; }
+  updateCountRing(0);
+  var btn=document.getElementById('sosBtn');
+  if(btn){ btn.querySelector('.sos-btn-sub').textContent='Hold 3 sec'; }
+}
+
+function updateCountRing(progress){
+  var c=document.getElementById('countCircle');
+  if(!c) return;
+  var offset = 283 - (283*progress);
+  c.setAttribute('stroke-dashoffset', offset);
+}
+
+// ════════════════════════════════════════
+// SOS ACTIVE STATE
+// ════════════════════════════════════════
+function activateSOS(){
+  STATE='active';
+  sosStartTime=Date.now();
+  sosElapsed=0; recSec=0;
+
+  document.getElementById('statusBar').className='status active';
+  document.getElementById('hdr').className='hdr active';
+  document.getElementById('hdrTitle').textContent='⚡ SOS ACTIVE';
+  document.getElementById('hdrSub').textContent='Recording silently · 911 notified · Contacts alerted';
+  document.getElementById('phone').style.background='#7F1D1D';
+  document.getElementById('scrollEl').style.background='#7F1D1D';
+
+  // Start elapsed timer
+  sosIv=setInterval(function(){
+    sosElapsed++;
+    var e=document.getElementById('sosElapsedEl');
+    var m=Math.floor(sosElapsed/60), s=String(sosElapsed%60).padStart(2,'0');
+    if(e) e.textContent=m+':'+s;
+  },1000);
+
+  renderActive();
+
+  // Animate contact notifications one by one
+  setTimeout(function(){updateContactStatus(contacts[0].id,'sent');}, 800);
+  setTimeout(function(){updateContactStatus(contacts[1].id,'sent');}, 1400);
+  setTimeout(function(){updateContactStatus(contacts[2].id,'sent');}, 1900);
+  setTimeout(function(){updateContactStatus(contacts[0].id,'seen');}, 4500);
+  setTimeout(function(){updateContactStatus(contacts[1].id,'calling');}, 7000);
+}
+
+function renderActive(){
+  var now = new Date();
+  var timeStr = (now.getHours()%12||12)+':'+String(now.getMinutes()).padStart(2,'0')+' '+(now.getHours()>=12?'PM':'AM');
+
+  var html='<div class="sos-active-screen" id="sosActiveScreen">'+
+
+    // STATUS ROW
+    '<div class="sos-status-bar">'+
+      '<div class="sos-live-badge">'+
+        '<div class="sos-live-dot"></div>'+
+        '<div class="sos-live-label">SOS ACTIVE</div>'+
+      '</div>'+
+      '<div class="sos-elapsed" id="sosElapsedEl">0:00</div>'+
+    '</div>'+
+
+    // SILENT RECORDING
+    '<div class="rec-panel">'+
+      '<div class="rec-panel-hdr">'+
+        '<div class="rec-red-dot"></div>'+
+        '<div class="rec-title">Silently recording</div>'+
+        '<div class="rec-dur" id="recDurEl">0:00</div>'+
+      '</div>'+
+      '<canvas class="rec-canvas" id="wfCanvas"></canvas>'+
+      '<div class="rec-note">'+
+        '🔒 Recording is invisible — no indicator shown to others · '+
+        'Video + audio + GPS path captured · '+
+        'C2PA certified · Encrypted upload · '+
+        'Preserved until you tap I\'m Safe'+
+      '</div>'+
+    '</div>'+
+
+    // 911 DATA PACKET
+    '<div class="packet-panel">'+
+      '<div class="packet-hdr">'+
+        '<div class="packet-icon">🚨</div>'+
+        '<div class="packet-title">911 data packet sent</div>'+
+        '<div class="packet-sending"><div class="packet-spinner"></div>Transmitting live</div>'+
+      '</div>'+
+      '<div class="packet-row"><div class="packet-key">User ID</div><div class="packet-val">DS-ANON-4421 (James R.)</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Location</div><div class="packet-val">40.6892°N 73.9761°W · Flatbush Ave & Fulton St</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Accuracy</div><div class="packet-val">±12 meters · GPS + WiFi</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Movement</div><div class="packet-val">Stationary · Last moved 0:'+String(Math.floor(sosElapsed/60)).padStart(2,'0')+'</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Time</div><div class="packet-val">'+timeStr+' ET · SOS triggered manually</div></div>'+
+      '<div class="packet-row"><div class="packet-key">SmartReport</div><div class="packet-val">Auto-generated · uploading evidence</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Medical</div><div class="packet-val">No medical alerts on file</div></div>'+
+      '<div class="packet-row"><div class="packet-key">Video feed</div><div class="packet-val">Live stream available on request</div></div>'+
+    '</div>'+
+
+    // CONTACTS NOTIFIED
+    '<div class="notif-panel">'+
+      '<div class="notif-hdr">'+
+        '<div class="notif-title">Trusted contacts</div>'+
+        '<div class="notif-count">'+contacts.length+' alerted</div>'+
+      '</div>'+
+      contacts.map(function(c){
+        return '<div class="notif-item" id="ni_'+c.id+'">'+
+          '<div class="ni-avatar" style="background:'+c.color+'">'+c.avatar+'</div>'+
+          '<div style="flex:1">'+
+            '<div class="ni-name">'+c.name+'</div>'+
+            '<div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:500">'+c.rel+' · '+(c.hasApp?'DolSafe':'SMS')+'</div>'+
+          '</div>'+
+          '<div class="ni-status" id="ns_'+c.id+'"><div style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);animation:pulse .8s infinite"></div><span style="color:rgba(255,255,255,.5)">Sending…</span></div>'+
+        '</div>';
+      }).join('')+
+    '</div>'+
+
+    // SAFE BUTTON
+    '<div class="safe-section">'+
+      '<button class="safe-btn" onclick="markSafe()">✅ I\'m Safe — stop recording</button>'+
+      '<div class="cancel-link" onclick="markSafe()">Cancel false alarm</div>'+
+    '</div>'+
+
+  '</div>';
+
+  document.getElementById('mainContent').innerHTML=html;
+
+  // Start waveform
+  initWaveform();
+
+  // Start rec timer
+  recIv=setInterval(function(){
+    recSec++;
+    var e=document.getElementById('recDurEl');
+    if(e){ var m=Math.floor(recSec/60),s=String(recSec%60).padStart(2,'0'); e.textContent=m+':'+s; }
+  },1000);
+}
+
+function updateContactStatus(id, status){
+  var el=document.getElementById('ns_'+id); if(!el) return;
+  if(status==='sent'){
+    el.innerHTML='<span class="ni-status sent">✓✓ Alert sent</span>';
+  } else if(status==='seen'){
+    el.innerHTML='<span class="ni-status seen">👁 Seen · viewing location</span>';
+  } else if(status==='calling'){
+    el.innerHTML='<span class="ni-status calling">📞 Calling you now</span>';
+  }
+}
+
+function initWaveform(){
+  var c=document.getElementById('wfCanvas'); if(!c) return;
+  c.width=c.offsetWidth||340; c.height=48;
+  var ctx=c.getContext('2d');
+  var t=0;
+  if(wfCanvasIv) clearInterval(wfCanvasIv);
+  wfCanvasIv=setInterval(function(){
+    if(!c.isConnected){clearInterval(wfCanvasIv);return;}
+    t+=0.08;
+    ctx.clearRect(0,0,c.width,48);
+    var bars=40;
+    for(var i=0;i<bars;i++){
+      var h=6+Math.abs(Math.sin(t+i*.4))*20+Math.abs(Math.sin(t*.7+i*.25))*14;
+      var x=i*(c.width/bars);
+      var alpha=.4+Math.abs(Math.sin(t*.5+i*.3))*.5;
+      ctx.fillStyle='rgba(252,165,165,'+alpha+')';
+      ctx.beginPath();
+      ctx.roundRect(x+1,24-h/2,c.width/bars-3,h,2);
+      ctx.fill();
+    }
+  },50);
+}
+
+// ════════════════════════════════════════
+// SAFE — STOP RECORDING
+// ════════════════════════════════════════
+function markSafe(){
+  STATE='safe';
+  clearInterval(sosIv); sosIv=null;
+  clearInterval(recIv); recIv=null;
+  clearInterval(wfCanvasIv); wfCanvasIv=null;
+
+  document.getElementById('statusBar').className='status normal';
+  document.getElementById('hdr').className='hdr normal';
+  document.getElementById('hdrTitle').textContent='SOS & Trusted Contacts';
+  document.getElementById('hdrSub').textContent='You marked yourself safe';
+  document.getElementById('phone').style.background='#F2F5FA';
+  document.getElementById('scrollEl').style.background='';
+
+  renderSafeConfirmed();
+}
+
+function renderSafeConfirmed(){
+  var recMins=Math.floor(recSec/60), recSecs=String(recSec%60).padStart(2,'0');
+  var recDurStr=recMins>0?recMins+'m '+recSecs+'s':recSec+'s';
+
+  var html='<div class="safe-confirmed">'+
+    '<div class="sc-icon">✅</div>'+
+    '<div class="sc-title">You\'re marked safe</div>'+
+    '<div class="sc-sub">Recording stopped. Contacts notified you are safe. 911 received your safe status.</div>'+
+
+    '<div class="sc-summary">'+
+      '<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:10px">Incident summary</div>'+
+      '<div class="sc-row"><div class="sc-key">SOS duration</div><div class="sc-val">'+
+        (function(){var m=Math.floor(sosElapsed/60),s=String(sosElapsed%60).padStart(2,'0');return m>0?m+'m '+s+'s':sosElapsed+'s';})()+'</div></div>'+
+      '<div class="sc-row"><div class="sc-key">Recording length</div><div class="sc-val">'+recDurStr+'</div></div>'+
+      '<div class="sc-row"><div class="sc-key">Contacts alerted</div><div class="sc-val">'+contacts.length+' contacts notified</div></div>'+
+      '<div class="sc-row"><div class="sc-key">911 notified</div><div class="sc-val">Location + data packet sent</div></div>'+
+      '<div class="sc-row"><div class="sc-key">Evidence</div><div class="sc-val">'+recDurStr+' video · C2PA certified</div></div>'+
+    '</div>'+
+
+    '<div class="evidence-note">'+
+      '<div class="ev-icon">🎥</div>'+
+      '<div class="ev-text">'+
+        'Your '+recDurStr+' recording is encrypted and saved. You can choose to:<br>'+
+        '• <strong>Share with 911</strong> — send the full recording to dispatch<br>'+
+        '• <strong>Share with contacts</strong> — let trusted contacts view it<br>'+
+        '• <strong>Delete it</strong> — remove all footage from our servers<br>'+
+        'Evidence is auto-deleted after 30 days if no action is taken.'+
+      '</div>'+
+    '</div>'+
+
+    '<div style="display:flex;flex-direction:column;gap:8px">'+
+      '<button onclick="shareEvidence()" style="width:100%;padding:13px;border-radius:12px;background:#1A56DB;border:none;font-family:\'Inter\',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer">📤 Share recording with 911</button>'+
+      '<button onclick="deleteEvidence()" style="width:100%;padding:13px;border-radius:12px;background:#F9FAFB;border:1px solid #E5E7EB;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:700;color:#374151;cursor:pointer">🗑 Delete recording</button>'+
+      '<button onclick="backToNormal()" style="width:100%;padding:13px;border-radius:12px;background:#F9FAFB;border:1px solid #E5E7EB;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:700;color:#374151;cursor:pointer">← Back to contacts</button>'+
+    '</div>'+
+  '</div>';
+
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ── ADD CONTACT MODAL ──
+function openAddModal(){
+  if(contacts.length>=MAX_CONTACTS){ toast('Maximum 5 trusted contacts'); return; }
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
+
+function pickAv(el,emoji){
+  selectedAvatar=emoji;
+  document.querySelectorAll('.av-opt').forEach(function(e){e.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function pickRel(el,rel){
+  selectedRel=rel;
+  document.querySelectorAll('.rel-opt').forEach(function(e){e.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function pickApp(hasApp){
+  selectedHasApp=hasApp;
+  document.getElementById('hasApp_yes').style.borderColor=hasApp?'#1A56DB':'#E5E7EB';
+  document.getElementById('hasApp_yes').style.background=hasApp?'#EFF6FF':'white';
+  document.getElementById('hasApp_no').style.borderColor=!hasApp?'#1A56DB':'#E5E7EB';
+  document.getElementById('hasApp_no').style.background=!hasApp?'#EFF6FF':'white';
+}
+
+function saveContact(){
+  var name=document.getElementById('m_name').value.trim();
+  var phone=document.getElementById('m_phone').value.trim();
+  if(!name||!phone){ toast('Name and phone required'); return; }
+  var colors=['#DBEAFE','#FEF3C7','#F3E8FF','#D1FAE5','#FEE2E2'];
+  contacts.push({
+    id:Date.now(), name:name, phone:phone, rel:selectedRel,
+    avatar:selectedAvatar, color:colors[contacts.length%colors.length],
+    hasApp:selectedHasApp, status:'offline'
+  });
+  closeModal();
+  document.getElementById('m_name').value='';
+  document.getElementById('m_phone').value='';
+  render();
+  toast('✅ '+name+' added as trusted contact','g');
+}
+
+// ── ACTIONS ──
+function doCheckin(){
+  var btn=document.getElementById('chkBtn');
+  if(btn){ btn.textContent='✅ Checked in!'; btn.className='chk-btn done'; }
+  toast('✅ Safe check-in sent to all contacts','g');
+}
+function pingContact(id){
+  var c=contacts.find(function(x){return x.id===id;}); if(!c) return;
+  toast('📍 Location sent to '+c.name);
+}
+function callContact(id){
+  var c=contacts.find(function(x){return x.id===id;}); if(!c) return;
+  toast('📞 Calling '+c.name+'…');
+}
+function removeContact(id){
+  contacts=contacts.filter(function(c){return c.id!==id;});
+  render();
+  toast('Contact removed');
+}
+function shareEvidence(){ toast('📤 Recording shared with 911 dispatch','g'); }
+function deleteEvidence(){ toast('🗑 Recording deleted from servers'); backToNormal(); }
+function backToNormal(){ STATE='normal'; sosElapsed=0; recSec=0; render(); }
+function goBack(){ toast('← Back to DolSafe home'); }
+
+function toast(msg,type){
+  var t=document.getElementById('toastEl');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ── BOOT ──
+window.addEventListener('load',function(){ render(); });
+</script>
+
+<div class="ni-lbl">Home</div></a><a class="ni" href="dolsafe-commute.html"><div class="ni-ico">🛡️</div><div class="ni-lbl">Commute</div></a><a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a><a class="ni on" href="dolsafe-sos.html"><div class="ni-ico" style="color:#1A56DB">🆘</div><div class="ni-lbl" style="color:#1A56DB">SOS</div></a><a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+</div>
+<div class="bnav">
+    <a class="ni" href="dolsafe-home.html"><div class="ni-ico">🏠</div><div class="ni-lbl">Home</div></a>
+    <a class="ni" href="dolsafe-commute.html"><div class="ni-ico">🛡️</div><div class="ni-lbl">Commute</div></a>
+    <a class="ni" href="dolsafe-smartreport.html"><div class="ni-ico">📋</div><div class="ni-lbl">Report</div></a>
+    <a class="ni on" href="dolsafe-sos.html"><div class="ni-ico" style="color:#1A56DB">🆘</div><div class="ni-lbl" style="color:#1A56DB">SOS</div></a>
+    <a class="ni" href="dolsafe-car.html"><div class="ni-ico">🚗</div><div class="ni-lbl">My Car</div></a>
+  </div>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>
